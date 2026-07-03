@@ -19,7 +19,7 @@ export default function AdminFinancePage() {
   };
 
   const handleReject = (id: string) => {
-    toast.error(`ปฏิเสธรายการชำระเงิน ${id} แล้ว (แจ้งให้นักศึกษาอัปโหลดใหม่)`);
+    toast.error(`ปฏิเสธรายการชำระเงิน ${id} แล้ว (แจ้งให้ผู้เข้าศึกษาอัปโหลดใหม่)`);
     updatePaymentStatus(id, "rejected");
   };
 
@@ -65,7 +65,7 @@ export default function AdminFinancePage() {
                 <span className="material-symbols-outlined text-[20px]">search</span>
               </span>
               <Input 
-                placeholder="ค้นหารหัสอ้างอิง, ชื่อ หรือรหัสนักศึกษา..." 
+                placeholder="ค้นหารหัสอ้างอิง, ชื่อ หรือรหัสประจำตัว..." 
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -83,7 +83,7 @@ export default function AdminFinancePage() {
               <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-y">
                 <tr>
                   <th className="px-4 py-3 font-medium">รหัสอ้างอิง</th>
-                  <th className="px-4 py-3 font-medium">นักศึกษา</th>
+                  <th className="px-4 py-3 font-medium">ผู้เข้าศึกษา</th>
                   <th className="px-4 py-3 font-medium">ประเภทการชำระ</th>
                   <th className="px-4 py-3 font-medium text-right">จำนวนเงิน</th>
                   <th className="px-4 py-3 font-medium">วันที่แจ้งโอน</th>

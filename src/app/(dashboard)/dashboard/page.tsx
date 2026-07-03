@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import Footer from "@/components/layout/Footer";
-import { dashboardData } from "@/data";
+import { dashboardData, cpeData } from "@/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 
 const iconClass = "material-symbols-outlined text-[20px]";
@@ -21,16 +21,16 @@ export default function DashboardPage() {
           ยินดีต้อนรับกลับ, {d.studentName}
         </h1>
         <p className="text-xs text-muted-foreground">
-          รหัสนักศึกษา: {d.studentId}
+          รหัสประจำตัว: {d.studentId}
         </p>
       </header>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
-          { icon: "school", label: "เกรดเฉลี่ย (GPA)", value: d.gpa.toFixed(2), color: "text-primary", bg: "bg-primary/10", border: false, borderDestructive: false },
-          { icon: "credit_score", label: "หน่วยกิตที่ได้รับ", value: `${d.creditsEarned}/${d.creditsTotal}`, color: "text-chart-3", bg: "bg-chart-3/10", border: true, borderDestructive: false },
-          { icon: "how_to_reg", label: "สถานะการลงทะเบียน", value: d.registrationTerm, color: "text-secondary-foreground", bg: "bg-secondary/20", border: false, borderDestructive: false },
+          { icon: "workspace_premium", label: "หน่วยกิต CPE", value: `${cpeData.currentCredits}/${cpeData.targetCredits}`, color: "text-primary", bg: "bg-primary/10", border: false, borderDestructive: false },
+          { icon: "credit_score", label: "หน่วยกิตฝึกอบรม", value: `${d.creditsEarned}/${d.creditsTotal}`, color: "text-chart-3", bg: "bg-chart-3/10", border: true, borderDestructive: false },
+          { icon: "how_to_reg", label: "สถานะการฝึกอบรม", value: d.trainingStatus, color: "text-secondary-foreground", bg: "bg-secondary/20", border: false, borderDestructive: false },
           { icon: "warning", label: "ยอดค้างชำระ", value: `฿${d.balanceDue.toLocaleString()}`, color: "text-destructive", bg: "bg-destructive/10", border: false, borderDestructive: true },
         ].map((m) => (
           <Card key={m.label} className={`card-shadow ${m.border ? "border-l-4 border-l-chart-3" : ""} ${m.borderDestructive ? "border-l-4 border-l-destructive" : ""}`}>
@@ -61,32 +61,46 @@ export default function DashboardPage() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* GPA Trend */}
+        {/* CPE Progress */}
         <Card className="lg:col-span-2 card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">แนวโน้มผลการเรียน (GPA Trend)</CardTitle>
-            <CardDescription className="text-xs">เกรดเฉลี่ยสะสมแยกตามภาคการศึกษา</CardDescription>
+            <CardTitle className="text-sm">ความคืบหน้าการสะสม CPE</CardTitle>
+            <CardDescription className="text-xs">สะสมได้ {cpeData.currentCredits} จาก {cpeData.targetCredits} CPE · หมดอายุ {cpeData.expiryDate}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={d.gpaHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.1)" />
-                  <XAxis dataKey="semester" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} padding={{ left: 10, right: 10 }} />
-                  <YAxis domain={[2.0, 4.0]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+            <div className="mt-4 space-y-5">
+              {/* Overall Progress Bar */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-medium text-muted-foreground">ความคืบหน้าโดยรวม</span>
+                  <span className="text-sm font-bold text-primary">{Math.round((cpeData.currentCredits / cpeData.targetCredits) * 100)}%</span>
+                </div>
+                <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary rounded-full transition-all duration-1000" 
+                    style={{ width: `${(cpeData.currentCredits / cpeData.targetCredits) * 100}%` }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="gpa" 
-                    stroke="var(--color-primary)" 
-                    strokeWidth={4} 
-                    dot={{ r: 5, strokeWidth: 2, fill: "hsl(var(--background))" }} 
-                    activeDot={{ r: 7, fill: "var(--color-primary)", stroke: "hsl(var(--background))", strokeWidth: 2 }} 
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5">เหลืออีก {cpeData.targetCredits - cpeData.currentCredits} CPE · เวลาคงเหลือ {cpeData.timeLeft}</p>
+              </div>
+
+              {/* Breakdown by category */}
+              <div className="space-y-3">
+                {cpeData.breakdown.map((item, index) => (
+                  <div key={index}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-medium text-muted-foreground">{item.category}</span>
+                      <span className="font-bold">{item.value} <span className="font-normal text-muted-foreground">CPE</span></span>
+                    </div>
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-1000" 
+                        style={{ width: `${(item.value / cpeData.currentCredits) * 100}%`, backgroundColor: item.fill }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -123,8 +137,11 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
         {/* Schedule */}
         <Card className="card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm">ตารางเรียนวันนี้</CardTitle>
+            <Link href="/schedule" className="text-xs text-primary hover:underline flex items-center gap-0.5">
+              ดูทั้งหมด <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+            </Link>
           </CardHeader>
           <CardContent className="space-y-2">
             {d.schedule.map((item, i) => (

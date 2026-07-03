@@ -11,7 +11,7 @@ export default function AdminSettingsPage() {
 
   const handleToggleAdmission = () => {
     updateSettings({ admissionOpen: !settings.admissionOpen });
-    toast.success(`ระบบรับสมัครนักศึกษาใหม่ ${!settings.admissionOpen ? 'เปิด' : 'ปิด'} ใช้งานแล้ว`);
+    toast.success(`ระบบรับสมัครผู้เข้าศึกษาใหม่ ${!settings.admissionOpen ? 'เปิด' : 'ปิด'} ใช้งานแล้ว`);
   };
 
   const handleToggleRegistration = () => {
@@ -77,14 +77,14 @@ export default function AdminSettingsPage() {
         <Card className="shadow-sm border-slate-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><span className="material-symbols-outlined text-primary">toggle_on</span> เปิด-ปิดระบบบริการ</CardTitle>
-            <CardDescription>ควบคุมการใช้งานฟีเจอร์ต่างๆ ของนักศึกษาตามช่วงเวลาที่กำหนด</CardDescription>
+            <CardDescription>ควบคุมการใช้งานฟีเจอร์ต่างๆ ของผู้เข้าศึกษาตามช่วงเวลาที่กำหนด</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <h4 className="font-semibold text-slate-900">ระบบรับสมัครนักศึกษาใหม่ (Admission)</h4>
-                  <p className="text-sm text-slate-500">เปิดให้นักศึกษาส่งใบสมัครเข้าฝึกอบรม</p>
+                  <h4 className="font-semibold text-slate-900">ระบบรับสมัครผู้เข้าศึกษาใหม่ (Admission)</h4>
+                  <p className="text-sm text-slate-500">เปิดให้ผู้เข้าศึกษาส่งใบสมัครเข้าฝึกอบรม</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-sm font-medium ${settings.admissionOpen ? 'text-green-600' : 'text-slate-500'}`}>
@@ -102,7 +102,7 @@ export default function AdminSettingsPage() {
               <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50">
                 <div>
                   <h4 className="font-semibold text-slate-900">ระบบลงทะเบียนรายวิชา (Registration)</h4>
-                  <p className="text-sm text-slate-500">เปิดให้นักศึกษาลงทะเบียนเรียนในเทอมปัจจุบัน</p>
+                  <p className="text-sm text-slate-500">เปิดให้ผู้เข้าศึกษาลงทะเบียนเรียนในเทอมปัจจุบัน</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-sm font-medium ${settings.registrationOpen ? 'text-green-600' : 'text-slate-500'}`}>

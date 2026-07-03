@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════
 // Royal Pharmacy College Portal — Data
 // แหล่งข้อมูลจริงจากเอกสารราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย
-// Mockup data คงไว้เฉพาะส่วนที่ไม่มีข้อมูลจริง (ชื่อนักศึกษา ฯลฯ)
+// Mockup data คงไว้เฉพาะส่วนที่ไม่มีข้อมูลจริง (ชื่อผู้เข้าศึกษา ฯลฯ)
 // ══════════════════════════════════════════════════════
 
 // ===== Navigation =====
@@ -20,7 +20,7 @@ export const sidebarNavItems = [
 // ===== ข้อมูลสถาบัน (REAL) =====
 export const institutionInfo = {
   nameTh: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย",
-  nameEn: "Royal Pharmacy College of Thailand",
+  nameEn: "Royal College of Pharmacists of Thailand",
   parentOrg: "สภาเภสัชกรรม — The Pharmacy Council of Thailand",
   address: "ชั้น 8 อาคารมหิตลาธิเบศร กระทรวงสาธารณสุข ถ.ติวานนท์ ต.ตลาดขวัญ อ.เมือง จ.นนทบุรี 11000",
   phone: "0-2591-9992",
@@ -36,20 +36,14 @@ export const institutionInfo = {
 export const dashboardData = {
   studentName: "Yoo Ji-min", // mock
   studentId: "นคบส-2568-001", // mock
-  gpa: 3.45, // mock
   creditsEarned: 18, // mock
   creditsTotal: 36, // mock
-  registrationTerm: "2/2568",
+  trainingStatus: "กำลังฝึกอบรม",
   balanceDue: 20000,
   subjects: [
     { name: "องค์ความรู้ทางเภสัชบำบัดเฉพาะทาง", progress: 50 },
     { name: "การสอบปากเปล่าข้างเตียงผู้ป่วย", progress: 30 },
     { name: "การสอบโครงร่างวิทยานิพนธ์", progress: 10 },
-  ],
-  gpaHistory: [
-    { semester: "ปี 1 เทอม 1", gpa: 3.20 },
-    { semester: "ปี 1 เทอม 2", gpa: 3.45 },
-    { semester: "ปี 2 เทอม 1", gpa: 3.45 },
   ],
   creditsBreakdown: [
     { name: "วิชาบังคับ", value: 12, fill: "var(--color-chart-1)" },
@@ -87,15 +81,15 @@ export const colleges = {
   },
   "วภช.": {
     name: "วภช.",
-    fullName: "วิทยาลัยเภสัชกรรมชุมชน",
-    fullNameEn: "College of Community Pharmacy",
+    fullName: "วิทยาลัยเภสัชกรรมชุมชนแห่งประเทศไทย",
+    fullNameEn: "College of Community Pharmacy of Thailand",
     phone: "0-2591-9992",
     email: "info@cpat.ac.th",
   },
   "สมุนไพร": {
     name: "สมุนไพร",
-    fullName: "วิทยาลัยเภสัชกรรมสมุนไพร",
-    fullNameEn: "College of Herbal Pharmacy",
+    fullName: "วิทยาลัยเภสัชกรรมสมุนไพรแห่งประเทศไทย",
+    fullNameEn: "College of Herbal Pharmacy of Thailand",
     phone: "0-2591-9992",
     email: "info@cpat.ac.th",
   },
@@ -251,38 +245,38 @@ export const collegeProgramsData = [
   },
 ];
 
-// ===== Students (mock names, real structure) =====
+// ===== ผู้เข้าศึกษา (mock names, real structure) =====
 export const studentsData = [
-  { id: "นคบส-2568-001", name: "Yoo Ji-min", college: "วภท.", status: "active", year: 2, gpa: 3.45, email: "yoojimin@student.rpc.ac.th", phone: "081-234-5678" },
-  { id: "นคบส-2568-002", name: "นายโรนัลโด ซุยส์", college: "CPAT", status: "active", year: 1, gpa: 3.75, email: "somchai.r@example.ac.th", phone: "082-345-6789" },
-  { id: "นคบส-2568-003", name: "นางสาวพิมพ์ใจ ตั้งใจเรียน", college: "วภช.", status: "leave", year: 3, gpa: 3.20, email: "pimjai.t@example.ac.th", phone: "083-456-7890" },
-  { id: "นคบส-2568-004", name: "นายวิชัย พัฒนากุล", college: "วภท.", status: "active", year: 2, gpa: 3.88, email: "wichai.p@example.ac.th", phone: "084-567-8901" },
+  { id: "วภท-2568-001", name: "Yoo Ji-min", college: "วภท.", status: "active", batch: 4, cpeCredits: 65, cpeTarget: 100, email: "yoojimin@example.com", phone: "081-234-5678" },
+  { id: "CPAT-2568-002", name: "นายโรนัลโด ซุยส์", college: "CPAT", status: "active", batch: 5, cpeCredits: 30, cpeTarget: 100, email: "somchai.r@example.com", phone: "082-345-6789" },
+  { id: "วภช-2568-003", name: "นางสาวพิมพ์ใจ ตั้งใจเรียน", college: "วภช.", status: "leave", batch: 3, cpeCredits: 85, cpeTarget: 100, email: "pimjai.t@example.com", phone: "083-456-7890" },
+  { id: "วภท-2568-004", name: "นายวิชัย พัฒนากุล", college: "วภท.", status: "active", batch: 4, cpeCredits: 72, cpeTarget: 100, email: "wichai.p@example.com", phone: "084-567-8901" },
 ];
 
-// ===== Student Detail (mock person, real institutional fields) =====
+// ===== รายละเอียดผู้เข้าศึกษา (mock person, real institutional fields) =====
 export const studentDetailData = {
   name: "Yoo Ji-min", // mock
   nameEn: "Yoo Ji-min",
   dob: "11 เมษายน 2543",
-  nationality: "เกาหลีใต้",
-  religion: "คริสต์",
+  nationality: "ไทย",
+  religion: "พุทธ",
   address: "123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110",
-  id: "นคบส-2568-001",
-  licenseNumber: "ภ. 12345",
+  id: "วภท-2568-001",
+  licenseNumber: "ภ.12345",
   college: colleges["วภท."].fullName,
   collegeShort: "วภท.",
   program: "วุฒิบัตรแสดงความรู้ความชำนาญในการประกอบวิชาชีพเภสัชกรรม สาขาเภสัชบำบัด (BCP)",
-  academicYear: "2568",
-  year: 2,
-  gpa: 3.45, // mock
+  trainingYear: "2568",
+  batch: 4,
+  cpeCredits: 65, // mock
+  cpeTarget: 100, // mock
   creditsEarned: 18, // mock
   creditsTotal: 36, // mock
   status: "active" as const,
   registeredCourses: 3,
   educationTimeline: [
-    { degree: "วุฒิบัตรเภสัชบำบัด (BCP — กำลังศึกษา)", field: "เภสัชกรรมบำบัด", institution: "วิทยาลัยเภสัชบำบัดแห่งประเทศไทย", period: "2568 - ปัจจุบัน", isCurrent: true },
-    { degree: "เภสัชศาสตรบัณฑิต (ภ.บ.)", field: "เภสัชศาสตร์", institution: "คณะเภสัชศาสตร์ มหาวิทยาลัยมหิดล", period: "2558 - 2564", isCurrent: false },
-    { degree: "วิทยาศาสตร์บัณฑิต", field: "วิทยาศาสตร์การแพทย์", institution: "คณะเภสัชศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย", period: "2554 - 2558", isCurrent: false },
+    { degree: "วุฒิบัตรเภสัชบำบัด (BCP — กำลังฝึกอบรม)", field: "เภสัชกรรมบำบัด", institution: "วิทยาลัยเภสัชบำบัดแห่งประเทศไทย", period: "2568 - ปัจจุบัน", isCurrent: true },
+    { degree: "เภสัชศาสตรบัณฑิต (ภ.บ.)", field: "เภสัชศาสตร์", institution: "คณะเภสัชศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย", period: "2558 - 2564", isCurrent: false },
   ],
 };
 
@@ -293,7 +287,7 @@ export const registrationData = {
   maxCourses: 3,
   selectedCredits: 36,
   maxCredits: 36,
-  gpa: 3.45,
+
   courses: [
     { code: "วภท-301", title: "องค์ความรู้ทางเภสัชบำบัดเฉพาะทาง (สอบข้อเขียน)", credits: 12, schedule: "จันทร์ 09:00-12:00", room: "ห้อง BCP-101", capacity: 20, enrolled: 18, status: "registered" },
     { code: "วภท-302", title: "การสอบปากเปล่าข้างเตียงผู้ป่วย (Bedside Examination)", credits: 12, schedule: "อังคาร 09:00-12:00", room: "Ward 1", capacity: 20, enrolled: 15, status: "registered" },
@@ -306,7 +300,7 @@ export const financeData = {
   totalFees: 23000,
   outstandingBalance: 20000,
   items: [
-    { id: 1, description: "ค่าลงทะเบียนเรียน ภาคการศึกษา 1/2569", amount: 20000, dueDate: "30 ก.ย. 2569", status: "unpaid" },
+    { id: 1, description: "ค่าลงทะเบียนฝึกอบรม ประจำปี 2569", amount: 20000, dueDate: "30 ก.ย. 2569", status: "unpaid" },
     { id: 2, description: "ค่าสมัครสอบหนังสืออนุมัติ", amount: 2500, dueDate: "15 ส.ค. 2569", status: "paid" },
     { id: 3, description: "ค่าลงทะเบียนแรกเข้า", amount: 500, dueDate: "15 ส.ค. 2569", status: "pending" },
   ],
@@ -320,8 +314,8 @@ export const financeData = {
 // ===== Requests =====
 export const requestsData = [
   { id: "จ.1-2569-001", type: "คำร้องทั่วไป", title: "ขอเปลี่ยนแปลงข้อมูลส่วนตัว", date: "15 ม.ค. 2569", status: "approved", progress: ["เจ้าหน้าที่ ✓", "หัวหน้าสาขา ✓", "เสร็จสิ้น ✓"] },
-  { id: "ง.1-2569-002", type: "การเงิน", title: "ขอผ่อนผันชำระค่าลงทะเบียน", date: "20 ม.ค. 2569", status: "pending", progress: ["เจ้าหน้าที่ ✓", "คณบดี ◷", "เสร็จสิ้น"] },
-  { id: "อ.1-2569-003", type: "เอกสารสำคัญ", title: "ขอหนังสือรับรองการเป็นนักศึกษา", date: "25 ม.ค. 2569", status: "pending", progress: ["เจ้าหน้าที่ ◷", "หัวหน้าสาขา", "เสร็จสิ้น"] },
+  { id: "ง.1-2569-002", type: "การเงิน", title: "ขอผ่อนผันชำระค่าลงทะเบียน", date: "20 ม.ค. 2569", status: "pending", progress: ["เจ้าหน้าที่ ✓", "ผู้อำนวยการวิทยาลัย ◷", "เสร็จสิ้น"] },
+  { id: "อ.1-2569-003", type: "เอกสารสำคัญ", title: "ขอหนังสือรับรองการเป็นผู้เข้าศึกษา", date: "25 ม.ค. 2569", status: "pending", progress: ["เจ้าหน้าที่ ◷", "หัวหน้าสาขา", "เสร็จสิ้น"] },
   { id: "จ.1-2569-004", type: "คำร้องทั่วไป", title: "ขอเปลี่ยนสาขาวิชา", date: "10 ธ.ค. 2568", status: "rejected", progress: ["เจ้าหน้าที่ ✓", "หัวหน้าสาขา ✗", "เสร็จสิ้น"] },
 ];
 
@@ -393,13 +387,13 @@ export const legalReferences = [
 export const newsData = [
   { id: 1, title: "ประกาศรายชื่อผู้มีสิทธิ์สอบหนังสืออนุมัติฯ รุ่นที่ 4/2569", date: "15 มิ.ย. 2569", category: "ประกาศสำคัญ", categoryColor: "red" as const, excerpt: "ประกาศรายชื่อผู้มีสิทธิ์สอบหนังสืออนุมัติแสดงความรู้ความชำนาญในการประกอบวิชาชีพเภสัชกรรม สาขาการคุ้มครองผู้บริโภคด้านยาและสุขภาพ รุ่นที่ 4 ประจำปี 2569", target: "ผู้สมัครสอบ วคบท.", views: 1245, hasAttachment: true, image: "/images/assets/service/service1.jpg" },
   { id: 2, title: "ขอเชิญร่วมประชุมวิชาการนานาชาติด้านเภสัชศาสตร์ 2569", date: "10 มิ.ย. 2569", category: "วิชาการ", categoryColor: "purple" as const, excerpt: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย ขอเชิญชวนเภสัชกรและบุคลากรทางการแพทย์เข้าร่วมงานประชุมวิชาการนานาชาติ", target: "เภสัชกรทุกสาขา", views: 876, hasAttachment: false, image: "/images/assets/meeting/meeting1.jpg" },
-  { id: 3, title: "แจ้งกำหนดการชำระค่าลงทะเบียน ภาคเรียนที่ 2/2569", date: "5 มิ.ย. 2569", category: "การเงิน", categoryColor: "gold" as const, excerpt: "กำหนดการชำระค่าลงทะเบียนเรียนสำหรับภาคเรียนที่ 2 ปีการศึกษา 2569 ทุกวิทยาลัย", target: "นักศึกษาทุกชั้นปี", views: 2340, hasAttachment: true, image: "/images/assets/tuition.png" },
+  { id: 3, title: "แจ้งกำหนดการชำระค่าลงทะเบียน ประจำปี 2569", date: "5 มิ.ย. 2569", category: "การเงิน", categoryColor: "gold" as const, excerpt: "กำหนดการชำระค่าลงทะเบียนฝึกอบรมประจำปี 2569 ทุกวิทยาลัย", target: "ผู้เข้าศึกษาทุกรุ่น", views: 2340, hasAttachment: true, image: "/images/assets/tuition.png" },
   { id: 4, title: "เปิดรับสมัคร Board Certified Pharmacotherapy (BCP) รุ่นที่ 5", date: "1 มิ.ย. 2569", category: "กิจกรรม", categoryColor: "green" as const, excerpt: "วิทยาลัยเภสัชบำบัดแห่งประเทศไทย เปิดรับสมัครผู้เข้ารับการฝึกอบรมเป็นผู้มีความรู้ความชำนาญฯ สาขาเภสัชบำบัด รุ่นที่ 5", target: "เภสัชกรผู้สนใจ", views: 3456, hasAttachment: true, image: "/images/assets/meeting/meeting2.jpg" },
 ];
 
 // ===== Reports =====
 export const reportsData = {
-  metrics: { totalStudents: 1085, activeRegistrations: 950, ytdRevenue: 27500000, pendingRequests: 34 },
+  metrics: { totalTrainees: 1085, activeRegistrations: 950, ytdRevenue: 27500000, pendingRequests: 34 },
 };
 
 // ===== CPE Data =====
@@ -440,15 +434,15 @@ export const profileData = {
     licenseIssueDate: "15 เม.ย. 2565",
     birthDate: "11 เม.ย. 2543",
     age: 26,
-    nationality: "ไทย",
+    nationality: "ไทย",  
     maritalStatus: "โสด",
-    email: "karina@aespa.com",
+    email: "yoojimin@example.com",
     phone: "081-234-5678",
     address: "123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110",
   },
   workHistory: {
     status: "พนักงานเอกชน",
-    currentWorkplace: "โรงพยาบาลศูนย์การแพทย์ควังยา",
+    currentWorkplace: "โรงพยาบาลศิริราช",
     position: "เภสัชกรคลินิก",
     level: "ปฏิบัติการ",
     workplacePhone: "02-123-4567 ต่อ 89",

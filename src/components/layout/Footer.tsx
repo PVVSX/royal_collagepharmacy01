@@ -20,7 +20,7 @@ export default function Footer() {
             <a href="#" onClick={handleClick(`ติดต่อเรา\n\n${institutionInfo.address}\n\nโทร: ${institutionInfo.phone}\nอีเมล: ${institutionInfo.emails.general}`)} className="text-on-surface-variant hover:underline transition-all cursor-pointer">
               ติดต่อเรา
             </a>
-            <a href="#" onClick={handleClick(`นโยบายความเป็นส่วนตัว\n\nข้อมูลส่วนบุคคลของนักศึกษาจะถูกเก็บเป็นความลับตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562`)} className="text-on-surface-variant hover:underline transition-all cursor-pointer">
+            <a href="#" onClick={handleClick(`นโยบายความเป็นส่วนตัว\n\nข้อมูลส่วนบุคคลของผู้เข้าศึกษาจะถูกเก็บเป็นความลับตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562`)} className="text-on-surface-variant hover:underline transition-all cursor-pointer">
               นโยบายความเป็นส่วนตัว
             </a>
             <a href="#" onClick={handleClick(`ข้อกำหนดการใช้งาน\n\n${legalReferences[0]}\n\n${legalReferences[1]}`)} className="text-on-surface-variant hover:underline transition-all cursor-pointer">

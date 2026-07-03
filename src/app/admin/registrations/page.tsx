@@ -33,7 +33,7 @@ export default function RegistrationsApprovalPage() {
       <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">ตรวจสอบการลงทะเบียนเรียน</h1>
-          <p className="text-sm text-slate-500 mt-1">อนุมัติและยืนยันสิทธิ์การลงทะเบียนรายวิชาของนักศึกษาเข้าสู่ระบบวิทยาลัย</p>
+          <p className="text-sm text-slate-500 mt-1">อนุมัติและยืนยันสิทธิ์การลงทะเบียนรายวิชาของผู้เข้าศึกษาเข้าสู่ระบบวิทยาลัย</p>
         </div>
       </div>
 
@@ -64,7 +64,7 @@ export default function RegistrationsApprovalPage() {
             <div className="relative w-full sm:w-64">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
               <Input
-                placeholder="ค้นหารหัสนักศึกษา, ชื่อ, รหัสวิชา..."
+                placeholder="ค้นหารหัสประจำตัว, ชื่อ, รหัสวิชา..."
                 className="pl-9 bg-slate-50/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -78,7 +78,7 @@ export default function RegistrationsApprovalPage() {
               <TableHeader className="bg-slate-50/50">
                 <TableRow>
                   <TableHead className="w-[120px]">รหัสการลงทะเบียน</TableHead>
-                  <TableHead>ข้อมูลนักศึกษา</TableHead>
+                  <TableHead>ข้อมูลผู้เข้าศึกษา</TableHead>
                   <TableHead>รายวิชาที่ลงทะเบียน</TableHead>
                   <TableHead>ภาคการศึกษา</TableHead>
                   <TableHead>สถานะ</TableHead>

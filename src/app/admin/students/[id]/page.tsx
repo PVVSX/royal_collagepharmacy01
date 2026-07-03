@@ -33,13 +33,13 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-            <a href="/admin/students" className="hover:text-primary transition-colors">รายชื่อนักศึกษา</a>
+            <a href="/admin/students" className="hover:text-primary transition-colors">รายชื่อผู้เข้าศึกษา</a>
             <span className={`${icon18} text-muted-foreground/50`}>chevron_right</span>
             <span className="text-primary font-medium flex items-center gap-1">
               {studentId}
             </span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">ข้อมูลนักศึกษา</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">ข้อมูลผู้เข้าศึกษา</h1>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="gap-2 text-slate-700 bg-white border-slate-200 shadow-sm">
@@ -81,8 +81,8 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
             <div>
-              <p className="text-xs text-slate-500 mb-1">เกรดเฉลี่ยสะสม (GPA)</p>
-              <p className="text-xl font-bold text-slate-900">{s.gpa.toFixed(2)}</p>
+              <p className="text-xs text-slate-500 mb-1">หน่วยกิต CPE</p>
+              <p className="text-xl font-bold text-slate-900">{s.cpeCredits} <span className="text-sm text-slate-500 font-normal">/ {s.cpeTarget}</span></p>
             </div>
             <div>
               <p className="text-xs text-slate-500 mb-1">หน่วยกิตสะสม</p>

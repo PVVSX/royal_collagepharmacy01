@@ -26,11 +26,11 @@ export default function AdminStudentsPage() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">รายชื่อนักศึกษา</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">รายชื่อผู้เข้าศึกษา</h1>
           <p className="text-muted-foreground mt-1">จัดการข้อมูลและประวัติการศึกษาของผู้เข้ารับการฝึกอบรมทั้งหมด</p>
         </div>
         <Button className="gap-2 bg-slate-900 hover:bg-slate-800 text-white">
-          <span className="material-symbols-outlined text-[18px]">add</span> เพิ่มนักศึกษาใหม่
+          <span className="material-symbols-outlined text-[18px]">add</span> เพิ่มผู้เข้าศึกษาใหม่
         </Button>
       </div>
 
@@ -42,7 +42,7 @@ export default function AdminStudentsPage() {
                 <span className="material-symbols-outlined text-[20px]">search</span>
               </span>
               <Input 
-                placeholder="ค้นหาชื่อ, รหัสนักศึกษา หรืออีเมล..." 
+                placeholder="ค้นหาชื่อ, รหัสประจำตัว หรืออีเมล..." 
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -62,7 +62,7 @@ export default function AdminStudentsPage() {
             <table className="w-full text-sm text-left">
               <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-y">
                 <tr>
-                  <th className="px-4 py-3 font-medium">รหัสนักศึกษา</th>
+                  <th className="px-4 py-3 font-medium">รหัสประจำตัว</th>
                   <th className="px-4 py-3 font-medium">ชื่อ-นามสกุล</th>
                   <th className="px-4 py-3 font-medium">หลักสูตร</th>
                   <th className="px-4 py-3 font-medium">ปีการศึกษา</th>
@@ -106,7 +106,7 @@ export default function AdminStudentsPage() {
                 {filteredStudents.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                      ไม่พบข้อมูลนักศึกษาที่ค้นหา
+                      ไม่พบข้อมูลผู้เข้าศึกษาที่ค้นหา
                     </td>
                   </tr>
                 )}

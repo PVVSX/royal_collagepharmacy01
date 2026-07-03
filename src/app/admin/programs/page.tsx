@@ -38,7 +38,7 @@ export default function AdminProgramsPage() {
               
               <div className="flex justify-between items-center text-sm mb-6 border-t pt-4">
                 <div className="text-slate-600">
-                  นักศึกษาที่ลงทะเบียน
+                  ผู้เข้าศึกษาที่ลงทะเบียน
                 </div>
                 <div className="font-semibold text-slate-900">
                   {program.studentsCount} คน

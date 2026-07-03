@@ -5,35 +5,24 @@ import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/layout/Footer";
 
 const scheduleData = [
-  { day: "จันทร์", type: "lec", subject: "Adv. Pharmacotherapeutics I", room: "BCP-101", start: 8, duration: 2 },
-  { day: "จันทร์", type: "lec", subject: "Evidence-Based Medicine", room: "BCP-102", start: 10, duration: 1 },
-  { day: "จันทร์", type: "lec", subject: "Clinical Pharmacokinetics", room: "BCP-102", start: 11, duration: 1 },
-  { day: "จันทร์", type: "lab", subject: "Internal Medicine Ward Round", room: "Ward 1", start: 13, duration: 3 },
+  { day: "เสาร์ (สัปดาห์ที่ 1)", type: "lec", subject: "Adv. Pharmacotherapeutics I", room: "Online (Zoom)", start: 9, duration: 3 },
+  { day: "เสาร์ (สัปดาห์ที่ 1)", type: "lec", subject: "Evidence-Based Medicine", room: "Online (Zoom)", start: 13, duration: 3 },
   
-  { day: "อังคาร", type: "lec", subject: "Cardiovascular Pharmacotherapy", room: "BCP-101", start: 8, duration: 2 },
-  { day: "อังคาร", type: "lec", subject: "Biostatistics", room: "BCP-103", start: 10, duration: 1 },
-  { day: "อังคาร", type: "lec", subject: "Research Methodology", room: "BCP-103", start: 11, duration: 1 },
-  { day: "อังคาร", type: "lab", subject: "Cardiology Ward Round", room: "CCU", start: 13, duration: 3 },
+  { day: "อาทิตย์ (สัปดาห์ที่ 1)", type: "lec", subject: "Clinical Pharmacokinetics", room: "Online (Zoom)", start: 9, duration: 3 },
+  { day: "อาทิตย์ (สัปดาห์ที่ 1)", type: "lec", subject: "Research Methodology", room: "Online (Zoom)", start: 13, duration: 3 },
   
-  { day: "พุธ", type: "lec", subject: "Infectious Disease Pharmacotherapy", room: "BCP-101", start: 8, duration: 2 },
-  { day: "พุธ", type: "lec", subject: "Critical Care Pharmacotherapy", room: "BCP-101", start: 10, duration: 2 },
-  { day: "พุธ", type: "lec", subject: "Ambulatory Care Practice", room: "OPD-1", start: 13, duration: 2 },
+  { day: "เสาร์ (สัปดาห์ที่ 3)", type: "lab", subject: "Case Discussion: Internal Med.", room: "ห้องประชุมวิทยาลัย", start: 9, duration: 3 },
+  { day: "เสาร์ (สัปดาห์ที่ 3)", type: "lab", subject: "Workshop: Pharmacotherapy Plan", room: "ห้องประชุมวิทยาลัย", start: 13, duration: 4 },
   
-  { day: "พฤหัสบดี", type: "lec", subject: "Adv. Pharmacotherapeutics II", room: "BCP-102", start: 8, duration: 2 },
-  { day: "พฤหัสบดี", type: "lec", subject: "Oncology Pharmacy Practice", room: "BCP-102", start: 10, duration: 2 },
-  { day: "พฤหัสบดี", type: "lab", subject: "Oncology Ward Round", room: "Ward 2", start: 13, duration: 3 },
-  
-  { day: "ศุกร์", type: "lec", subject: "Pharmacogenomics & Precision Med.", room: "BCP-103", start: 8, duration: 2 },
-  { day: "ศุกร์", type: "lab", subject: "ICU Ward Round", room: "ICU", start: 10, duration: 2 },
-  { day: "ศุกร์", type: "lab", subject: "Case Presentation & Seminar", room: "Conf Room", start: 13, duration: 3 },
+  { day: "อาทิตย์ (สัปดาห์ที่ 3)", type: "lab", subject: "Bedside Teaching (Mock)", room: "ศูนย์จำลองสถานการณ์", start: 9, duration: 4 },
+  { day: "อาทิตย์ (สัปดาห์ที่ 3)", type: "lec", subject: "Seminar & Presentation", room: "ห้องประชุมวิทยาลัย", start: 14, duration: 3 },
 ];
 
 const dayRowMap: Record<string, number> = {
-  "จันทร์": 2,
-  "อังคาร": 3,
-  "พุธ": 4,
-  "พฤหัสบดี": 5,
-  "ศุกร์": 6,
+  "เสาร์ (สัปดาห์ที่ 1)": 2,
+  "อาทิตย์ (สัปดาห์ที่ 1)": 3,
+  "เสาร์ (สัปดาห์ที่ 3)": 4,
+  "อาทิตย์ (สัปดาห์ที่ 3)": 5,
 };
 
 const times = ["8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-13:00", "13:00-14:00", "14:00-15:00", "15:00-16:00", "16:00-17:00"];
@@ -44,8 +33,8 @@ export default function SchedulePage() {
       <div className="p-4 md:p-6 pb-24 max-w-[1280px] mx-auto">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
           <div>
-            <h1 className="text-lg md:text-xl font-semibold mb-1">ตารางเรียน (Class Schedule)</h1>
-            <p className="text-xs text-muted-foreground">หลักสูตรวุฒิบัตรฯ สาขาเภสัชบำบัด (BCP) · ภาคปฏิบัติการและทฤษฎีขั้นสูง</p>
+            <h1 className="text-lg md:text-xl font-semibold mb-1">ตารางกิจกรรมการฝึกอบรม</h1>
+            <p className="text-xs text-muted-foreground">หลักสูตรวุฒิบัตรฯ สาขาเภสัชบำบัด (BCP) · ภาคทฤษฎีและปฏิบัติการ (สัปดาห์ที่ 1 และ 3 ของเดือน)</p>
           </div>
           <div className="flex gap-2">
             <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 text-xs px-2 py-1">ทฤษฎี (Lecture)</Badge>
@@ -76,7 +65,7 @@ export default function SchedulePage() {
                 ))}
 
                 {/* Empty Grid Cells for Borders */}
-                {Array.from({ length: 5 }).map((_, r) => (
+                {Array.from({ length: 4 }).map((_, r) => (
                   Array.from({ length: 9 }).map((_, c) => (
                     <div key={`empty-${r}-${c}`} className="border-b border-r border-border/50" style={{ gridRow: r + 2, gridColumn: c + 2 }}></div>
                   ))

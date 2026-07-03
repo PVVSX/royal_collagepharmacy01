@@ -67,12 +67,12 @@ export function PersonalInfoCard({ data, isReadOnly = true }: PersonalInfoCardPr
         <div className="space-y-1 hidden md:block"></div>
 
         <div className="space-y-1 md:col-span-2">
-          <label className={labelClassName}>สำเร็จการศึกษาจาก</label>
-          <Input readOnly={isReadOnly} defaultValue={data.education?.institution} className={inputClassName} />
+          <label className={labelClassName}>สำเร็จการศึกษาจาก (ปริญญาตรี)</label>
+          <Input readOnly={isReadOnly} defaultValue={data.education?.bachelors?.institution || "จุฬาลงกรณ์มหาวิทยาลัย"} className={inputClassName} />
         </div>
         <div className="space-y-1">
           <label className={labelClassName}>ปีที่จบ</label>
-          <Input readOnly={isReadOnly} defaultValue={data.education?.year || "2565"} className={inputClassName} />
+          <Input readOnly={isReadOnly} defaultValue={data.education?.bachelors?.graduationYear || "2565"} className={inputClassName} />
         </div>
 
         <div className="space-y-1">

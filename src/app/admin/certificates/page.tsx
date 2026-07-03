@@ -31,7 +31,7 @@ export default function CertificatesManagementPage() {
   const handleIssue = (id: string) => {
     updateCertificateStatus(id, "issued");
     toast.success("ออกวุฒิบัตรสำเร็จ", {
-      description: "ระบบได้สร้างวุฒิบัตรและจัดส่งให้นักศึกษาผ่านระบบเรียบร้อยแล้ว",
+      description: "ระบบได้สร้างวุฒิบัตรและจัดส่งให้ผู้เข้าศึกษาผ่านระบบเรียบร้อยแล้ว",
     });
   };
 
@@ -68,7 +68,7 @@ export default function CertificatesManagementPage() {
             <div className="relative w-full sm:w-64">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
               <Input
-                placeholder="ค้นหานักศึกษา, หลักสูตร..."
+                placeholder="ค้นหาผู้เข้าศึกษา, หลักสูตร..."
                 className="pl-9 bg-slate-50/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

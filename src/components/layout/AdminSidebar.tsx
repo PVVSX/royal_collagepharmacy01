@@ -14,7 +14,7 @@ const navItems = [
   { href: "/admin/finance", icon: "payments", label: "ตรวจสอบการเงิน" },
   { href: "/admin/courses", icon: "library_books", label: "จัดการรายวิชา" },
   { href: "/admin/programs", icon: "menu_book", label: "จัดการหลักสูตร" },
-  { href: "/admin/students", icon: "group", label: "รายชื่อนักศึกษา" },
+  { href: "/admin/students", icon: "group", label: "รายชื่อผู้เข้าศึกษา" },
   { href: "/admin/exams", icon: "assignment_turned_in", label: "บันทึกผลสอบ" },
   { href: "/admin/certificates", icon: "workspace_premium", label: "ออกวุฒิบัตร" },
   { href: "/admin/settings", icon: "settings", label: "ตั้งค่าระบบ" },

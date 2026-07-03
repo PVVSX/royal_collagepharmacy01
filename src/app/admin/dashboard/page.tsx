@@ -27,7 +27,7 @@ export default function AdminDashboardPage() {
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <p className="text-sm font-medium text-slate-500">นักศึกษาทั้งหมด</p>
+                <p className="text-sm font-medium text-slate-500">ผู้เข้าศึกษาทั้งหมด</p>
                 <p className="text-3xl font-bold text-slate-900">1,248</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
@@ -151,7 +151,7 @@ export default function AdminDashboardPage() {
               <span className="material-symbols-outlined text-primary">summarize</span> ออกรายงาน ก.พ.
             </Button>
             <Button variant="outline" className="w-full justify-start gap-3 h-12 text-slate-700 hover:text-primary hover:bg-primary/5">
-              <span className="material-symbols-outlined text-primary">mail</span> ส่งอีเมลแจ้งเตือนนักศึกษา
+              <span className="material-symbols-outlined text-primary">mail</span> ส่งอีเมลแจ้งเตือนผู้เข้าศึกษา
             </Button>
           </CardContent>
         </Card>

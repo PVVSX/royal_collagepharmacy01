@@ -65,7 +65,7 @@ export default function PrintProfilePage() {
               <div className="col-span-9">
                 <div className="font-bold">{p.education.bachelors.degree}</div>
                 <div>{p.education.bachelors.institution}</div>
-                <div className="text-gray-600 text-xs mt-0.5">เกรดเฉลี่ยสะสม (GPA): {p.education.bachelors.gpa}</div>
+                <div className="text-gray-600 text-xs mt-0.5">เกรดเฉลี่ยสะสมระดับปริญญาตรี: {p.education.bachelors.gpa}</div>
               </div>
             </div>
           </div>

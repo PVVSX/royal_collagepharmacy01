@@ -66,11 +66,10 @@ export default function RegistrationPage() {
         <div><p className="text-xs font-medium text-amber-600 dark:text-amber-500">หมดเขตลงทะเบียน {d.deadline}</p><p className="text-xs text-amber-600/80 dark:text-amber-500/80 mt-0.5">กรุณาลงทะเบียนก่อนกำหนด</p></div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-2 gap-3 mb-5">
         {[
           { label: "วิชาที่เลือก", value: `${selectedCoursesCount}/${d.maxCourses}` },
           { label: "หน่วยกิต", value: `${selectedCredits}/${d.maxCredits}` },
-          { label: "GPA ปัจจุบัน", value: d.gpa.toFixed(2) },
         ].map((s) => (
           <Card key={s.label}><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">{s.label}</p><p className="text-lg font-bold text-primary mt-0.5">{s.value}</p></CardContent></Card>
         ))}

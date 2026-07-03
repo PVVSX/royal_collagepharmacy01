@@ -102,7 +102,7 @@ export default function ProgramsPage() {
                   <Button
                     variant="link"
                     className="p-0 h-auto text-xs text-primary gap-1"
-                    onClick={() => toast.info(`ดูรายละเอียดหลักสูตร\n\n${p.title}\nวิทยาลัย: ${p.collegeFull}\nรหัส: ${p.code}\nหน่วยกิต: ${p.credits}\nระยะเวลา: ${p.duration}\nนักศึกษา: ${p.students} คน\n\n${p.description}`)}
+                    onClick={() => toast.info(`ดูรายละเอียดหลักสูตร\n\n${p.title}\nวิทยาลัย: ${p.collegeFull}\nรหัส: ${p.code}\nหน่วยกิต: ${p.credits}\nระยะเวลา: ${p.duration}\nผู้เข้าศึกษา: ${p.students} คน\n\n${p.description}`)}
                   >
                     ดูรายละเอียด <span className="material-symbols-outlined text-sm">arrow_forward</span>
                   </Button>

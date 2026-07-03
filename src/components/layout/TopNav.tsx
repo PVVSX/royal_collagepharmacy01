@@ -13,7 +13,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -182,34 +181,6 @@ export default function TopNav() {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => toast.info("ช่วยเหลือ", { description: "ติดต่อศูนย์ช่วยเหลือ โทร 0-2591-9992" })}>
               <span className="material-symbols-outlined text-[16px] mr-2">help</span> ช่วยเหลือ
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive" onClick={() => router.push("/")}>
-              <span className="material-symbols-outlined text-[16px] mr-2">logout</span> ออกจากระบบ
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* User avatar */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="ml-1 h-7 w-7 rounded-full p-0">
-              <Avatar className="h-7 w-7">
-                <img src="/Karina_new.jpg" alt="Yoo Ji-min" className="h-full w-full object-cover rounded-full" />
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44 text-sm">
-            <DropdownMenuLabel>
-              <p className="text-sm">Yoo Ji-min</p>
-              <p className="text-xs opacity-90 text-muted-foreground font-normal">yoojimin@student.rpc.ac.th</p>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => toast.info("โปรไฟล์", { description: "รหัส: นคบส-2568-001 | Role: Student" })}>
-              <span className="material-symbols-outlined text-[16px] mr-2">person</span> โปรไฟล์
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast.info("ตั้งค่าบัญชี")}>
-              <span className="material-symbols-outlined text-[16px] mr-2">settings</span> การตั้งค่า
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={() => router.push("/")}>

@@ -34,7 +34,7 @@ export default function ExamsManagementPage() {
     <div className="p-4 md:p-6 pb-24 max-w-[1280px] mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">จัดการการสอบประเมินความรู้</h1>
-        <p className="text-sm text-slate-500 mt-1">ตรวจสอบสิทธิ์การสอบและบันทึกผลสอบของนักศึกษา</p>
+        <p className="text-sm text-slate-500 mt-1">ตรวจสอบสิทธิ์การสอบและบันทึกผลสอบของผู้เข้าศึกษา</p>
       </div>
 
       <Card className="card-shadow">
@@ -64,7 +64,7 @@ export default function ExamsManagementPage() {
             <div className="relative w-full sm:w-64">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
               <Input
-                placeholder="ค้นหานักศึกษา, หลักสูตร..."
+                placeholder="ค้นหาผู้เข้าศึกษา, หลักสูตร..."
                 className="pl-9 bg-slate-50/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -77,7 +77,7 @@ export default function ExamsManagementPage() {
             <Table>
               <TableHeader className="bg-slate-50/50">
                 <TableRow>
-                  <TableHead>ข้อมูลนักศึกษา</TableHead>
+                  <TableHead>ข้อมูลผู้เข้าศึกษา</TableHead>
                   <TableHead>หลักสูตร</TableHead>
                   <TableHead>ประเภทการสอบ</TableHead>
                   <TableHead>สมุดประจำตัว (Logbook)</TableHead>

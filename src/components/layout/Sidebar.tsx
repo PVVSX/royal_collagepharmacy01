@@ -7,19 +7,40 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 
-const navItems = [
-  { href: "/dashboard", icon: "dashboard", label: "ภาพรวม" },
-  { href: "/students", icon: "person", label: "ข้อมูลของฉัน" },
-  { href: "/cpe", icon: "workspace_premium", label: "หน่วยกิต CPE" },
-  { href: "/admission", icon: "school", label: "สมัครเรียน" },
-  { href: "/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
-  { href: "/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
-  { href: "/finance", icon: "payments", label: "การเงิน" },
-  { href: "/requests", icon: "description", label: "คำร้อง" },
-  { href: "/news", icon: "campaign", label: "ข่าวสาร" },
-  { href: "/help", icon: "support_agent", label: "ศูนย์ช่วยเหลือ" },
-  { href: "/settings", icon: "settings", label: "ตั้งค่าบัญชี" },
-] as const;
+// กลุ่ม nav แบบมี section label
+// - ข่าวสาร → TopNav Notification Bell
+// - ศูนย์ช่วยเหลือ → TopNav Help Button
+// - ตั้งค่าบัญชี → TopNav Avatar/Settings Dropdown
+const navGroups: {
+  groupLabel?: string;
+  items: { href: string; icon: string; label: string }[];
+}[] = [
+  {
+    groupLabel: "เมนูหลัก",
+    items: [
+      { href: "/dashboard", icon: "dashboard", label: "ภาพรวม" },
+      { href: "/news", icon: "campaign", label: "ข่าวสาร" },
+      { href: "/students", icon: "person", label: "ข้อมูลของฉัน" },
+      { href: "/cpe", icon: "workspace_premium", label: "หน่วยกิต CPE" },
+      { href: "/admission", icon: "school", label: "สมัครเรียน" },
+    ],
+  },
+  {
+    groupLabel: "การเรียน",
+    items: [
+      { href: "/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
+      { href: "/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
+      { href: "/schedule", icon: "calendar_today", label: "ตารางเรียน" },
+    ],
+  },
+  {
+    groupLabel: "บริการผู้เข้าศึกษา",
+    items: [
+      { href: "/finance", icon: "payments", label: "การเงิน" },
+      { href: "/requests", icon: "description", label: "คำร้อง" },
+    ],
+  },
+];
 
 function SidebarNav({ pathname }: { pathname: string }) {
   const router = useRouter();
@@ -50,38 +71,49 @@ function SidebarNav({ pathname }: { pathname: string }) {
       <div className="mx-4 h-px bg-sidebar-border" />
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-3 custom-scrollbar">
-        {navItems.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
-                active
-                  ? "bg-sidebar-primary/10 text-sidebar-primary"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              )}
-            >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[20px] transition-all",
-                  active
-                    ? "fill text-sidebar-primary"
-                    : "text-sidebar-foreground/70 group-hover:text-sidebar-foreground"
-                )}
-              >
-                {item.icon}
-              </span>
-              <span className="truncate">{item.label}</span>
-              {active && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary" />
-              )}
-            </Link>
-          );
-        })}
-      </nav>
+      <nav className="flex-1 overflow-y-auto px-3 py-3 custom-scrollbar space-y-4">
+        {navGroups.map((group, gi) => (
+          <div key={gi}>
+            {group.groupLabel && (
+              <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40 select-none">
+                {group.groupLabel}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
+                      active
+                        ? "bg-sidebar-primary/10 text-sidebar-primary"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "material-symbols-outlined text-[20px] transition-all",
+                        active
+                          ? "fill text-sidebar-primary"
+                          : "text-sidebar-foreground/70 group-hover:text-sidebar-foreground"
+                      )}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="truncate">{item.label}</span>
+                    {active && (
+                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+    </nav>
 
       <div className="mx-4 h-px bg-sidebar-border" />
 
