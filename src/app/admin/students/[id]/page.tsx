@@ -57,7 +57,7 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
         <CardContent className="p-6 relative pt-0">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-end -mt-12 mb-6">
             <div className="w-24 h-24 rounded-xl border-4 border-white shadow-md bg-white overflow-hidden shrink-0">
-              <img src="/Karina_new.jpg" alt={s.name} className="w-full h-full object-cover object-top" />
+              <img src="/somchai_profile.png" alt={s.name} className="w-full h-full object-cover object-top" />
             </div>
             <div className="flex-1 space-y-1">
               <h2 className="text-2xl font-bold text-slate-900">{s.name}</h2>

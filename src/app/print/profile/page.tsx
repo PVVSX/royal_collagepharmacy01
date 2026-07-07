@@ -21,7 +21,7 @@ export default function PrintProfilePage() {
         
         {/* Header */}
         <div className="text-center mb-8 border-b-2 border-black pb-6 relative">
-          <img src="/Karina_new.jpg" alt="Profile" className="absolute right-0 top-0 w-[30mm] h-[40mm] object-cover border border-gray-300" />
+          <img src="/somchai_profile.png" alt="Profile" className="absolute right-0 top-0 w-[30mm] h-[40mm] object-cover border border-gray-300" />
           <h1 className="text-2xl font-bold mb-2 tracking-wide">ประวัติส่วนบุคคล</h1>
           <h2 className="text-lg font-semibold text-gray-700">Curriculum Vitae</h2>
         </div>

@@ -173,7 +173,7 @@ export default function TopNav() {
           <DropdownMenuContent align="end" className="w-44 text-sm">
             <DropdownMenuLabel>ตั้งค่า</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => toast.info("โปรไฟล์ผู้ใช้", { description: "Yoo Ji-min (yoojimin@student.rpc.ac.th)" })}>
+            <DropdownMenuItem onClick={() => toast.info("โปรไฟล์ผู้ใช้", { description: "ภก. สมชาย ใจดี (somchai.j@student.rpc.ac.th)" })}>
               <span className="material-symbols-outlined text-[16px] mr-2">person</span> โปรไฟล์
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => toast.info("การตั้งค่า", { description: "เมนูตั้งค่าระบบกำลังพัฒนา" })}>

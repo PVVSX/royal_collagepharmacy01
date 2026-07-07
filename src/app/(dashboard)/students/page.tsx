@@ -56,7 +56,7 @@ export default function StudentsPage() {
             {/* Avatar & Basic Info */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-5">
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-card shadow-xl overflow-hidden bg-white shrink-0 -mt-16 md:-mt-20 relative z-10">
-                <img src="/Karina_new.jpg" alt={s.name} className="w-full h-full object-cover object-top" />
+                <img src="/somchai_profile.png" alt={s.name} className="w-full h-full object-cover object-top" />
               </div>
               <div className="text-center md:text-left pt-2 md:pt-4">
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
@@ -65,7 +65,21 @@ export default function StudentsPage() {
                     กำลังศึกษา
                   </Badge>
                 </div>
-                <p className="text-muted-foreground font-medium mb-1">{s.college} — ปีการศึกษา {s.academicYear}</p>
+                <p className="text-muted-foreground font-medium mb-2">{s.college} — ปีการศึกษา {s.academicYear}</p>
+                
+                {/* Specialty Tags */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-3">
+                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border-none font-medium px-2.5 py-0.5">
+                    <span className="material-symbols-outlined text-[12px] mr-1">science</span> ATMPs
+                  </Badge>
+                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border-none font-medium px-2.5 py-0.5">
+                    <span className="material-symbols-outlined text-[12px] mr-1">bloodtype</span> มะเร็งเม็ดเลือดขาว (Leukemia)
+                  </Badge>
+                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border-none font-medium px-2.5 py-0.5">
+                    <span className="material-symbols-outlined text-[12px] mr-1">biotech</span> Cell & Gene Therapy
+                  </Badge>
+                </div>
+
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <span className={icon16}>badge</span> รหัส: {s.id}
@@ -100,7 +114,7 @@ export default function StudentsPage() {
                       </div>
                       <div className="relative z-10 flex flex-col items-center text-center w-full">
                         <div className="w-24 h-24 rounded-full border-4 border-white/30 overflow-hidden shadow-xl bg-white/10 shrink-0 mb-3">
-                          <img src="/Karina_new.jpg" alt="Profile" className="w-full h-full object-cover object-top" />
+                          <img src="/somchai_profile.png" alt="Profile" className="w-full h-full object-cover object-top" />
                         </div>
                         <h2 className="text-xl font-bold mt-1">{profileData.personalInfo.title}{profileData.personalInfo.firstName} {profileData.personalInfo.lastName}</h2>
                         <div className="text-sm opacity-90 mb-1">{profileData.personalInfo.title} {profileData.personalInfo.firstNameEn} {profileData.personalInfo.lastNameEn}</div>

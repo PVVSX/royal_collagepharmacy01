@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 
+
 // กลุ่ม nav แบบมี section label
 // - ข่าวสาร → TopNav Notification Bell
 // - ศูนย์ช่วยเหลือ → TopNav Help Button
@@ -19,27 +20,28 @@ const navGroups: {
     groupLabel: "เมนูหลัก",
     items: [
       { href: "/dashboard", icon: "dashboard", label: "ภาพรวม" },
-      { href: "/news", icon: "campaign", label: "ข่าวสาร" },
       { href: "/students", icon: "person", label: "ข้อมูลของฉัน" },
       { href: "/cpe", icon: "workspace_premium", label: "หน่วยกิต CPE" },
+      { href: "/pathway", icon: "route", label: "เส้นทางการศึกษา" },
       { href: "/admission", icon: "school", label: "สมัครเรียน" },
+      { href: "/research", icon: "science", label: "ฐานข้อมูลงานวิจัย" },
     ],
   },
-  {
-    groupLabel: "การเรียน",
-    items: [
-      { href: "/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
-      { href: "/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
-      { href: "/schedule", icon: "calendar_today", label: "ตารางเรียน" },
-    ],
-  },
-  {
-    groupLabel: "บริการผู้เข้าศึกษา",
-    items: [
-      { href: "/finance", icon: "payments", label: "การเงิน" },
-      { href: "/requests", icon: "description", label: "คำร้อง" },
-    ],
-  },
+  // {
+  //   groupLabel: "การเรียน",
+  //   items: [
+  //     { href: "/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
+  //     { href: "/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
+  //     { href: "/schedule", icon: "calendar_today", label: "ตารางเรียน" },
+  //   ],
+  // },
+  // {
+  //   groupLabel: "บริการผู้เข้าศึกษา",
+  //   items: [
+  //     { href: "/finance", icon: "payments", label: "การเงิน" },
+  //     { href: "/requests", icon: "description", label: "คำร้อง" },
+  //   ],
+  // },
 ];
 
 function SidebarNav({ pathname }: { pathname: string }) {
@@ -121,10 +123,10 @@ function SidebarNav({ pathname }: { pathname: string }) {
       <div className="p-4">
         <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent transition-colors">
           <Avatar className="h-8 w-8">
-            <img src="/Karina_new.jpg" alt="Yoo Ji-min" className="h-full w-full object-cover rounded-full" />
+            <img src="/somchai_profile.png" alt="สมชาย ใจดี" className="h-full w-full object-cover rounded-full" />
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate text-sidebar-foreground">Yoo Ji-min</p>
+            <p className="text-sm font-medium truncate text-sidebar-foreground">ภก. สมชาย ใจดี</p>
             <p className="text-xs opacity-90 text-sidebar-foreground/70">Student (Tester)</p>
           </div>
           <button

@@ -34,7 +34,7 @@ export const institutionInfo = {
 
 // ===== Dashboard =====
 export const dashboardData = {
-  studentName: "Yoo Ji-min", // mock
+  studentName: "นาย สมชาย ใจดี", // mock
   studentId: "นคบส-2568-001", // mock
   creditsEarned: 18, // mock
   creditsTotal: 36, // mock
@@ -247,7 +247,7 @@ export const collegeProgramsData = [
 
 // ===== ผู้เข้าศึกษา (mock names, real structure) =====
 export const studentsData = [
-  { id: "วภท-2568-001", name: "Yoo Ji-min", college: "วภท.", status: "active", batch: 4, cpeCredits: 65, cpeTarget: 100, email: "yoojimin@example.com", phone: "081-234-5678" },
+  { id: "วภท-2568-001", name: "นาย สมชาย ใจดี", college: "วภท.", status: "active", batch: 4, cpeCredits: 65, cpeTarget: 100, email: "somchai.j@example.com", phone: "081-234-5678" },
   { id: "CPAT-2568-002", name: "นายโรนัลโด ซุยส์", college: "CPAT", status: "active", batch: 5, cpeCredits: 30, cpeTarget: 100, email: "somchai.r@example.com", phone: "082-345-6789" },
   { id: "วภช-2568-003", name: "นางสาวพิมพ์ใจ ตั้งใจเรียน", college: "วภช.", status: "leave", batch: 3, cpeCredits: 85, cpeTarget: 100, email: "pimjai.t@example.com", phone: "083-456-7890" },
   { id: "วภท-2568-004", name: "นายวิชัย พัฒนากุล", college: "วภท.", status: "active", batch: 4, cpeCredits: 72, cpeTarget: 100, email: "wichai.p@example.com", phone: "084-567-8901" },
@@ -255,8 +255,8 @@ export const studentsData = [
 
 // ===== รายละเอียดผู้เข้าศึกษา (mock person, real institutional fields) =====
 export const studentDetailData = {
-  name: "Yoo Ji-min", // mock
-  nameEn: "Yoo Ji-min",
+  name: "นาย สมชาย ใจดี", // mock
+  nameEn: "Somchai Jaidee",
   dob: "11 เมษายน 2543",
   nationality: "ไทย",
   religion: "พุทธ",
@@ -425,18 +425,18 @@ export const cpeData = {
 // ===== Profile / Admission Mock Data =====
 export const profileData = {
   personalInfo: {
-    title: "ภญ.",
-    firstName: "ยู",
-    lastName: "จีมิน",
-    firstNameEn: "Yoo",
-    lastNameEn: "Ji-min",
+    title: "ภก.",
+    firstName: "สมชาย",
+    lastName: "ใจดี",
+    firstNameEn: "Somchai",
+    lastNameEn: "Jaidee",
     licenseNumber: "ภ.12345",
     licenseIssueDate: "15 เม.ย. 2565",
     birthDate: "11 เม.ย. 2543",
     age: 26,
     nationality: "ไทย",  
     maritalStatus: "โสด",
-    email: "yoojimin@example.com",
+    email: "somchai.j@example.com",
     phone: "081-234-5678",
     address: "123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110",
   },
@@ -475,4 +475,96 @@ export const notificationsData = [
   { id: 1, title: 'การเงิน', message: 'ใกล้ถึงกำหนดชำระค่าลงทะเบียนเรียนภาคการศึกษา 1/2569', time: '2 ชั่วโมงที่แล้ว', isRead: false, type: 'warning' },
   { id: 2, title: 'คำร้อง', message: 'คำร้องขอเปลี่ยนแปลงข้อมูลส่วนตัวของคุณได้รับการอนุมัติแล้ว', time: '1 วันที่แล้ว', isRead: false, type: 'success' },
   { id: 3, title: 'ประกาศ', message: 'เปิดรับสมัคร Board Certified Pharmacotherapy (BCP) รุ่นที่ 5', time: '3 วันที่แล้ว', isRead: true, type: 'info' }
+];
+
+// ===== Learning Pathway (derived from profile + program data) =====
+export type PathwayStepStatus = "completed" | "current" | "recommended";
+export type PathwayStepType = "education" | "certification" | "experience" | "milestone";
+
+export interface PathwayStep {
+  id: string;
+  type: PathwayStepType;
+  status: PathwayStepStatus;
+  title: string;
+  subtitle: string;
+  period?: string;
+  icon: string;
+  details?: string;
+  reason?: string;
+  progress?: number;
+  creditsEarned?: number;
+  creditsTotal?: number;
+  substeps?: { name: string; status: "done" | "in_progress" | "not_started"; progress: number }[];
+}
+
+export const pathwayData: PathwayStep[] = [
+  // ══════════════════════════════════════
+  // ── กำลังศึกษา ──
+  // ══════════════════════════════════════
+  {
+    id: "atmp-training",
+    type: "certification",
+    status: "current",
+    title: "หลักสูตรผู้เชี่ยวชาญเฉพาะทาง (ATMPs)",
+    subtitle: "Advanced Therapy Medicinal Products",
+    period: `${studentDetailData.trainingYear} - ปัจจุบัน`,
+    icon: "science",
+    progress: Math.round((dashboardData.creditsEarned / dashboardData.creditsTotal) * 100),
+    creditsEarned: dashboardData.creditsEarned,
+    creditsTotal: dashboardData.creditsTotal,
+    substeps: dashboardData.subjects.map((s) => ({
+      name: s.name,
+      status: s.progress >= 100 ? "done" as const : s.progress > 0 ? "in_progress" as const : "not_started" as const,
+      progress: s.progress,
+    })),
+  },
+
+  // ══════════════════════════════════════
+  // ── แนะนำถัดไป ──
+  // ══════════════════════════════════════
+  {
+    id: "rec-gmp-atmp",
+    type: "certification",
+    status: "recommended",
+    title: "อบรมหลักสูตร GMP for ATMPs",
+    subtitle: "Good Manufacturing Practice เฉพาะสำหรับผลิตภัณฑ์การแพทย์ขั้นสูง",
+    icon: "verified",
+    reason: "การผลิตและการควบคุมคุณภาพของ ATMPs มีมาตรฐานเฉพาะเจาะจง การผ่านการอบรมนี้จะช่วยเพิ่มศักยภาพในการจัดการยาและเซลล์บำบัด",
+  },
+  {
+    id: "rec-cgt-fellowship",
+    type: "education",
+    status: "recommended",
+    title: "ศึกษาดูงานด้าน Cell & Gene Therapy (CGT)",
+    subtitle: "ศูนย์ความเป็นเลิศทางการแพทย์ด้านเซลล์บำบัด",
+    icon: "biotech",
+    reason: "ต่อยอดทักษะภาคปฏิบัติในการเตรียมและบริหารจัดการผลิตภัณฑ์เซลล์บำบัด ซึ่งเป็นทักษะที่ขาดแคลนและเป็นที่ต้องการสูง",
+  },
+  {
+    id: "rec-research-precision",
+    type: "milestone",
+    status: "recommended",
+    title: "ตีพิมพ์วิจัยด้าน Pharmacogenomics & ATMPs",
+    subtitle: "การนำไปประยุกต์ใช้ในการรักษาแบบจำเพาะบุคคล (Precision Medicine)",
+    icon: "article",
+    reason: "จากหัวข้อที่คุณกำลังศึกษา การตีพิมพ์ผลงานวิจัยในด้านนี้จะช่วยสร้างเครือข่ายระดับนานาชาติและยกระดับความน่าเชื่อถือในสายวิชาการ",
+  },
+  {
+    id: "rec-intl-network",
+    type: "milestone",
+    status: "recommended",
+    title: "เข้าร่วมเครือข่าย International ATMP Working Group",
+    subtitle: "เครือข่ายความร่วมมือระดับนานาชาติด้านการรักษาด้วยเซลล์และยีน",
+    icon: "public",
+    reason: "เพื่อติดตามแนวโน้มการรักษาแบบก้าวกระโดด และร่วมกำหนดมาตรฐานหรือทิศทางของการจัดการ ATMPs ในระดับภูมิภาค",
+  },
+  {
+    id: "rec-board-cert",
+    type: "certification",
+    status: "recommended",
+    title: "สอบวุฒิบัตรฯ สาขาเภสัชบำบัดเฉพาะทาง (ATMPs)",
+    subtitle: "Board Certified in Advanced Therapies Pharmacy",
+    icon: "military_tech",
+    reason: "เป้าหมายสูงสุดในสายวิชาชีพเฉพาะทาง เพื่อให้ได้รับการรับรองอย่างเป็นทางการและก้าวสู่การเป็นผู้เชี่ยวชาญระดับแนวหน้า",
+  },
 ];

@@ -31,7 +31,7 @@ export default function DashboardPage() {
           { icon: "workspace_premium", label: "หน่วยกิต CPE", value: `${cpeData.currentCredits}/${cpeData.targetCredits}`, color: "text-primary", bg: "bg-primary/10", border: false, borderDestructive: false },
           { icon: "credit_score", label: "หน่วยกิตฝึกอบรม", value: `${d.creditsEarned}/${d.creditsTotal}`, color: "text-chart-3", bg: "bg-chart-3/10", border: true, borderDestructive: false },
           { icon: "how_to_reg", label: "สถานะการฝึกอบรม", value: d.trainingStatus, color: "text-secondary-foreground", bg: "bg-secondary/20", border: false, borderDestructive: false },
-          { icon: "warning", label: "ยอดค้างชำระ", value: `฿${d.balanceDue.toLocaleString()}`, color: "text-destructive", bg: "bg-destructive/10", border: false, borderDestructive: true },
+          // { icon: "warning", label: "ยอดค้างชำระ", value: `฿${d.balanceDue.toLocaleString()}`, color: "text-destructive", bg: "bg-destructive/10", border: false, borderDestructive: true },
         ].map((m) => (
           <Card key={m.label} className={`card-shadow ${m.border ? "border-l-4 border-l-chart-3" : ""} ${m.borderDestructive ? "border-l-4 border-l-destructive" : ""}`}>
             <CardContent className="p-4 flex items-center gap-3">
@@ -134,9 +134,9 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4"> */}
         {/* Schedule */}
-        <Card className="card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
+        {/* <Card className="card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
           <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm">ตารางเรียนวันนี้</CardTitle>
             <Link href="/schedule" className="text-xs text-primary hover:underline flex items-center gap-0.5">
@@ -163,10 +163,10 @@ export default function DashboardPage() {
               </div>
             ))}
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Announcements */}
-        <Card className="card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
+        {/* <Card className="card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">ประกาศและข่าวสาร</CardTitle>
           </CardHeader>
@@ -193,8 +193,8 @@ export default function DashboardPage() {
               );
             })}
           </CardContent>
-        </Card>
-      </div>
+        </Card> */}
+      {/* </div> */}
       <Footer />
     </div>
   );
