@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMockDb, Status } from "@/context/MockDbContext";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

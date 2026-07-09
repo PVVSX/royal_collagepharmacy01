@@ -33,7 +33,7 @@ function SidebarNav({ pathname }: { pathname: string }) {
       <Link href="/admin/dashboard" className="block px-5 pt-5 pb-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white p-1 overflow-hidden flex-shrink-0">
-            <img src="/logo.png" alt="รภวท" className="h-full w-full object-contain" />
+            <img src="/logo_pharmacy.jpg" alt="รภวท" className="h-full w-full object-contain" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold leading-tight text-sidebar-foreground">

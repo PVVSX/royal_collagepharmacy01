@@ -21,7 +21,7 @@ const navGroups: {
     items: [
       { href: "/dashboard", icon: "dashboard", label: "ภาพรวม" },
       { href: "/students", icon: "person", label: "ข้อมูลของฉัน" },
-      { href: "/cpe", icon: "workspace_premium", label: "หน่วยกิต CPE" },
+      { href: "/cpd", icon: "workspace_premium", label: "หน่วยกิต CPD" },
       { href: "/pathway", icon: "route", label: "เส้นทางการศึกษา" },
       { href: "/admission", icon: "school", label: "สมัครเรียน" },
       { href: "/research", icon: "science", label: "ฐานข้อมูลงานวิจัย" },
@@ -57,14 +57,14 @@ function SidebarNav({ pathname }: { pathname: string }) {
       <Link href="/dashboard" className="block px-5 pt-5 pb-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white p-1 overflow-hidden flex-shrink-0">
-            <img src="/logo.png" alt="รภวท" className="h-full w-full object-contain" />
+            <img src="/logo_pharmacy.jpg" alt="รภวท" className="h-full w-full object-contain" />
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-tight text-sidebar-foreground">
-              ราชวิทยาลัยเภสัชกรรม
+            <p className="text-sm font-bold leading-tight text-sidebar-foreground">
+              ฐานข้อมูลเภสัชกร
             </p>
             <p className="text-xs opacity-90 text-sidebar-foreground/70 mt-0.5">
-              Royal Pharmacy College
+              Pharmacist Database
             </p>
           </div>
         </div>

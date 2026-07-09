@@ -49,7 +49,7 @@ export default function LoginPage() {
             transition={{ duration: 0.7, delay: 0.2 }}
           >
             <div className="w-20 h-20 rounded-xl bg-white/10 backdrop-blur-md p-3 mb-6 border border-white/20 shadow-lg">
-              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+              <img src="/logo_pharmacy.jpg" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-4xl font-bold mb-4 leading-tight">
               ราชวิทยาลัยเภสัชกรรม<br />แห่งประเทศไทย
@@ -76,7 +76,7 @@ export default function LoginPage() {
         >
           <div className="md:hidden flex flex-col items-center mb-8">
             <div className="w-20 h-20 bg-white rounded-full shadow-sm border border-border p-3 mb-4">
-              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+              <img src="/logo_pharmacy.jpg" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-xl font-bold text-center text-primary">ราชวิทยาลัยเภสัชกรรม<br/>แห่งประเทศไทย</h1>
           </div>

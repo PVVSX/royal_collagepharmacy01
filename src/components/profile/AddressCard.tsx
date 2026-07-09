@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 export interface AddressCardProps {
   title: string;
   icon?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any; // Rapid prototyping
   isReadOnly?: boolean;
   showContactInfo?: boolean; // If true, show phone, mobile, email

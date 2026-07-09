@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { PersonalInfoCard } from "@/components/profile/PersonalInfoCard";
 import { AddressCard } from "@/components/profile/AddressCard";
 import { WorkplaceCard } from "@/components/profile/WorkplaceCard";
+import Link from "next/link";
 
-const icon20 = "material-symbols-outlined text-[20px]";
 const icon18 = "material-symbols-outlined text-[18px]";
 
 const tabs = [
@@ -33,7 +33,7 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
-            <a href="/admin/students" className="hover:text-primary transition-colors">รายชื่อผู้เข้าศึกษา</a>
+            <Link href="/admin/students" className="hover:text-primary transition-colors">รายชื่อผู้เข้าศึกษา</Link>
             <span className={`${icon18} text-muted-foreground/50`}>chevron_right</span>
             <span className="text-primary font-medium flex items-center gap-1">
               {studentId}
@@ -81,8 +81,8 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
             <div>
-              <p className="text-xs text-slate-500 mb-1">หน่วยกิต CPE</p>
-              <p className="text-xl font-bold text-slate-900">{s.cpeCredits} <span className="text-sm text-slate-500 font-normal">/ {s.cpeTarget}</span></p>
+              <p className="text-xs text-slate-500 mb-1">หน่วยกิต CPD</p>
+              <p className="text-xl font-bold text-slate-900">{s.cpdCredits} <span className="text-sm text-slate-500 font-normal">/ {s.cpdTarget}</span></p>
             </div>
             <div>
               <p className="text-xs text-slate-500 mb-1">หน่วยกิตสะสม</p>

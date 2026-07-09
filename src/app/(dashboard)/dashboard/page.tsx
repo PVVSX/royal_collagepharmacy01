@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Footer from "@/components/layout/Footer";
-import { dashboardData, cpeData } from "@/data";
+import { dashboardData, cpdData } from "@/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -28,7 +28,7 @@ export default function DashboardPage() {
       {/* Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         {[
-          { icon: "workspace_premium", label: "หน่วยกิต CPE", value: `${cpeData.currentCredits}/${cpeData.targetCredits}`, color: "text-primary", bg: "bg-primary/10", border: false, borderDestructive: false },
+          { icon: "workspace_premium", label: "หน่วยกิต CPD", value: `${cpdData.currentCredits}/${cpdData.targetCredits}`, color: "text-primary", bg: "bg-primary/10", border: false, borderDestructive: false },
           { icon: "credit_score", label: "หน่วยกิตฝึกอบรม", value: `${d.creditsEarned}/${d.creditsTotal}`, color: "text-chart-3", bg: "bg-chart-3/10", border: true, borderDestructive: false },
           { icon: "how_to_reg", label: "สถานะการฝึกอบรม", value: d.trainingStatus, color: "text-secondary-foreground", bg: "bg-secondary/20", border: false, borderDestructive: false },
           // { icon: "warning", label: "ยอดค้างชำระ", value: `฿${d.balanceDue.toLocaleString()}`, color: "text-destructive", bg: "bg-destructive/10", border: false, borderDestructive: true },
@@ -61,11 +61,11 @@ export default function DashboardPage() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* CPE Progress */}
+        {/* CPD Progress */}
         <Card className="lg:col-span-2 card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">ความคืบหน้าการสะสม CPE</CardTitle>
-            <CardDescription className="text-xs">สะสมได้ {cpeData.currentCredits} จาก {cpeData.targetCredits} CPE · หมดอายุ {cpeData.expiryDate}</CardDescription>
+            <CardTitle className="text-sm">ความคืบหน้าการสะสม CPD</CardTitle>
+            <CardDescription className="text-xs">สะสมได้ {cpdData.currentCredits} จาก {cpdData.targetCredits} CPD · หมดอายุ {cpdData.expiryDate}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mt-4 space-y-5">
@@ -73,29 +73,29 @@ export default function DashboardPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs font-medium text-muted-foreground">ความคืบหน้าโดยรวม</span>
-                  <span className="text-sm font-bold text-primary">{Math.round((cpeData.currentCredits / cpeData.targetCredits) * 100)}%</span>
+                  <span className="text-sm font-bold text-primary">{Math.round((cpdData.currentCredits / cpdData.targetCredits) * 100)}%</span>
                 </div>
                 <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-primary rounded-full transition-all duration-1000" 
-                    style={{ width: `${(cpeData.currentCredits / cpeData.targetCredits) * 100}%` }}
+                    style={{ width: `${(cpdData.currentCredits / cpdData.targetCredits) * 100}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1.5">เหลืออีก {cpeData.targetCredits - cpeData.currentCredits} CPE · เวลาคงเหลือ {cpeData.timeLeft}</p>
+                <p className="text-[10px] text-muted-foreground mt-1.5">เหลืออีก {cpdData.targetCredits - cpdData.currentCredits} CPD · เวลาคงเหลือ {cpdData.timeLeft}</p>
               </div>
 
               {/* Breakdown by category */}
               <div className="space-y-3">
-                {cpeData.breakdown.map((item, index) => (
+                {cpdData.breakdown.map((item, index) => (
                   <div key={index}>
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-medium text-muted-foreground">{item.category}</span>
-                      <span className="font-bold">{item.value} <span className="font-normal text-muted-foreground">CPE</span></span>
+                      <span className="font-bold">{item.value} <span className="font-normal text-muted-foreground">CPD</span></span>
                     </div>
                     <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                       <div 
                         className="h-full rounded-full transition-all duration-1000" 
-                        style={{ width: `${(item.value / cpeData.currentCredits) * 100}%`, backgroundColor: item.fill }}
+                        style={{ width: `${(item.value / cpdData.currentCredits) * 100}%`, backgroundColor: item.fill }}
                       />
                     </div>
                   </div>

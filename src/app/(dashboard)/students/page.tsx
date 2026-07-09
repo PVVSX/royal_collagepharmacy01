@@ -44,48 +44,79 @@ export default function StudentsPage() {
       {/* Hero Banner Section */}
       <div className="relative rounded-3xl overflow-hidden bg-card border shadow-sm">
         {/* Banner Background */}
-        <div className="h-32 md:h-48 w-full bg-gradient-to-r from-[#737300] to-[#4a4a00] relative">
-          <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-          <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
-            <span className="material-symbols-outlined text-[150px]">local_pharmacy</span>
+        <div className="h-36 md:h-52 w-full bg-gradient-to-r from-[#6b7030] via-[#555a20] to-[#3a3f10] relative overflow-hidden">
+          <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')]" />
+          {/* Logo Watermark */}
+          <div className="absolute -right-10 md:-right-20 top-1/2 -translate-y-1/2 opacity-[0.08] pointer-events-none mix-blend-screen">
+            <img src="/watermark_council.png" alt="Watermark" className="w-[300px] h-[300px] md:w-[450px] md:h-[450px] object-contain" />
           </div>
+          {/* Decorative gradients */}
+          <div className="absolute -left-20 -top-20 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
         </div>
         
         <div className="px-6 pb-6 md:px-8 md:pb-8 relative">
           <div className="flex flex-col md:flex-row justify-between gap-6">
             {/* Avatar & Basic Info */}
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-5">
-              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-card shadow-xl overflow-hidden bg-white shrink-0 -mt-16 md:-mt-20 relative z-10">
-                <img src="/somchai_profile.png" alt={s.name} className="w-full h-full object-cover object-top" />
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+              {/* Profile Picture with Completion Ring */}
+              <div className="relative shrink-0 -mt-16 md:-mt-20 z-10 group">
+                <div className="absolute inset-0 rounded-full border-[6px] border-emerald-500/20" />
+                <div className="absolute inset-0 rounded-full border-[6px] border-emerald-500" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 50%)" }} />
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-card shadow-2xl overflow-hidden bg-white relative">
+                  <img src="/somchai_profile.png" alt={s.name} className="w-full h-full object-cover object-top" />
+                </div>
+                {/* Completion badge */}
+                <div className="absolute bottom-1 md:bottom-2 right-1 md:right-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md border-2 border-card">
+                  100%
+                </div>
               </div>
-              <div className="text-center md:text-left pt-2 md:pt-4">
-                <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
-                  <h1 className="text-2xl md:text-3xl font-bold">{s.name}</h1>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+
+              <div className="text-center md:text-left pt-2 md:pt-4 flex-1">
+                <div className="flex flex-col md:flex-row md:items-end justify-center md:justify-start gap-2 md:gap-3 mb-1">
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                    {profileData.personalInfo.title}{profileData.personalInfo.firstName} {profileData.personalInfo.lastName}
+                    <span className="text-base md:text-lg text-muted-foreground font-medium ml-2">ภ.บ., BCP Candidate</span>
+                  </h1>
+                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 mb-1 shrink-0">
                     กำลังศึกษา
                   </Badge>
                 </div>
-                <p className="text-muted-foreground font-medium mb-2">{s.college} — ปีการศึกษา {s.academicYear}</p>
+                
+                {/* Workplace & Context */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 text-sm text-foreground/80 font-medium mb-3">
+                  <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[16px] text-primary">work</span> {profileData.workHistory.position}, {profileData.workHistory.currentWorkplace}</span>
+                  <span className="text-muted-foreground/30 hidden md:inline">•</span>
+                  <span className="text-muted-foreground">{s.college} — ปีการศึกษา {s.academicYear}</span>
+                </div>
                 
                 {/* Specialty Tags */}
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-3">
-                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border-none font-medium px-2.5 py-0.5">
-                    <span className="material-symbols-outlined text-[12px] mr-1">science</span> ATMPs
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mr-1">ความเชี่ยวชาญ:</span>
+                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border border-[#4D5A2D]/20 font-medium px-2.5 py-0.5 shadow-sm">
+                    <span className="material-symbols-outlined text-[12px] mr-1 text-[#4D5A2D] dark:text-[#c4c48a]">science</span> ATMPs
                   </Badge>
-                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border-none font-medium px-2.5 py-0.5">
-                    <span className="material-symbols-outlined text-[12px] mr-1">bloodtype</span> มะเร็งเม็ดเลือดขาว (Leukemia)
+                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border border-[#4D5A2D]/20 font-medium px-2.5 py-0.5 shadow-sm">
+                    <span className="material-symbols-outlined text-[12px] mr-1 text-[#4D5A2D] dark:text-[#c4c48a]">bloodtype</span> Leukemia
                   </Badge>
-                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border-none font-medium px-2.5 py-0.5">
-                    <span className="material-symbols-outlined text-[12px] mr-1">biotech</span> Cell & Gene Therapy
+                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border border-[#4D5A2D]/20 font-medium px-2.5 py-0.5 shadow-sm">
+                    <span className="material-symbols-outlined text-[12px] mr-1 text-[#4D5A2D] dark:text-[#c4c48a]">biotech</span> Cell & Gene Therapy
                   </Badge>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <span className={icon16}>badge</span> รหัส: {s.id}
+                {/* IDs & Contact */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2 text-xs md:text-sm text-muted-foreground bg-muted/30 p-2.5 rounded-xl border border-border/50 inline-flex">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <span className={icon16}>badge</span> วภท-2568-001
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 font-medium">
                     <span className={icon16}>verified</span> ใบประกอบฯ: {s.licenseNumber}
+                  </div>
+                  <div className="w-px h-4 bg-border hidden md:block" />
+                  <div className="flex items-center gap-1.5">
+                    <span className={icon16}>mail</span> {profileData.personalInfo.email}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className={icon16}>call</span> {profileData.personalInfo.phone}
                   </div>
                 </div>
               </div>
@@ -105,7 +136,7 @@ export default function StudentsPage() {
                       <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
                       <div className="relative z-10 flex items-center gap-3 w-full pb-4 mb-5 mt-2">
                         <div className="bg-white p-1 rounded-md shrink-0">
-                          <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+                          <img src="/logo_pharmacy.jpg" alt="Logo" className="w-8 h-8 object-contain" />
                         </div>
                         <div className="text-left">
                           <div className="font-bold text-sm tracking-tight leading-tight drop-shadow-sm">ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย</div>
@@ -163,41 +194,68 @@ export default function StudentsPage() {
           </div>
 
           {/* Quick Stats Banner */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 border-t pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <span className={icon20}>workspace_premium</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8 border-t border-border/60 pt-6 relative">
+            <div className="flex flex-col gap-2 relative">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-inner">
+                  <span className={icon20}>workspace_premium</span>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">หน่วยกิต CPD</div>
+                  <div className="font-bold text-lg text-primary">{s.cpdCredits}<span className="text-sm font-normal text-muted-foreground">/{s.cpdTarget}</span></div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground">หน่วยกิต CPE</div>
-                <div className="font-bold text-lg text-primary">{s.cpeCredits}<span className="text-sm font-normal text-muted-foreground">/{s.cpeTarget}</span></div>
+              {/* Progress bar */}
+              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-1">
+                <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${(s.cpdCredits / s.cpdTarget) * 100}%` }} />
+              </div>
+              <div className="text-[10px] text-muted-foreground text-right mt-0.5">เหลืออีก {s.cpdTarget - s.cpdCredits} หน่วยกิต</div>
+            </div>
+            
+            <div className="flex flex-col gap-2 relative md:border-l border-border/50 md:pl-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-inner">
+                  <span className={icon20}>library_books</span>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">หน่วยกิตสะสม</div>
+                  <div className="font-bold text-lg">{s.creditsEarned}<span className="text-sm font-normal text-muted-foreground">/{s.creditsTotal}</span></div>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-1">
+                <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${(s.creditsEarned / s.creditsTotal) * 100}%` }} />
+              </div>
+              <div className="text-[10px] text-muted-foreground text-right mt-0.5">ครึ่งทางแล้ว!</div>
+            </div>
+
+            <div className="flex flex-col justify-center gap-1 relative border-t md:border-t-0 md:border-l border-border/50 pt-4 md:pt-0 md:pl-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-inner">
+                  <span className={icon20}>history_edu</span>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">ลงทะเบียนเทอมนี้</div>
+                  <div className="font-bold text-lg">{s.registeredCourses} <span className="text-sm font-normal text-muted-foreground">วิชา</span></div>
+                </div>
+              </div>
+              <div className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-md mt-2 inline-flex w-max items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> กำลังดำเนินการสอบ 1 วิชา
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <span className={icon20}>library_books</span>
+
+            <div className="flex flex-col justify-center gap-1 relative border-t md:border-t-0 md:border-l border-border/50 pt-4 md:pt-0 md:pl-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-inner">
+                  <span className={icon20}>event_available</span>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">ปีการศึกษาที่เข้า</div>
+                  <div className="font-bold text-lg">2568</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground">หน่วยกิตสะสม</div>
-                <div className="font-bold text-lg">{s.creditsEarned}<span className="text-sm font-normal text-muted-foreground">/{s.creditsTotal}</span></div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <span className={icon20}>history_edu</span>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground">วิชาลงทะเบียนฝึกอบรม</div>
-                <div className="font-bold text-lg">{s.registeredCourses}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <span className={icon20}>event_available</span>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground">ปีที่เข้าศึกษา</div>
-                <div className="font-bold text-lg">2568</div>
+              <div className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md mt-2 inline-flex w-max items-center gap-1">
+                <span className="material-symbols-outlined text-[12px]">verified</span> สถานะ: ปกติ (Active)
               </div>
             </div>
           </div>

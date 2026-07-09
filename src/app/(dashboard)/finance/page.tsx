@@ -58,7 +58,6 @@ export default function FinancePage() {
       };
       addPayment(newPayment);
     }
-    setItems((current) => current.map((i) => i.id === itemId ? { ...i, status: "pending" } : i));
   };
 
   return (

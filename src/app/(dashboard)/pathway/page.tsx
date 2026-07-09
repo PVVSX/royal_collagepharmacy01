@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { pathwayData, type PathwayStep, profileData, cpeData } from "@/data";
+import { pathwayData, type PathwayStep, profileData, cpdData } from "@/data";
 import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/layout/Footer";
+import { motion, AnimatePresence } from "framer-motion";
 
 const icon18 = "material-symbols-outlined text-[18px]";
 
@@ -177,46 +178,91 @@ function CardContent({
           )}
         </div>
 
-        {/* ── Expanded: Current substeps ── */}
-        {step.status === "current" && expanded && step.substeps && (
-          <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
-            {step.substeps.map((sub, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    "material-symbols-outlined text-[14px]",
-                    sub.status === "done" ? "text-emerald-500"
-                      : sub.status === "in_progress" ? "text-blue-500"
-                      : "text-muted-foreground/30"
-                  )}
-                >
-                  {sub.status === "done" ? "check_circle" : sub.status === "in_progress" ? "pending" : "radio_button_unchecked"}
-                </span>
-                <span className="text-xs flex-1 text-foreground/80 truncate">{sub.name}</span>
-                <div className="w-10 h-1.5 bg-muted/50 rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full",
-                      sub.status === "done" ? "bg-emerald-500" : sub.status === "in_progress" ? "bg-blue-500" : "bg-muted-foreground/20"
-                    )}
-                    style={{ width: `${sub.progress}%` }}
-                  />
-                </div>
-                <span className="text-[10px] text-muted-foreground tabular-nums w-6 text-right">{sub.progress}%</span>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* ── Expanded Content (Animated) ── */}
+        <AnimatePresence initial={false}>
+          {expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="pb-1">
+                {/* Current substeps */}
+                {step.status === "current" && step.substeps && (
+                  <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                    {step.substeps.map((sub, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "material-symbols-outlined text-[14px]",
+                            sub.status === "done" ? "text-emerald-500"
+                              : sub.status === "in_progress" ? "text-blue-500"
+                              : "text-muted-foreground/30"
+                          )}
+                        >
+                          {sub.status === "done" ? "check_circle" : sub.status === "in_progress" ? "pending" : "radio_button_unchecked"}
+                        </span>
+                        <span className="text-xs flex-1 text-foreground/80 truncate">{sub.name}</span>
+                        <div className="w-10 h-1.5 bg-muted/50 rounded-full overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full rounded-full",
+                              sub.status === "done" ? "bg-emerald-500" : sub.status === "in_progress" ? "bg-blue-500" : "bg-muted-foreground/20"
+                            )}
+                            style={{ width: `${sub.progress}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground tabular-nums w-6 text-right">{sub.progress}%</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-        {/* ── Expanded: Recommended reason ── */}
-        {step.status === "recommended" && expanded && step.reason && (
-          <div className="mt-3 p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/30 dark:border-amber-800/20">
-            <div className="flex items-start gap-2">
-              <span className="material-symbols-outlined text-[14px] text-amber-500 mt-0.5 shrink-0">lightbulb</span>
-              <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">{step.reason}</p>
-            </div>
-          </div>
-        )}
+                {/* Recommended reason & details */}
+                {step.status === "recommended" && (step.reason || step.richDetails) && (
+                  <div className="mt-3 space-y-2">
+                    {step.reason && (
+                      <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/30 dark:border-amber-800/20">
+                        <div className="flex items-start gap-2">
+                          <span className="material-symbols-outlined text-[14px] text-amber-500 mt-0.5 shrink-0">lightbulb</span>
+                          <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">{step.reason}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {step.richDetails && (
+                      <div className="p-3 rounded-xl bg-blue-50/50 dark:bg-blue-950/10 border border-blue-200/30 dark:border-blue-800/20 relative overflow-hidden group/detail">
+                        {/* Decoration */}
+                        <div className="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/5 rounded-full blur-xl group-hover/detail:bg-blue-500/10 transition-colors" />
+                        
+                        <div className="relative">
+                          <div className="flex items-start gap-2 mb-1.5">
+                            <span className="material-symbols-outlined text-[14px] text-blue-500 mt-0.5 shrink-0">info</span>
+                            <p className="text-xs font-bold text-blue-700 dark:text-blue-400 leading-relaxed">{step.richDetails.source}</p>
+                          </div>
+                          <p className="text-[11px] md:text-xs text-muted-foreground leading-relaxed pl-[22px]">{step.richDetails.info}</p>
+                          {step.richDetails.url && (
+                            <a 
+                              href={step.richDetails.url} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 mt-2.5 ml-[22px] px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900/40 text-[10px] text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-800/60 font-semibold transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-[12px]">open_in_new</span> ดูรายละเอียด
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Expand chevron */}
         {(step.substeps || step.reason) && (

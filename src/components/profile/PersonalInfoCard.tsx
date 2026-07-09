@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 export interface PersonalInfoCardProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any; // using any for rapid prototyping, replace with proper type later
   isReadOnly?: boolean;
 }

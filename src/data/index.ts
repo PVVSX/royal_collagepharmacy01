@@ -8,7 +8,7 @@
 export const sidebarNavItems = [
   { href: "/dashboard", icon: "dashboard", label: "ภาพรวม" },
   { href: "/students", icon: "person", label: "ข้อมูลของฉัน" },
-  { href: "/cpe", icon: "workspace_premium", label: "หน่วยกิต CPE" },
+  { href: "/cpd", icon: "workspace_premium", label: "หน่วยกิต CPD" },
   { href: "/admission", icon: "assignment_ind", label: "สมัครเรียน" },
   { href: "/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
   { href: "/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
@@ -247,10 +247,10 @@ export const collegeProgramsData = [
 
 // ===== ผู้เข้าศึกษา (mock names, real structure) =====
 export const studentsData = [
-  { id: "วภท-2568-001", name: "นาย สมชาย ใจดี", college: "วภท.", status: "active", batch: 4, cpeCredits: 65, cpeTarget: 100, email: "somchai.j@example.com", phone: "081-234-5678" },
-  { id: "CPAT-2568-002", name: "นายโรนัลโด ซุยส์", college: "CPAT", status: "active", batch: 5, cpeCredits: 30, cpeTarget: 100, email: "somchai.r@example.com", phone: "082-345-6789" },
-  { id: "วภช-2568-003", name: "นางสาวพิมพ์ใจ ตั้งใจเรียน", college: "วภช.", status: "leave", batch: 3, cpeCredits: 85, cpeTarget: 100, email: "pimjai.t@example.com", phone: "083-456-7890" },
-  { id: "วภท-2568-004", name: "นายวิชัย พัฒนากุล", college: "วภท.", status: "active", batch: 4, cpeCredits: 72, cpeTarget: 100, email: "wichai.p@example.com", phone: "084-567-8901" },
+  { id: "วภท-2568-001", name: "นาย สมชาย ใจดี", college: "วภท.", status: "active", batch: 4, cpdCredits: 65, cpdTarget: 100, email: "somchai.j@example.com", phone: "081-234-5678" },
+  { id: "CPAT-2568-002", name: "นายโรนัลโด ซุยส์", college: "CPAT", status: "active", batch: 5, cpdCredits: 30, cpdTarget: 100, email: "somchai.r@example.com", phone: "082-345-6789" },
+  { id: "วภช-2568-003", name: "นางสาวพิมพ์ใจ ตั้งใจเรียน", college: "วภช.", status: "leave", batch: 3, cpdCredits: 85, cpdTarget: 100, email: "pimjai.t@example.com", phone: "083-456-7890" },
+  { id: "วภท-2568-004", name: "นายวิชัย พัฒนากุล", college: "วภท.", status: "active", batch: 4, cpdCredits: 72, cpdTarget: 100, email: "wichai.p@example.com", phone: "084-567-8901" },
 ];
 
 // ===== รายละเอียดผู้เข้าศึกษา (mock person, real institutional fields) =====
@@ -268,8 +268,8 @@ export const studentDetailData = {
   program: "วุฒิบัตรแสดงความรู้ความชำนาญในการประกอบวิชาชีพเภสัชกรรม สาขาเภสัชบำบัด (BCP)",
   trainingYear: "2568",
   batch: 4,
-  cpeCredits: 65, // mock
-  cpeTarget: 100, // mock
+  cpdCredits: 65, // mock
+  cpdTarget: 100, // mock
   creditsEarned: 18, // mock
   creditsTotal: 36, // mock
   status: "active" as const,
@@ -396,8 +396,8 @@ export const reportsData = {
   metrics: { totalTrainees: 1085, activeRegistrations: 950, ytdRevenue: 27500000, pendingRequests: 34 },
 };
 
-// ===== CPE Data =====
-export const cpeData = {
+// ===== CPD Data =====
+export const cpdData = {
   currentCredits: 65,
   targetCredits: 100,
   expiryDate: "30 กันยายน 2570",
@@ -416,9 +416,36 @@ export const cpeData = {
     { id: 4, title: "ประชุมวิชาการนานาชาติ FAPA 2025", date: "20 พ.ย. 2568", credits: 20, category: "ประชุมวิชาการ" },
   ],
   recommended: [
-    { id: 1, title: "การประชุมนานาชาติด้านเภสัชศาสตร์ 2569", credits: 15, date: "10-12 มิ.ย. 2569", type: "ประชุม", url: "/news" },
-    { id: 2, title: "อัปเดตแนวทางการรักษาเบาหวาน 2026", credits: 3, date: "เรียนได้ตลอดเวลา", type: "e-Learning", url: "#" },
-    { id: 3, title: "Pharmacogenomics in Clinical Practice", credits: 5, date: "เรียนได้ตลอดเวลา", type: "e-Learning", url: "#" },
+    { 
+      id: 1, 
+      title: "การประชุมนานาชาติด้านเภสัชศาสตร์ 2569", 
+      credits: 15, 
+      date: "10-12 มิ.ย. 2569", 
+      type: "ประชุม", 
+      url: "#",
+      image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80",
+      description: "งานประชุมวิชาการนานาชาติประจำปี รวบรวมองค์ความรู้ด้านเภสัชกรรมล่าสุดจากผู้เชี่ยวชาญทั่วโลก เหมาะสำหรับเภสัชกรทุกสาขาที่ต้องการอัปเดตเทรนด์ใหม่ๆ ด้านการบริบาลทางเภสัชกรรม"
+    },
+    { 
+      id: 2, 
+      title: "อัปเดตแนวทางการรักษาเบาหวาน 2026", 
+      credits: 3, 
+      date: "เรียนได้ตลอดเวลา", 
+      type: "e-Learning", 
+      url: "#",
+      image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80",
+      description: "คอร์สออนไลน์สรุปแนวทางการรักษาเบาหวานฉบับล่าสุด (Guidelines 2026) เจาะลึกการใช้ยากลุ่มใหม่และการจัดการผลข้างเคียงผ่านกรณีศึกษาผู้ป่วยจริง"
+    },
+    { 
+      id: 3, 
+      title: "Pharmacogenomics in Clinical Practice", 
+      credits: 5, 
+      date: "เรียนได้ตลอดเวลา", 
+      type: "e-Learning", 
+      url: "#",
+      image: "https://images.unsplash.com/photo-1532187863486-abf9db090b2b?w=800&q=80",
+      description: "ทำความเข้าใจหลักการเภสัชพันธุศาสตร์ (Pharmacogenomics) เพื่อการรักษาและจ่ายยาเฉพาะบุคคล (Precision Medicine) พร้อมวิธีประเมินผล Lab ทางพันธุกรรมเบื้องต้น"
+    },
   ]
 };
 
@@ -495,6 +522,11 @@ export interface PathwayStep {
   creditsEarned?: number;
   creditsTotal?: number;
   substeps?: { name: string; status: "done" | "in_progress" | "not_started"; progress: number }[];
+  richDetails?: {
+    source: string;
+    info: string;
+    url?: string;
+  };
 }
 
 export const pathwayData: PathwayStep[] = [
@@ -530,6 +562,11 @@ export const pathwayData: PathwayStep[] = [
     subtitle: "Good Manufacturing Practice เฉพาะสำหรับผลิตภัณฑ์การแพทย์ขั้นสูง",
     icon: "verified",
     reason: "การผลิตและการควบคุมคุณภาพของ ATMPs มีมาตรฐานเฉพาะเจาะจง การผ่านการอบรมนี้จะช่วยเพิ่มศักยภาพในการจัดการยาและเซลล์บำบัด",
+    richDetails: {
+      source: "อ้างอิงจาก: คณะเภสัชศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย และ กองยา อย.",
+      info: "หลักสูตรอบรมเชิงปฏิบัติการเพื่อพัฒนาศักยภาพผู้ปฏิบัติงานด้าน ATMP Manufacturing ตามมาตรฐาน PIC/S GMP ผู้ผ่านการอบรมจะได้รับประกาศนียบัตรรับรอง และสามารถสะสมหน่วยกิต CPD ได้ 15 หน่วยกิต (ติดตามการเปิดรับสมัครผ่านระบบ CCPE)",
+      url: "https://ccpe.pharmacycouncil.org/"
+    }
   },
   {
     id: "rec-cgt-fellowship",
@@ -539,6 +576,11 @@ export const pathwayData: PathwayStep[] = [
     subtitle: "ศูนย์ความเป็นเลิศทางการแพทย์ด้านเซลล์บำบัด",
     icon: "biotech",
     reason: "ต่อยอดทักษะภาคปฏิบัติในการเตรียมและบริหารจัดการผลิตภัณฑ์เซลล์บำบัด ซึ่งเป็นทักษะที่ขาดแคลนและเป็นที่ต้องการสูง",
+    richDetails: {
+      source: "อ้างอิงจาก: ศูนย์ความเป็นเลิศทางการแพทย์ด้านผลิตภัณฑ์การแพทย์ขั้นสูง (EC-ATMPs) รพ.จุฬาลงกรณ์",
+      info: "โครงการศึกษาดูงานระยะสั้น (Short-course Fellowship) เพื่อเรียนรู้กระบวนการผลิตเซลล์บำบัด (CAR-T cells) ในห้องปฏิบัติการคลีนรูมระดับสากล เหมาะสำหรับเภสัชกรที่ต้องการต่อยอดทักษะเฉพาะทาง",
+      url: "https://chulalongkornhospital.go.th/"
+    }
   },
   {
     id: "rec-research-precision",
@@ -548,6 +590,11 @@ export const pathwayData: PathwayStep[] = [
     subtitle: "การนำไปประยุกต์ใช้ในการรักษาแบบจำเพาะบุคคล (Precision Medicine)",
     icon: "article",
     reason: "จากหัวข้อที่คุณกำลังศึกษา การตีพิมพ์ผลงานวิจัยในด้านนี้จะช่วยสร้างเครือข่ายระดับนานาชาติและยกระดับความน่าเชื่อถือในสายวิชาการ",
+    richDetails: {
+      source: "อ้างอิงจาก: ศูนย์ความเป็นเลิศด้านชีววิทยาศาสตร์ (TCELS)",
+      info: "TCELS สนับสนุนทุนวิจัยด้าน Pharmacogenomics และ ATMPs เป็นประจำทุกปี เพื่อส่งเสริมการพัฒนานวัตกรรมการแพทย์แม่นยำในประเทศไทย การตีพิมพ์ผลงานจะช่วยเพิ่มโอกาสรับทุนสนับสนุนต่อเนื่อง",
+      url: "https://www.tcels.or.th/"
+    }
   },
   {
     id: "rec-intl-network",
@@ -557,6 +604,11 @@ export const pathwayData: PathwayStep[] = [
     subtitle: "เครือข่ายความร่วมมือระดับนานาชาติด้านการรักษาด้วยเซลล์และยีน",
     icon: "public",
     reason: "เพื่อติดตามแนวโน้มการรักษาแบบก้าวกระโดด และร่วมกำหนดมาตรฐานหรือทิศทางของการจัดการ ATMPs ในระดับภูมิภาค",
+    richDetails: {
+      source: "อ้างอิงจาก: International Society for Cell & Gene Therapy (ISCT)",
+      info: "ISCT เป็นเครือข่ายระดับโลกที่มีคณะทำงานด้าน Regulatory Affairs และ Quality ซึ่งเภสัชกรไทยสามารถสมัครเป็นสมาชิกเพื่ออัปเดตแนวทางสากลล่าสุดได้",
+      url: "https://isctglobal.org/"
+    }
   },
   {
     id: "rec-board-cert",
@@ -566,5 +618,9 @@ export const pathwayData: PathwayStep[] = [
     subtitle: "Board Certified in Advanced Therapies Pharmacy",
     icon: "military_tech",
     reason: "เป้าหมายสูงสุดในสายวิชาชีพเฉพาะทาง เพื่อให้ได้รับการรับรองอย่างเป็นทางการและก้าวสู่การเป็นผู้เชี่ยวชาญระดับแนวหน้า",
+    richDetails: {
+      source: "อ้างอิงจาก: วิทยาลัยเภสัชบำบัดแห่งประเทศไทย (วภท.)",
+      info: "ปัจจุบัน วภท. อยู่ระหว่างการพัฒนาหลักสูตรต่อยอดเฉพาะทางด้าน ATMPs ซึ่งจะเปิดโอกาสให้เภสัชกรที่มีประสบการณ์เข้าสอบเพื่อรับวุฒิบัตรผู้เชี่ยวชาญระดับสูงได้ในอนาคตอันใกล้"
+    }
   },
 ];

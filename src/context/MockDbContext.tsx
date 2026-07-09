@@ -171,8 +171,10 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(k);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const p = (v: string | null, d: any) => v ? JSON.parse(v) : d;
 
+    /* eslint-disable react-hooks/set-state-in-effect */
     setAdmissions(p(s("mock_admissions"), defaultAdmissions));
     setPayments(p(s("mock_payments"), defaultPayments));
     setPrograms(p(s("mock_programs"), defaultPrograms));
