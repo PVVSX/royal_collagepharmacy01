@@ -27,21 +27,21 @@ const navGroups: {
       { href: "/research", icon: "science", label: "ฐานข้อมูลงานวิจัย" },
     ],
   },
-  // {
-  //   groupLabel: "การเรียน",
-  //   items: [
-  //     { href: "/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
-  //     { href: "/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
-  //     { href: "/schedule", icon: "calendar_today", label: "ตารางเรียน" },
-  //   ],
-  // },
-  // {
-  //   groupLabel: "บริการผู้เข้าศึกษา",
-  //   items: [
-  //     { href: "/finance", icon: "payments", label: "การเงิน" },
-  //     { href: "/requests", icon: "description", label: "คำร้อง" },
-  //   ],
-  // },
+  {
+    groupLabel: "การเรียน",
+    items: [
+      { href: "/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
+      { href: "/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
+      { href: "/schedule", icon: "calendar_today", label: "ตารางเรียน" },
+    ],
+  },
+  {
+    groupLabel: "บริการผู้เข้าศึกษา",
+    items: [
+      { href: "/finance", icon: "payments", label: "การเงิน" },
+      { href: "/requests", icon: "description", label: "คำร้อง" },
+    ],
+  },
 ];
 
 function SidebarNav({ pathname }: { pathname: string }) {
