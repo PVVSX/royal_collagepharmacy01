@@ -33,7 +33,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full p-4 md:p-6 pb-16 max-w-[1280px] mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">ตั้งค่าบัญชีและความปลอดภัย</h1>
         <p className="text-sm text-muted-foreground mt-1">จัดการรหัสผ่าน การยืนยันตัวตน และการแจ้งเตือน</p>

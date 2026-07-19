@@ -30,7 +30,7 @@ const times = ["8:00-9:00", "9:00-10:00", "10:00-11:00", "11:00-12:00", "12:00-1
 export default function SchedulePage() {
   return (
     <>
-      <div className="p-4 md:p-6 pb-24 max-w-[1280px] mx-auto">
+      <div className="p-4 md:p-6 pb-16 max-w-[1280px] mx-auto">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
           <div>
             <h1 className="text-lg md:text-xl font-semibold mb-1">ตารางกิจกรรมการฝึกอบรม</h1>
