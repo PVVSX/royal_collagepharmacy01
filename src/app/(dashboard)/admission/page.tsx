@@ -192,7 +192,7 @@ export default function ExamApplicationPage() {
         <div className="p-4 md:p-6 pb-16 max-w-[900px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* Header */}
           <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden mb-8">
-            <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-6 py-5">
+            <div className="border-b-2 border-primary bg-card px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <span className="material-symbols-outlined text-2xl text-primary">quiz</span>

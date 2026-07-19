@@ -17,7 +17,7 @@ export default function DashboardPage() {
   return (
     <div className="p-4 md:p-6 pb-16 max-w-[1280px] mx-auto">
       <header className="mb-5 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-5 py-4 md:px-6">
+        <div className="border-b-2 border-primary bg-card px-5 py-4 md:px-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">ระบบสารสนเทศสมาชิก · ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย</p>

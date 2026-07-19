@@ -118,7 +118,7 @@ export default function PassportPage() {
 
       {/* ══ Official Document Header ══ */}
       <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-        <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-6 py-4">
+        <div className="border-b-2 border-primary bg-card px-6 py-4">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-border bg-white p-1.5">
               <img src={p.issuingAuthority.logoUrl} alt="ตราสัญลักษณ์" className="h-full w-full object-contain" />
