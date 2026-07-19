@@ -73,7 +73,7 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
                 กำลังศึกษา (Active)
               </Badge>
               <div className="text-sm font-medium text-slate-600">
-                {s.college} (ปีการศึกษา {s.academicYear})
+                {s.college} (ปีการศึกษา {s.trainingYear})
               </div>
             </div>
           </div>

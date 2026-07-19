@@ -21,13 +21,15 @@ const requestTypes = [
   { id: "จบ", name: "คำร้องขอจบการศึกษา", active: false },
 ];
 
+type RequestItem = (typeof requestsData)[number];
+
 export default function RequestsPage() {
   const [activeTab, setActiveTab] = useState("ทั้งหมด");
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState("");
   const [requestList, setRequestList] = useState(requestsData);
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
   const tabs = [{ key: "ทั้งหมด", count: requestList.length },

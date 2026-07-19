@@ -187,7 +187,6 @@ export default function CPDPage() {
                     <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl rounded-2xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 duration-300">
                       {/* Image Banner */}
                       <div className="w-full h-48 md:h-56 relative bg-muted/50">
-                        {/* @ts-ignore */}
                         <img src={item.image || "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80"} alt={item.title} className="w-full h-full object-cover transition-opacity duration-500" loading="lazy" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                         <div className="absolute bottom-4 left-5 flex gap-2">
@@ -211,7 +210,6 @@ export default function CPDPage() {
                             รายละเอียดกิจกรรม
                           </h4>
                           <p className="text-sm text-foreground/80 leading-relaxed bg-muted/30 p-4 rounded-xl border border-border/50">
-                            {/* @ts-ignore */}
                             {item.description || "ไม่มีรายละเอียดเพิ่มเติม"}
                           </p>
                         </div>

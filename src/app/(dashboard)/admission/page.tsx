@@ -206,7 +206,7 @@ export default function AdmissionPage() {
         </h1>
         <p className="text-muted-foreground max-w-md mb-8">
           ระบบได้รับข้อมูลการสมัครของคุณเรียบร้อยแล้ว<br />
-          คุณสามารถติดตามสถานะได้ที่เมนู <strong>"ข้อมูลของฉัน"</strong>
+          คุณสามารถติดตามสถานะได้ที่เมนู <strong>“ข้อมูลของฉัน”</strong>
         </p>
         <div className="flex gap-4">
           <Button variant="outline" onClick={() => (window.location.href = "/dashboard")}>กลับหน้าหลัก</Button>

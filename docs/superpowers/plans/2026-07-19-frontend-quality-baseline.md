@@ -27,10 +27,10 @@
 **Interfaces:**
 - Produces: `npm test`, `npm run test:watch`, and `npm run typecheck` commands.
 
-- [ ] Install `vitest`, `@vitejs/plugin-react`, `jsdom`, `@testing-library/react`, `@testing-library/dom`, and `vite-tsconfig-paths` as dev dependencies.
-- [ ] Add `test: vitest run`, `test:watch: vitest`, and `typecheck: tsc --noEmit` scripts.
-- [ ] Configure Vitest with `tsconfigPaths()`, `react()`, and `environment: "jsdom"`.
-- [ ] Run `npm test` and confirm the harness exits successfully with no test files before adding behavior tests.
+- [x] Install `vitest`, `@vitejs/plugin-react`, `jsdom`, `@testing-library/react`, `@testing-library/dom`, and `vite-tsconfig-paths` as dev dependencies.
+- [x] Add `test: vitest run`, `test:watch: vitest`, and `typecheck: tsc --noEmit` scripts.
+- [x] Configure Vitest with `tsconfigPaths()`, `react()`, and `environment: "jsdom"`.
+- [x] Run `npm test` and confirm Vitest starts, reports `No test files found`, and exits 1 before adding behavior tests.
 
 ### Task 2: Reconcile finance statuses with TDD
 
@@ -40,15 +40,15 @@
 - Modify: `src/app/(dashboard)/finance/page.tsx`
 
 **Interfaces:**
-- Produces: `mergePaymentStatuses<T>(items, payments): T[]`.
+- Produces: `mergePaymentStatuses<T>(items, payments): PaymentStatusItem<T>[]`.
 - Status mapping: `pending -> pending`, `approved -> paid`, `rejected -> unpaid`.
 
-- [ ] Write tests for every status mapping and the unmatched-item behavior.
-- [ ] Run `npm test -- src/lib/finance/payment-status.test.ts` and confirm failure because the implementation does not exist.
-- [ ] Implement the minimal pure helper with immutable output.
-- [ ] Run the focused test and confirm all cases pass.
-- [ ] Replace finance's state/effect synchronization with `useMemo(() => mergePaymentStatuses(...))`.
-- [ ] Run the focused test and `npm run lint -- --quiet` to confirm the finance lint error is gone.
+- [x] Write tests for every status mapping, the unmatched-item behavior, and unsupported base statuses.
+- [x] Run `npm test -- src/lib/finance/payment-status.test.ts` and confirm failure because the implementation does not exist.
+- [x] Implement the minimal pure helper with immutable output.
+- [x] Run the focused test and confirm all cases pass.
+- [x] Replace finance's state/effect synchronization with `useMemo(() => mergePaymentStatuses(...))`.
+- [x] Run the focused test and `npm run lint -- --quiet` to confirm the finance lint error is gone.
 
 ### Task 3: Fix static root causes
 
@@ -64,12 +64,12 @@
 - Produces: explicit `RequestItem` type local to the requests page.
 - Consumes: canonical `studentDetailData.trainingYear`.
 
-- [ ] Replace both nonexistent `academicYear` reads with `trainingYear` and run `npm run typecheck`.
-- [ ] Replace raw JSX quotes around the student-menu label with Thai quotation marks.
-- [ ] Remove the two unnecessary CPD `@ts-ignore` directives.
-- [ ] Define `RequestItem` from the request record shape and type selected request as `RequestItem | null`.
-- [ ] Remove the `typescript.ignoreBuildErrors` block so Next.js uses its safe default.
-- [ ] Run `npm run lint -- --quiet` and `npm run typecheck`; both must exit successfully.
+- [x] Replace both nonexistent `academicYear` reads with `trainingYear` and run `npm run typecheck`.
+- [x] Replace raw JSX quotes around the student-menu label with Thai quotation marks.
+- [x] Remove the two unnecessary CPD `@ts-ignore` directives.
+- [x] Define `RequestItem` from the request record shape and type selected request as `RequestItem | null`.
+- [x] Remove the `typescript.ignoreBuildErrors` block so Next.js uses its safe default.
+- [x] Run `npm run lint -- --quiet` and `npm run typecheck`; both must exit successfully.
 
 ### Task 4: Verify and finish the branch
 
@@ -79,10 +79,9 @@
 **Interfaces:**
 - Consumes: all commands and types produced above.
 
-- [ ] Run `npm test` and confirm all tests pass.
-- [ ] Run `npm run lint` and confirm zero errors.
-- [ ] Run `npm run typecheck` and confirm exit code 0.
-- [ ] Run `npm run build` and confirm production type validation and exit code 0.
-- [ ] Run `git diff --check` and inspect `git status --short` plus the complete diff.
+- [x] Run `npm test` and confirm all tests pass.
+- [x] Run `npm run lint` and confirm zero errors.
+- [x] Run `npm run typecheck` and confirm exit code 0.
+- [x] Run `npm run build` and confirm production type validation and exit code 0.
+- [x] Run `git diff --check` and inspect `git status --short` plus the complete diff.
 - [ ] Commit focused changes with descriptive messages, then invoke `superpowers:finishing-a-development-branch`.
-

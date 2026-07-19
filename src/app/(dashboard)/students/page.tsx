@@ -86,7 +86,7 @@ export default function StudentsPage() {
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 text-sm text-foreground/80 font-medium mb-3">
                   <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[16px] text-primary">work</span> {profileData.workHistory.position}, {profileData.workHistory.currentWorkplace}</span>
                   <span className="text-muted-foreground/30 hidden md:inline">•</span>
-                  <span className="text-muted-foreground">{s.college} — ปีการศึกษา {s.academicYear}</span>
+                  <span className="text-muted-foreground">{s.college} — ปีการศึกษา {s.trainingYear}</span>
                 </div>
                 
                 {/* Specialty Tags */}

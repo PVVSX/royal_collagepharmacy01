@@ -18,7 +18,7 @@
 
 ## Design
 
-Create a small pure finance helper that maps review statuses to student-facing statuses and merges them into the original fee records. The finance page derives its displayed list with `useMemo` instead of synchronously setting state in an effect. Static failures are fixed at their source: consumers use the canonical `trainingYear`, request state receives an explicit record type, and obsolete suppressions are removed.
+Create a small pure finance helper that validates base payment statuses, maps review statuses to student-facing statuses, and merges them into the original fee records. The finance page derives its displayed list with `useMemo` instead of synchronously setting state in an effect. Static failures are fixed at their source: consumers use the canonical `trainingYear`, request state receives an explicit record type, and obsolete suppressions are removed.
 
 Vitest follows the Next.js 16 bundled guide and tests the pure finance helper without rendering the full page. Existing lint and TypeScript commands remain the regression checks for static failures. No warning-only cleanup is included unless it disappears as a direct consequence of these fixes.
 
@@ -26,6 +26,5 @@ Vitest follows the Next.js 16 bundled guide and tests the pure finance helper wi
 
 - `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` exit successfully.
 - The build performs TypeScript validation.
-- Payment statuses map as `pending -> pending`, `approved -> paid`, and `rejected -> unpaid`; unmatched fee records retain their original status.
+- Payment statuses map as `pending -> pending`, `approved -> paid`, and `rejected -> unpaid`; unmatched fee records retain a valid original status, while unsupported base statuses fail explicitly.
 - No backend, route, data persistence, or visible UI behavior changes beyond correcting payment status display.
-
