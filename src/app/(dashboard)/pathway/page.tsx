@@ -90,7 +90,7 @@ function CardContent({
   return (
     <div
       className={cn(
-        "relative bg-card rounded-lg border shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group",
+        "relative bg-card rounded-lg border shadow-sm hover:border-primary/40 transition-colors duration-300 cursor-pointer group",
         step.status === "current" && "border-blue-300/50 dark:border-blue-700/30 shadow-md shadow-blue-500/5",
         step.status === "recommended" && "border-dashed border-muted-foreground/20 opacity-80 hover:opacity-100",
       )}
@@ -405,7 +405,7 @@ export default function PathwayPage() {
                   onClick={() => setShowAll(false)}
                   className={cn(
                     "group flex items-center gap-2 px-5 py-2 rounded-full",
-                    "bg-card border shadow-sm hover:shadow-md",
+                    "bg-card border shadow-sm hover:border-primary/40 transition-colors",
                     "text-muted-foreground hover:text-foreground text-xs font-medium",
                     "transition-all duration-300"
                   )}
@@ -478,7 +478,7 @@ export default function PathwayPage() {
                   onClick={() => setShowAll(false)}
                   className={cn(
                     "group flex items-center gap-2 px-5 py-2 rounded-full",
-                    "bg-card border shadow-sm hover:shadow-md",
+                    "bg-card border shadow-sm hover:border-primary/40 transition-colors",
                     "text-muted-foreground hover:text-foreground text-xs font-medium",
                     "transition-all duration-300"
                   )}

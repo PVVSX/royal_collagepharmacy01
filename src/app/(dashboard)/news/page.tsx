@@ -31,7 +31,7 @@ export default function NewsPage() {
           <Badge key={f} variant={activeFilter === f ? "default" : "outline"} className="cursor-pointer text-xs px-3 py-1.5" onClick={() => setActiveFilter(f)}>{f}</Badge>
         ))}</div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{filtered.map((item) => { const c = cm[item.categoryColor]; return (
-          <Card key={item.id} className={`card-shadow border-t-4 border-l-0 ${c.border.replace('border-l', 'border-t')} hover:shadow-md transition-all hover:-translate-y-1 overflow-hidden flex flex-col`}>
+          <Card key={item.id} className={`card-shadow border-t-4 border-l-0 ${c.border.replace('border-l', 'border-t')} hover:border-primary/40 transition-colors overflow-hidden flex flex-col`}>
             <div className="relative w-full h-48 bg-muted">
               <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
               <Badge variant={c.variant} className="absolute top-3 right-3 text-xs px-2.5 py-0.5 shadow-sm">{item.category}</Badge>

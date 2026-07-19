@@ -130,7 +130,7 @@ export default function CPDPage() {
                       </div>
                       
                       {/* Content Card */}
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-lg border bg-card/50 shadow-sm transition-all hover:shadow-md hover:bg-muted/10">
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-lg border bg-card/50 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/10">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                           <Badge variant="outline" className="w-fit text-[10px] uppercase tracking-wider">{item.category}</Badge>
                           <span className="text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-0.5 rounded">{item.date}</span>
@@ -163,7 +163,7 @@ export default function CPDPage() {
                 {cpdData.recommended.map((item) => (
                   <Dialog key={item.id}>
                     <DialogTrigger asChild>
-                      <Card className="group overflow-hidden border-muted-foreground/20 hover:border-primary/50 hover:shadow-md transition-all duration-300 ease-out active:scale-[0.97] cursor-pointer text-left">
+                      <Card className="group overflow-hidden border-muted-foreground/20 hover:border-primary/50 transition-all duration-300 ease-out active:scale-[0.97] cursor-pointer text-left">
                         <CardContent className="p-0">
                           <div className="p-4 bg-gradient-to-br from-card to-muted/30">
                             <div className="flex justify-between items-start mb-3">

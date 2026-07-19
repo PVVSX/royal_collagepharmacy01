@@ -524,7 +524,7 @@ export default function StudentsPage() {
                       { name: "ใบแจ้งผลการศึกษา (Transcript)", ext: "PDF", icon: "description" },
                       { name: "ใบเสร็จรับเงินค่าลงทะเบียน", ext: "PDF", icon: "receipt" }
                     ].map((doc, i) => (
-                      <div key={i} className="flex flex-col items-center justify-center p-6 rounded-lg border bg-card hover:bg-primary/5 hover:border-primary/50 hover:shadow-md transition-all text-center cursor-pointer group" onClick={() => toast.info(`กำลังดาวน์โหลด: ${doc.name}`)}>
+                      <div key={i} className="flex flex-col items-center justify-center p-6 rounded-lg border bg-card hover:bg-primary/5 hover:border-primary/50 transition-all text-center cursor-pointer group" onClick={() => toast.info(`กำลังดาวน์โหลด: ${doc.name}`)}>
                         <div className="w-16 h-16 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
                           <span className="material-symbols-outlined text-3xl text-muted-foreground group-hover:text-primary transition-colors">{doc.icon}</span>
                         </div>

@@ -467,7 +467,7 @@ export default function ResearchPage() {
                   filteredResults.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="bg-white dark:bg-card rounded-lg shadow-sm border border-border/60 hover:shadow-md hover:border-[#4D5A2D]/20 transition-all duration-200 overflow-hidden"
+                      className="bg-white dark:bg-card rounded-lg shadow-sm border border-border/60 hover:border-[#4D5A2D]/20 transition-all duration-200 overflow-hidden"
                     >
                       <div className="p-5 md:p-6">
                         {/* Top row: badge + number */}

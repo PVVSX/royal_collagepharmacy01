@@ -72,7 +72,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* CPD Progress */}
-        <Card className="lg:col-span-2 card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
+        <Card className="lg:col-span-2 card-shadow hover:border-primary/40 transition-colors">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">ความคืบหน้าการสะสม CPD</CardTitle>
             <CardDescription className="text-xs">สะสมได้ {cpdData.currentCredits} จาก {cpdData.targetCredits} CPD · หมดอายุ {cpdData.expiryDate}</CardDescription>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Credits Donut */}
-        <Card className="card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
+        <Card className="card-shadow hover:border-primary/40 transition-colors">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">ความก้าวหน้าหน่วยกิต</CardTitle>
             <CardDescription className="text-xs">เก็บได้แล้ว {d.creditsEarned} จาก {d.creditsTotal} หน่วยกิต</CardDescription>
