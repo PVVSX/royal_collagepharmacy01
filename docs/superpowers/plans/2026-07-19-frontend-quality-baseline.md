@@ -84,4 +84,4 @@
 - [x] Run `npm run typecheck` and confirm exit code 0.
 - [x] Run `npm run build` and confirm production type validation and exit code 0.
 - [x] Run `git diff --check` and inspect `git status --short` plus the complete diff.
-- [ ] Commit focused changes with descriptive messages, then invoke `superpowers:finishing-a-development-branch`.
+- [x] Commit focused changes with descriptive messages, then invoke `superpowers:finishing-a-development-branch`.
