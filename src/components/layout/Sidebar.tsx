@@ -149,7 +149,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop */}
-      <aside className="fixed left-4 top-4 bottom-4 z-40 hidden w-60 flex-col overflow-hidden rounded-2xl glass-panel-primary md:flex">
+      <aside className="fixed left-0 top-0 bottom-0 z-40 hidden w-60 flex-col overflow-hidden bg-sidebar border-r border-sidebar-border md:flex">
         <SidebarNav pathname={pathname} />
       </aside>
 

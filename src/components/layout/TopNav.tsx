@@ -63,7 +63,7 @@ export default function TopNav() {
   };
 
   return (
-    <header className="fixed top-4 right-2 left-2 z-50 flex h-14 items-center justify-between rounded-2xl glass-panel px-4 md:left-[280px] md:right-4 border-none shadow-sm">
+    <header className="sticky top-0 z-50 flex h-14 items-center justify-between bg-card border-b border-border px-4 md:px-6">
       {/* Breadcrumbs */}
       <Breadcrumb>
         <BreadcrumbList className="text-sm">
