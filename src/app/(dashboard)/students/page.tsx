@@ -129,7 +129,7 @@ export default function StudentsPage() {
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-md bg-transparent border-none shadow-none flex flex-col items-center justify-center p-0 [&>button]:hidden">
-                    <div className="relative w-[340px] h-[540px] rounded-[24px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.4)] bg-gradient-to-br from-[#737300] to-[#4a4a00] text-white flex flex-col items-center p-6">
+                    <div className="relative w-[340px] h-[540px] rounded-lg overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.4)] bg-gradient-to-br from-[#737300] to-[#4a4a00] text-white flex flex-col items-center p-6">
                       <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
                       <div className="relative z-10 flex items-center gap-3 w-full pb-4 mb-5 mt-2">
                         <div className="bg-white p-1 rounded-md shrink-0">
@@ -384,7 +384,7 @@ export default function StudentsPage() {
                       <h4 className="text-sm font-semibold mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-primary text-lg">science</span> โครงการวิจัย</h4>
                       <div className="grid gap-3">
                         {profileData.research.projects.map((proj, i) => (
-                          <div key={i} className="p-4 rounded-lg border bg-card hover:shadow-sm transition-shadow">
+                          <div key={i} className="p-4 rounded-lg border bg-card hover:border-primary/40 transition-colors">
                             <div className="font-semibold text-sm mb-2">{proj.title}</div>
                             <div className="flex flex-wrap gap-4 text-xs">
                               <span className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md text-muted-foreground"><span className="material-symbols-outlined text-[14px]">person</span> บทบาท: {proj.role}</span>
@@ -454,7 +454,7 @@ export default function StudentsPage() {
                   <h3 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-3 mb-6"><span className="material-symbols-outlined text-primary">payments</span> ประวัติการชำระเงิน</h3>
                   <div className="space-y-3">
                     {financeData.items.map((item, i) => (
-                      <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-lg border bg-card gap-4 hover:shadow-sm transition-shadow">
+                      <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-lg border bg-card gap-4 hover:border-primary/40 transition-colors">
                         <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${item.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
                             <span className="material-symbols-outlined">{item.status === 'paid' ? 'check' : 'schedule'}</span>
@@ -485,7 +485,7 @@ export default function StudentsPage() {
                   <h3 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-3 mb-6"><span className="material-symbols-outlined text-primary">description</span> คำร้องของฉัน</h3>
                   <div className="space-y-3">
                     {requestsData.map((req, i) => (
-                      <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-lg border bg-card gap-4 hover:shadow-sm transition-shadow">
+                      <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-lg border bg-card gap-4 hover:border-primary/40 transition-colors">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0 text-muted-foreground">
                             <span className="material-symbols-outlined">draft</span>
