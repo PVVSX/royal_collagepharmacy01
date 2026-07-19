@@ -116,7 +116,7 @@ export default function TopNav() {
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80 rounded-xl">
+          <DropdownMenuContent align="end" className="w-80 rounded-lg">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <span className="font-semibold text-sm">การแจ้งเตือน</span>
               {notificationsData.filter(n => !n.isRead).length > 0 && (

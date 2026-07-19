@@ -191,7 +191,7 @@ export default function ExamApplicationPage() {
       <>
         <div className="p-4 md:p-6 pb-16 max-w-[900px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* Header */}
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden mb-8">
+          <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden mb-8">
             <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -226,12 +226,12 @@ export default function ExamApplicationPage() {
             </div>
 
             {admissions.length === 0 ? (
-              <div className="border border-dashed border-border rounded-xl py-10 text-center text-muted-foreground">
+              <div className="border border-dashed border-border rounded-lg py-10 text-center text-muted-foreground">
                 <span className="material-symbols-outlined text-3xl mb-2 block">inbox</span>
                 <p className="text-sm">ยังไม่มีประวัติการสมัครสอบ</p>
               </div>
             ) : (
-              <div className="border border-border rounded-xl overflow-hidden bg-card divide-y divide-border">
+              <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
                 <div className="hidden md:grid grid-cols-[1fr_1.5fr_100px_auto] gap-4 px-5 py-2.5 bg-muted/40 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                   <span>เลขที่คำร้อง</span>
                   <span>วิทยาลัย/สาขาที่สอบ</span>
@@ -389,7 +389,7 @@ export default function ExamApplicationPage() {
                           <button
                             type="button"
                             onClick={() => payFileRef.current?.click()}
-                            className="flex min-h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 p-4 text-center hover:border-primary transition-colors"
+                            className="flex min-h-32 w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/30 p-4 text-center hover:border-primary transition-colors"
                           >
                             <span className={`material-symbols-outlined mb-1 text-4xl ${payFile ? "text-primary" : "text-muted-foreground"}`}>
                               {payFile ? "check_circle" : "cloud_upload"}
@@ -482,7 +482,7 @@ export default function ExamApplicationPage() {
                   <p className="text-sm text-muted-foreground">กรุณาเลือก 1 สาขา</p>
                 </div>
 
-                <div className="divide-y divide-border border border-border rounded-xl overflow-hidden bg-card">
+                <div className="divide-y divide-border border border-border rounded-lg overflow-hidden bg-card">
                   {colleges.map((college) => {
                     const isSelected = selectedCollege === college.id;
                     return (
@@ -515,7 +515,7 @@ export default function ExamApplicationPage() {
             {/* ── STEP 2: ตรวจสอบคุณสมบัติ ───────────────────────────────────── */}
             {currentStep === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }} className="space-y-6">
-                <div className="bg-primary/5 border border-primary/20 p-4 rounded-xl flex items-start gap-3">
+                <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg flex items-start gap-3">
                   <span className="material-symbols-outlined text-primary mt-0.5">auto_awesome</span>
                   <div>
                     <h4 className="font-semibold text-primary text-sm">ดึงประวัติวิชาชีพอัตโนมัติสำเร็จ</h4>
@@ -543,7 +543,7 @@ export default function ExamApplicationPage() {
                     <CardDescription>กรุณาตรวจสอบข้อมูลทั้งหมดอีกครั้งก่อนกดส่งคำร้อง</CardDescription>
                   </CardHeader>
                   <CardContent className="mt-4">
-                    <div className="bg-muted/30 p-5 rounded-xl border space-y-0 divide-y divide-border">
+                    <div className="bg-muted/30 p-5 rounded-lg border space-y-0 divide-y divide-border">
                       <div className="flex justify-between items-center py-3">
                         <span className="text-sm text-muted-foreground">ประเภทคำร้อง</span>
                         <Badge className="text-sm px-3 py-1 border-0 bg-primary/10 text-primary">
@@ -570,7 +570,7 @@ export default function ExamApplicationPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 flex items-start gap-2.5 p-4 rounded-xl bg-muted/30 border border-border/50 text-xs text-muted-foreground">
+                    <div className="mt-5 flex items-start gap-2.5 p-4 rounded-lg bg-muted/30 border border-border/50 text-xs text-muted-foreground">
                       <span className="material-symbols-outlined text-[16px] mt-0.5 flex-shrink-0">info</span>
                       <p>
                         เมื่อกดส่งคำร้อง ระบบจะบันทึกข้อมูลการสมัครสอบและแจ้งไปยังเจ้าหน้าที่เพื่อพิจารณาคุณสมบัติ

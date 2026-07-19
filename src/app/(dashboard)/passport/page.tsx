@@ -117,7 +117,7 @@ export default function PassportPage() {
       </div>
 
       {/* ══ Official Document Header ══ */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-6 py-4">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-border bg-white p-1.5">
@@ -218,7 +218,7 @@ export default function PassportPage() {
       </div>
 
       {/* ══ D. Competencies (FIP) ══ */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <SectionHeader label="สมรรถนะวิชาชีพ (Competencies)" icon="radar" sub="อ้างอิงกรอบสมรรถนะสากล FIP Global Competency Framework — 4 ด้าน" />
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {clusters.map(({ cluster, ratings, averageLevel }) => (
@@ -268,7 +268,7 @@ export default function PassportPage() {
       {/* ══ Two-column: Specializations + Qualifications ══ */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* C. Specializations */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
           <SectionHeader label="ความเชี่ยวชาญเฉพาะทาง" icon="workspace_premium" sub="วุฒิบัตร / หนังสืออนุมัติ" />
           <div className="space-y-3">
             {p.specializations.map((s) => (
@@ -296,7 +296,7 @@ export default function PassportPage() {
         </div>
 
         {/* B. Qualifications */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
           <SectionHeader label="คุณวุฒิการศึกษา" icon="history_edu" />
           <div className="space-y-3">
             {p.qualifications.map((q) => (
@@ -316,7 +316,7 @@ export default function PassportPage() {
       </div>
 
       {/* ══ E. CPD ══ */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <SectionHeader label="การศึกษาต่อเนื่อง (CPD/CPE)" icon="school" sub={`เกณฑ์ต่ออายุใบอนุญาต: ${p.cpd.targetCredits} หน่วยกิต/รอบ 5 ปี (ปีละ ≥ ${p.cpd.perYearMinimum})`} />
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[280px_1fr]">
           <div className="rounded-lg border border-border bg-primary/5 p-4">
@@ -355,7 +355,7 @@ export default function PassportPage() {
       {/* ══ Two-column: Experience + Academic ══ */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* F. Experience */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
           <SectionHeader label="ประสบการณ์วิชาชีพ" icon="work" />
           <div className="relative ml-3 space-y-5 border-l-2 border-primary/20">
             {p.experience.map((e) => (
@@ -378,7 +378,7 @@ export default function PassportPage() {
         </div>
 
         {/* G. Academic work */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
           <SectionHeader label="ผลงานวิชาการและวิจัย" icon="biotech" />
           <div className="space-y-3">
             {p.academicWork.map((a) => (

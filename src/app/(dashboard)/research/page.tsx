@@ -307,14 +307,14 @@ export default function ResearchPage() {
     <>
       <div className="min-h-screen pb-8">
         {/* ── Search Banner ── */}
-        <div className="relative overflow-hidden rounded-2xl mx-2 md:mx-4 mb-6 bg-gradient-to-br from-[#4D5A2D] via-[#5a6a33] to-[#3a4422]">
+        <div className="relative overflow-hidden rounded-lg mx-2 md:mx-4 mb-6 bg-gradient-to-br from-[#4D5A2D] via-[#5a6a33] to-[#3a4422]">
           {/* Decorative circles */}
           <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-white/5" />
           <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-white/5" />
 
           <div className="relative z-10 px-6 md:px-8 pt-8 pb-10">
             <div className="flex items-center gap-3 mb-5">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/15 backdrop-blur-sm">
                 <Search className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -338,7 +338,7 @@ export default function ResearchPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="พิมพ์คำค้นหา เช่น warfarin, เภสัชกรรมคลินิก..."
-                  className="w-full h-11 pl-10 pr-10 rounded-xl text-sm text-foreground bg-white dark:bg-card border-0 focus:outline-none focus:ring-2 focus:ring-white/40 shadow-lg placeholder:text-muted-foreground/60"
+                  className="w-full h-11 pl-10 pr-10 rounded-lg text-sm text-foreground bg-white dark:bg-card border-0 focus:outline-none focus:ring-2 focus:ring-white/40 shadow-lg placeholder:text-muted-foreground/60"
                 />
                 {searchQuery && (
                   <button
@@ -352,7 +352,7 @@ export default function ResearchPage() {
               </div>
               <Button
                 type="submit"
-                className="h-11 px-6 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-semibold border border-white/20 rounded-xl shadow-sm transition-all"
+                className="h-11 px-6 bg-white/15 hover:bg-white/25 backdrop-blur-sm text-white font-semibold border border-white/20 rounded-lg shadow-sm transition-all"
               >
                 <Search className="w-4 h-4 mr-2" />
                 ค้นหา
@@ -366,7 +366,7 @@ export default function ResearchPage() {
           <div className="flex gap-5">
             {/* ── Desktop Filter Sidebar ── */}
             <aside className="hidden lg:block w-[260px] shrink-0">
-              <div className="sticky top-24 bg-white dark:bg-card rounded-xl shadow-sm border border-border/60 overflow-hidden">
+              <div className="sticky top-24 bg-white dark:bg-card rounded-lg shadow-sm border border-border/60 overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3.5 bg-muted/30 border-b border-border/50">
                   <div className="flex items-center gap-2 text-[13px] font-bold text-[#4D5A2D] dark:text-[#a3a375]">
@@ -432,7 +432,7 @@ export default function ResearchPage() {
             {/* ── Results ── */}
             <div className="flex-1 min-w-0 space-y-4">
               {/* Result Header */}
-              <div className="bg-white dark:bg-card px-4 py-3 rounded-xl shadow-sm border border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="bg-white dark:bg-card px-4 py-3 rounded-lg shadow-sm border border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div className="text-[13px] text-muted-foreground">
                   ผลการค้นหา{" "}
                   {activeQuery && (
@@ -467,7 +467,7 @@ export default function ResearchPage() {
                   filteredResults.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="bg-white dark:bg-card rounded-xl shadow-sm border border-border/60 hover:shadow-md hover:border-[#4D5A2D]/20 transition-all duration-200 overflow-hidden"
+                      className="bg-white dark:bg-card rounded-lg shadow-sm border border-border/60 hover:shadow-md hover:border-[#4D5A2D]/20 transition-all duration-200 overflow-hidden"
                     >
                       <div className="p-5 md:p-6">
                         {/* Top row: badge + number */}
@@ -565,7 +565,7 @@ export default function ResearchPage() {
                     </div>
                   ))
                 ) : (
-                  <div className="bg-white dark:bg-card p-12 rounded-xl shadow-sm border text-center">
+                  <div className="bg-white dark:bg-card p-12 rounded-lg shadow-sm border text-center">
                     <BookOpen className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
                     <h3 className="text-lg font-bold text-foreground mb-2">
                       ไม่พบผลการค้นหา

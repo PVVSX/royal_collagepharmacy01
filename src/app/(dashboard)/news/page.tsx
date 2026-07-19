@@ -20,7 +20,7 @@ export default function NewsPage() {
   return (
     <>
       <div className="p-4 md:p-6 pb-16 max-w-[1280px] mx-auto">
-        <div className="relative w-full h-[200px] md:h-[280px] rounded-2xl overflow-hidden mb-8 shadow-sm">
+        <div className="relative w-full h-[200px] md:h-[280px] rounded-lg overflow-hidden mb-8 shadow-sm">
           <img src="/images/assets/news/header page.png" alt="News Banner" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6 md:p-10">
             <h1 className="text-2xl md:text-3xl font-bold mb-2 text-white drop-shadow-md">ข่าวสารและประกาศ</h1>

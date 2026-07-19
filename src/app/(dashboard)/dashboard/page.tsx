@@ -16,7 +16,7 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 md:p-6 pb-16 max-w-[1280px] mx-auto">
-      <header className="mb-5 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <header className="mb-5 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-5 py-4 md:px-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -129,7 +129,7 @@ export default function DashboardPage() {
             
             <div className="grid grid-cols-2 gap-3 mt-1">
               {d.creditsBreakdown.map((item, i) => (
-                <div key={i} className="flex flex-col bg-muted/40 p-3.5 rounded-xl border border-border/50 hover:bg-muted/80 transition-colors">
+                <div key={i} className="flex flex-col bg-muted/40 p-3.5 rounded-lg border border-border/50 hover:bg-muted/80 transition-colors">
                   <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
                     <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: item.fill }} />
                     <span className="text-[11px] font-medium">{item.name}</span>

@@ -101,7 +101,7 @@ export default function StudentsPage() {
                 </div>
 
                 {/* IDs & Contact */}
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2 text-xs md:text-sm text-muted-foreground bg-muted/30 p-2.5 rounded-xl border border-border/50 inline-flex">
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2 text-xs md:text-sm text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/50 inline-flex">
                   <div className="flex items-center gap-1.5 font-medium">
                     <span className={icon16}>badge</span> วภท-2568-001
                   </div>
@@ -150,7 +150,7 @@ export default function StudentsPage() {
                           สมาชิกราชวิทยาลัย
                         </div>
                       </div>
-                      <div className="relative z-10 w-full mt-5 space-y-2 text-sm bg-black/10 p-3.5 rounded-xl backdrop-blur-sm">
+                      <div className="relative z-10 w-full mt-5 space-y-2 text-sm bg-black/10 p-3.5 rounded-lg backdrop-blur-sm">
                         <div className="flex justify-between items-center px-1">
                           <span className="opacity-70 text-xs">เลขที่ใบประกอบฯ</span>
                           <span className="font-medium tracking-wide">{profileData.personalInfo.licenseNumber}</span>
@@ -160,7 +160,7 @@ export default function StudentsPage() {
                           <span className="font-medium text-green-300">ปกติ (Active)</span>
                         </div>
                       </div>
-                      <div className="relative z-10 mt-auto flex flex-col items-center bg-white text-black p-3 rounded-xl shadow-xl w-full max-w-[200px] mb-2">
+                      <div className="relative z-10 mt-auto flex flex-col items-center bg-white text-black p-3 rounded-lg shadow-xl w-full max-w-[200px] mb-2">
                         <div className="w-24 h-24 bg-muted rounded-md overflow-hidden shrink-0">
                           <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentMemberPassport.verifyToken)}`} alt="QR Code" className="w-full h-full" />
                         </div>
@@ -267,7 +267,7 @@ export default function StudentsPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === tab.key
                   ? "bg-primary text-primary-foreground shadow-md"
                   : "bg-card/50 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -281,7 +281,7 @@ export default function StudentsPage() {
 
         {/* Right Content Panel */}
         <div className="flex-1">
-          <Card className="min-h-[500px] border shadow-sm bg-card rounded-2xl overflow-hidden">
+          <Card className="min-h-[500px] border shadow-sm bg-card rounded-lg overflow-hidden">
             <CardContent className="p-6 md:p-8">
               {/* ---- Personal Info ---- */}
               {activeTab === "personal" && (
@@ -327,7 +327,7 @@ export default function StudentsPage() {
                     <Button variant="outline" size="sm" className="h-8 text-xs gap-1 rounded-full"><span className={icon18}>edit</span> ขอแก้ไขประวัติ</Button>
                   </div>
                   <div className="space-y-6">
-                    <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
+                    <div className="bg-primary/5 p-6 rounded-lg border border-primary/10">
                       <h4 className="text-sm font-semibold mb-5 flex items-center gap-2 text-primary"><span className="material-symbols-outlined">apartment</span> ที่ทำงานปัจจุบัน</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
@@ -357,7 +357,7 @@ export default function StudentsPage() {
                       <h4 className="text-sm font-semibold mb-3">ประสบการณ์ทำงานย้อนหลัง</h4>
                       <div className="space-y-3">
                         {profileData.workHistory.previousJobs.map((job, i) => (
-                          <div key={i} className="flex gap-4 p-4 rounded-xl border bg-card hover:border-primary/30 transition-colors">
+                          <div key={i} className="flex gap-4 p-4 rounded-lg border bg-card hover:border-primary/30 transition-colors">
                             <div className="w-16 shrink-0 text-sm font-bold text-primary pt-0.5">{job.year}</div>
                             <div>
                               <div className="text-sm font-bold">{job.position}</div>
@@ -384,7 +384,7 @@ export default function StudentsPage() {
                       <h4 className="text-sm font-semibold mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-primary text-lg">science</span> โครงการวิจัย</h4>
                       <div className="grid gap-3">
                         {profileData.research.projects.map((proj, i) => (
-                          <div key={i} className="p-4 rounded-xl border bg-card hover:shadow-sm transition-shadow">
+                          <div key={i} className="p-4 rounded-lg border bg-card hover:shadow-sm transition-shadow">
                             <div className="font-semibold text-sm mb-2">{proj.title}</div>
                             <div className="flex flex-wrap gap-4 text-xs">
                               <span className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md text-muted-foreground"><span className="material-symbols-outlined text-[14px]">person</span> บทบาท: {proj.role}</span>
@@ -399,7 +399,7 @@ export default function StudentsPage() {
                       <h4 className="text-sm font-semibold mb-3 flex items-center gap-2"><span className="material-symbols-outlined text-primary text-lg">article</span> ผลงานตีพิมพ์ / นำเสนอวิชาการ</h4>
                       <div className="space-y-2">
                         {profileData.research.publications.map((pub, i) => (
-                          <div key={i} className="flex gap-3 text-sm p-3 rounded-xl hover:bg-muted/50 transition-colors">
+                          <div key={i} className="flex gap-3 text-sm p-3 rounded-lg hover:bg-muted/50 transition-colors">
                             <div className="text-primary mt-0.5"><span className="material-symbols-outlined text-[18px]">workspace_premium</span></div>
                             <div>
                               <span className="font-medium">{pub.title}</span> <span className="text-muted-foreground font-semibold ml-1">({pub.year})</span>
@@ -409,7 +409,7 @@ export default function StudentsPage() {
                       </div>
                     </div>
 
-                    <div className="bg-primary/5 p-5 rounded-2xl border border-primary/20">
+                    <div className="bg-primary/5 p-5 rounded-lg border border-primary/20">
                       <h4 className="text-sm font-semibold mb-2 text-primary flex items-center gap-2"><span className="material-symbols-outlined text-lg">lightbulb</span> ความสนใจด้านงานวิจัย (Research Interest)</h4>
                       <p className="text-sm leading-relaxed">{profileData.research.interest}</p>
                     </div>
@@ -421,7 +421,7 @@ export default function StudentsPage() {
               {activeTab === "registration" && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                   <h3 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-3 mb-6"><span className="material-symbols-outlined text-primary">how_to_reg</span> วิชาที่ลงทะเบียน (เทอมปัจจุบัน)</h3>
-                  <div className="rounded-xl border overflow-hidden shadow-sm">
+                  <div className="rounded-lg border overflow-hidden shadow-sm">
                     <table className="w-full text-sm text-left">
                       <thead className="bg-muted font-medium text-muted-foreground">
                         <tr>
@@ -454,7 +454,7 @@ export default function StudentsPage() {
                   <h3 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-3 mb-6"><span className="material-symbols-outlined text-primary">payments</span> ประวัติการชำระเงิน</h3>
                   <div className="space-y-3">
                     {financeData.items.map((item, i) => (
-                      <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border bg-card gap-4 hover:shadow-sm transition-shadow">
+                      <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-lg border bg-card gap-4 hover:shadow-sm transition-shadow">
                         <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${item.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
                             <span className="material-symbols-outlined">{item.status === 'paid' ? 'check' : 'schedule'}</span>
@@ -485,7 +485,7 @@ export default function StudentsPage() {
                   <h3 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-3 mb-6"><span className="material-symbols-outlined text-primary">description</span> คำร้องของฉัน</h3>
                   <div className="space-y-3">
                     {requestsData.map((req, i) => (
-                      <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border bg-card gap-4 hover:shadow-sm transition-shadow">
+                      <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-lg border bg-card gap-4 hover:shadow-sm transition-shadow">
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0 text-muted-foreground">
                             <span className="material-symbols-outlined">draft</span>
@@ -524,7 +524,7 @@ export default function StudentsPage() {
                       { name: "ใบแจ้งผลการศึกษา (Transcript)", ext: "PDF", icon: "description" },
                       { name: "ใบเสร็จรับเงินค่าลงทะเบียน", ext: "PDF", icon: "receipt" }
                     ].map((doc, i) => (
-                      <div key={i} className="flex flex-col items-center justify-center p-6 rounded-2xl border bg-card hover:bg-primary/5 hover:border-primary/50 hover:shadow-md transition-all text-center cursor-pointer group" onClick={() => toast.info(`กำลังดาวน์โหลด: ${doc.name}`)}>
+                      <div key={i} className="flex flex-col items-center justify-center p-6 rounded-lg border bg-card hover:bg-primary/5 hover:border-primary/50 hover:shadow-md transition-all text-center cursor-pointer group" onClick={() => toast.info(`กำลังดาวน์โหลด: ${doc.name}`)}>
                         <div className="w-16 h-16 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
                           <span className="material-symbols-outlined text-3xl text-muted-foreground group-hover:text-primary transition-colors">{doc.icon}</span>
                         </div>
