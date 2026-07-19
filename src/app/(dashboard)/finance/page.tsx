@@ -1,8 +1,12 @@
 "use client";
 
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { financeData, profileData } from "@/data";
+import {
+  mergePaymentStatuses,
+  type PaymentStatusItem,
+} from "@/lib/finance/payment-status";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,8 +15,7 @@ import Footer from "@/components/layout/Footer";
 import PaymentDialog from "@/components/finance/PaymentDialog";
 import { useMockDb, Payment } from "@/context/MockDbContext";
 
-type PaymentStatus = "paid" | "unpaid" | "pending";
-type PaymentItem = Omit<(typeof financeData.items)[number], "status"> & { status: PaymentStatus };
+type PaymentItem = PaymentStatusItem<(typeof financeData.items)[number]>;
 
 const s: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
   paid: { variant: "default", label: "จ่ายแล้ว" },
@@ -23,22 +26,15 @@ const s: Record<string, { variant: "default" | "secondary" | "destructive" | "ou
 export default function FinancePage() {
   const d = financeData;
   const { payments: adminPayments, addPayment } = useMockDb();
-  
-  // Initialize with financeData items, but override status if it's in adminPayments
-  const [items, setItems] = useState<PaymentItem[]>(() => d.items.map((item) => ({ ...item, status: item.status as PaymentStatus })));
-  
-  // Sync with MockDb
-  useEffect(() => {
-    setItems(current => current.map(item => {
-      // Find if this item has been paid/submitted in MockDb
-      // We match by description/type roughly since IDs are different format
-      const matchedPayment = adminPayments.find(p => p.type === item.description);
-      if (matchedPayment) {
-        return { ...item, status: matchedPayment.status as PaymentStatus };
-      }
-      return item;
-    }));
-  }, [adminPayments]);
+
+  const items = useMemo(
+    () =>
+      mergePaymentStatuses(
+        d.items,
+        adminPayments,
+      ),
+    [adminPayments, d.items],
+  );
 
   const [selectedItem, setSelectedItem] = useState<PaymentItem | null>(null);
   const outstandingBalance = items.filter((item) => item.status === "unpaid").reduce((sum, item) => sum + item.amount, 0);
