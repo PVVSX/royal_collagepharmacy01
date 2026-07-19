@@ -30,7 +30,7 @@ export default function AdminAdmissionsPage() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">อนุมัติการสมัครเรียน</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">อนุมัติการสมัครสอบ</h1>
           <p className="text-muted-foreground mt-1">ตรวจสอบและพิจารณาคำร้องขอเข้ารับการฝึกอบรม</p>
         </div>
       </div>

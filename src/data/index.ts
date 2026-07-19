@@ -2,14 +2,26 @@
 // Royal Pharmacy College Portal — Data
 // แหล่งข้อมูลจริงจากเอกสารราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย
 // Mockup data คงไว้เฉพาะส่วนที่ไม่มีข้อมูลจริง (ชื่อผู้เข้าศึกษา ฯลฯ)
+//
+// หมายเหตุ: ข้อมูล "ผู้ใช้ปัจจุบัน" ผูกกับ Single Source of Truth ที่ src/lib/domain
+// (currentMemberPassport) เพื่อให้ชื่อ/รหัส/ใบประกอบฯ/หน่วยกิต ตรงกันทุกหน้า
 // ══════════════════════════════════════════════════════
+
+import { currentMemberPassport as MEMBER } from "@/lib/domain/member";
+
+// ชื่อ-รหัสผู้ใช้ปัจจุบัน (derive จาก SSOT)
+const meFullName = `${MEMBER.identity.titleTh}${MEMBER.identity.firstNameTh} ${MEMBER.identity.lastNameTh}`;
+const meId = MEMBER.memberId;
+const meLicense = MEMBER.license.licenseNumber;
+const meCpdCredits = MEMBER.cpd.currentCredits;
+const meCpdTarget = MEMBER.cpd.targetCredits;
 
 // ===== Navigation =====
 export const sidebarNavItems = [
   { href: "/dashboard", icon: "dashboard", label: "ภาพรวม" },
   { href: "/students", icon: "person", label: "ข้อมูลของฉัน" },
   { href: "/cpd", icon: "workspace_premium", label: "หน่วยกิต CPD" },
-  { href: "/admission", icon: "assignment_ind", label: "สมัครเรียน" },
+  { href: "/admission", icon: "quiz", label: "สมัครสอบ" },
   { href: "/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
   { href: "/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
   { href: "/finance", icon: "payments", label: "การเงิน" },
@@ -34,8 +46,8 @@ export const institutionInfo = {
 
 // ===== Dashboard =====
 export const dashboardData = {
-  studentName: "นาย สมชาย ใจดี", // mock
-  studentId: "นคบส-2568-001", // mock
+  studentName: meFullName, // SSOT
+  studentId: meId, // SSOT (แก้จากเดิม "นคบส-2568-001" ที่ไม่ตรงกับสาขา วภท.)
   creditsEarned: 18, // mock
   creditsTotal: 36, // mock
   trainingStatus: "กำลังฝึกอบรม",
@@ -247,7 +259,7 @@ export const collegeProgramsData = [
 
 // ===== ผู้เข้าศึกษา (mock names, real structure) =====
 export const studentsData = [
-  { id: "วภท-2568-001", name: "นาย สมชาย ใจดี", college: "วภท.", status: "active", batch: 4, cpdCredits: 65, cpdTarget: 100, email: "somchai.j@example.com", phone: "081-234-5678" },
+  { id: meId, name: meFullName, college: "วภท.", status: "active", batch: 4, cpdCredits: meCpdCredits, cpdTarget: meCpdTarget, email: MEMBER.identity.email, phone: MEMBER.identity.phone },
   { id: "CPAT-2568-002", name: "นายโรนัลโด ซุยส์", college: "CPAT", status: "active", batch: 5, cpdCredits: 30, cpdTarget: 100, email: "somchai.r@example.com", phone: "082-345-6789" },
   { id: "วภช-2568-003", name: "นางสาวพิมพ์ใจ ตั้งใจเรียน", college: "วภช.", status: "leave", batch: 3, cpdCredits: 85, cpdTarget: 100, email: "pimjai.t@example.com", phone: "083-456-7890" },
   { id: "วภท-2568-004", name: "นายวิชัย พัฒนากุล", college: "วภท.", status: "active", batch: 4, cpdCredits: 72, cpdTarget: 100, email: "wichai.p@example.com", phone: "084-567-8901" },
@@ -255,21 +267,21 @@ export const studentsData = [
 
 // ===== รายละเอียดผู้เข้าศึกษา (mock person, real institutional fields) =====
 export const studentDetailData = {
-  name: "นาย สมชาย ใจดี", // mock
+  name: meFullName, // SSOT
   nameEn: "Somchai Jaidee",
   dob: "11 เมษายน 2543",
   nationality: "ไทย",
   religion: "พุทธ",
   address: "123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110",
-  id: "วภท-2568-001",
-  licenseNumber: "ภ.12345",
+  id: meId,
+  licenseNumber: meLicense,
   college: colleges["วภท."].fullName,
   collegeShort: "วภท.",
   program: "วุฒิบัตรแสดงความรู้ความชำนาญในการประกอบวิชาชีพเภสัชกรรม สาขาเภสัชบำบัด (BCP)",
   trainingYear: "2568",
   batch: 4,
-  cpdCredits: 65, // mock
-  cpdTarget: 100, // mock
+  cpdCredits: meCpdCredits, // SSOT
+  cpdTarget: meCpdTarget, // SSOT
   creditsEarned: 18, // mock
   creditsTotal: 36, // mock
   status: "active" as const,
@@ -452,19 +464,19 @@ export const cpdData = {
 // ===== Profile / Admission Mock Data =====
 export const profileData = {
   personalInfo: {
-    title: "ภก.",
-    firstName: "สมชาย",
-    lastName: "ใจดี",
-    firstNameEn: "Somchai",
-    lastNameEn: "Jaidee",
-    licenseNumber: "ภ.12345",
+    title: MEMBER.identity.titleTh,
+    firstName: MEMBER.identity.firstNameTh,
+    lastName: MEMBER.identity.lastNameTh,
+    firstNameEn: MEMBER.identity.firstNameEn,
+    lastNameEn: MEMBER.identity.lastNameEn,
+    licenseNumber: meLicense,
     licenseIssueDate: "15 เม.ย. 2565",
     birthDate: "11 เม.ย. 2543",
     age: 26,
-    nationality: "ไทย",  
+    nationality: MEMBER.identity.nationality,
     maritalStatus: "โสด",
-    email: "somchai.j@example.com",
-    phone: "081-234-5678",
+    email: MEMBER.identity.email,
+    phone: MEMBER.identity.phone,
     address: "123 ถ.สุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110",
   },
   workHistory: {

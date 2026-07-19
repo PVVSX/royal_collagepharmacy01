@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import { toast } from "sonner";
 import { useState } from "react";
 import { studentDetailData, profileData, registrationData, financeData, requestsData } from "@/data";
+import { currentMemberPassport } from "@/lib/domain";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -91,16 +92,12 @@ export default function StudentsPage() {
                 
                 {/* Specialty Tags */}
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mr-1">ความเชี่ยวชาญ:</span>
-                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border border-[#4D5A2D]/20 font-medium px-2.5 py-0.5 shadow-sm">
-                    <span className="material-symbols-outlined text-[12px] mr-1 text-[#4D5A2D] dark:text-[#c4c48a]">science</span> ATMPs
-                  </Badge>
-                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border border-[#4D5A2D]/20 font-medium px-2.5 py-0.5 shadow-sm">
-                    <span className="material-symbols-outlined text-[12px] mr-1 text-[#4D5A2D] dark:text-[#c4c48a]">bloodtype</span> Leukemia
-                  </Badge>
-                  <Badge variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border border-[#4D5A2D]/20 font-medium px-2.5 py-0.5 shadow-sm">
-                    <span className="material-symbols-outlined text-[12px] mr-1 text-[#4D5A2D] dark:text-[#c4c48a]">biotech</span> Cell & Gene Therapy
-                  </Badge>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mr-1">สาขาที่มุ่งพัฒนา:</span>
+                  {currentMemberPassport.focusAreas.map((area) => (
+                    <Badge key={area} variant="secondary" className="bg-[#4D5A2D]/10 text-[#4D5A2D] dark:text-[#c4c48a] dark:bg-[#4D5A2D]/20 border border-[#4D5A2D]/20 font-medium px-2.5 py-0.5 shadow-sm">
+                      <span className="material-symbols-outlined text-[12px] mr-1 text-[#4D5A2D] dark:text-[#c4c48a]">stars</span> {area}
+                    </Badge>
+                  ))}
                 </div>
 
                 {/* IDs & Contact */}
@@ -165,7 +162,7 @@ export default function StudentsPage() {
                       </div>
                       <div className="relative z-10 mt-auto flex flex-col items-center bg-white text-black p-3 rounded-xl shadow-xl w-full max-w-[200px] mb-2">
                         <div className="w-24 h-24 bg-muted rounded-md overflow-hidden shrink-0">
-                          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=RPC-2569-KARINA" alt="QR Code" className="w-full h-full" />
+                          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentMemberPassport.verifyToken)}`} alt="QR Code" className="w-full h-full" />
                         </div>
                         <span className="text-[10px] text-muted-foreground font-medium mt-2">สแกนเพื่อยืนยันตัวตน</span>
                       </div>

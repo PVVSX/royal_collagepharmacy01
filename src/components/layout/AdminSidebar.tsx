@@ -9,7 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 
 const navItems = [
   { href: "/admin/dashboard", icon: "dashboard", label: "ภาพรวมแอดมิน" },
-  { href: "/admin/admissions", icon: "how_to_reg", label: "อนุมัติการสมัครเรียน" },
+  { href: "/admin/admissions", icon: "how_to_reg", label: "อนุมัติการสมัครสอบ" },
   { href: "/admin/registrations", icon: "rule", label: "อนุมัติการลงทะเบียน" },
   { href: "/admin/finance", icon: "payments", label: "ตรวจสอบการเงิน" },
   { href: "/admin/courses", icon: "library_books", label: "จัดการรายวิชา" },
