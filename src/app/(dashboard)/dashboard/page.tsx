@@ -16,13 +16,23 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 md:p-6 pb-16 max-w-[1280px] mx-auto">
-      <header className="mb-5">
-        <h1 className="text-lg md:text-xl font-semibold mb-0.5">
-          ยินดีต้อนรับกลับ, {d.studentName}
-        </h1>
-        <p className="text-xs text-muted-foreground">
-          รหัสประจำตัว: {d.studentId}
-        </p>
+      <header className="mb-5 overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-5 py-4 md:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">ระบบสารสนเทศสมาชิก · ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย</p>
+              <h1 className="mt-0.5 text-lg font-bold tracking-tight md:text-xl">ยินดีต้อนรับ, {d.studentName}</h1>
+              <p className="text-xs text-muted-foreground">รหัสสมาชิก: <span className="font-mono">{d.studentId}</span></p>
+            </div>
+            <Link
+              href="/passport"
+              className="inline-flex items-center gap-2 self-start rounded-lg border border-primary/30 bg-primary/5 px-3.5 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 sm:self-auto"
+            >
+              <span className="material-symbols-outlined text-[18px]">badge</span>
+              เปิดหนังสือเดินทางวิชาชีพ
+            </Link>
+          </div>
+        </div>
       </header>
 
       {/* Metric Cards */}

@@ -20,10 +20,11 @@ const navGroups: {
     groupLabel: "เมนูหลัก",
     items: [
       { href: "/dashboard", icon: "dashboard", label: "ภาพรวม" },
+      { href: "/passport", icon: "badge", label: "หนังสือเดินทางวิชาชีพ" },
       { href: "/students", icon: "person", label: "ข้อมูลของฉัน" },
       { href: "/cpd", icon: "workspace_premium", label: "หน่วยกิต CPD" },
       { href: "/pathway", icon: "route", label: "เส้นทางการศึกษา" },
-      { href: "/admission", icon: "school", label: "สมัครเรียน" },
+      { href: "/admission", icon: "quiz", label: "สมัครสอบ" },
       { href: "/research", icon: "science", label: "ฐานข้อมูลงานวิจัย" },
     ],
   },
