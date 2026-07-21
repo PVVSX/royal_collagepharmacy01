@@ -80,7 +80,7 @@ export default function LoginPage() {
           <div className="mb-8">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-primary mb-1">ระบบสารสนเทศสมาชิก · Member Portal</p>
             <h2 className="text-2xl font-bold text-foreground mb-2">เข้าสู่ระบบ</h2>
-            <p className="text-sm text-muted-foreground">กรุณาเข้าสู่ระบบเพื่อเข้าใช้งานหนังสือเดินทางวิชาชีพและบริการต่างๆ</p>
+            <p className="text-sm text-muted-foreground">กรุณาเข้าสู่ระบบเพื่อเข้าใช้งาน Professional Profile และบริการต่างๆ</p>
           </div>
 
           <form className="space-y-5" onSubmit={handleLogin}>

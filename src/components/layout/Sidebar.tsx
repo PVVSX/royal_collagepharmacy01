@@ -20,7 +20,7 @@ const navGroups: {
     groupLabel: "เมนูหลัก",
     items: [
       { href: "/dashboard", icon: "dashboard", label: "ภาพรวม" },
-      { href: "/passport", icon: "badge", label: "หนังสือเดินทางวิชาชีพ" },
+      { href: "/passport", icon: "badge", label: "Professional Profile" },
       { href: "/students", icon: "person", label: "ข้อมูลของฉัน" },
       { href: "/cpd", icon: "workspace_premium", label: "หน่วยกิต CPD" },
       { href: "/pathway", icon: "route", label: "เส้นทางการศึกษา" },
@@ -62,7 +62,7 @@ function SidebarNav({ pathname }: { pathname: string }) {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-bold leading-tight text-sidebar-foreground">
-              ฐานข้อมูลเภสัชกร
+              ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย
             </p>
             <p className="text-xs opacity-90 text-sidebar-foreground/70 mt-0.5">
               Pharmacist Database

@@ -154,6 +154,68 @@ export const currentMemberPassport: ProfessionalPassport = {
     },
   ],
 
+  // ── I. Endorsements (สิทธิ/ใบรับรองเฉพาะทาง) ──────────────────────────────
+  endorsements: [
+    {
+      id: "end-imm",
+      kind: "immunization",
+      titleTh: "ผู้ผ่านการอบรมการให้บริการฉีดวัคซีนโดยเภสัชกร",
+      issuedAt: "2023-08-10",
+      expiresAt: "2026-09-30", // ใกล้หมดอายุ — ใช้สาธิต UX แจ้งเตือน
+      refNo: "IMM-2566-0421",
+      verification: verified("สภาเภสัชกรรม", "2023-08-10"),
+    },
+    {
+      id: "end-mtm",
+      kind: "medication_therapy",
+      titleTh: "การบริบาลทางเภสัชกรรมผู้ป่วยโรคเรื้อรัง (MTM)",
+      issuedAt: "2024-02-01",
+      verification: verified("วิทยาลัยเภสัชบำบัดแห่งประเทศไทย", "2024-02-01"),
+    },
+    {
+      id: "end-primary",
+      kind: "primary_care",
+      titleTh: "เภสัชกรครอบครัว / เภสัชกรรมปฐมภูมิ",
+      issuedAt: "2024-06-15",
+      refNo: "PC-2567-0088",
+      verification: selfDeclared(),
+    },
+  ],
+
+  // ── J. Practice Sites (สถานที่ประกอบวิชาชีพ) ──────────────────────────────
+  practiceSites: [
+    {
+      id: "site-siriraj",
+      nameTh: "ฝ่ายเภสัชกรรม โรงพยาบาลศิริราช",
+      sector: "hospital_public",
+      roleTh: "เภสัชกรประจำหอผู้ป่วยใน (IPD)",
+      addressTh: "เลขที่ 2 ถนนวังหลัง แขวงศิริราช เขตบางกอกน้อย",
+      province: "กรุงเทพมหานคร",
+      isPrimary: true,
+      verification: verified("โรงพยาบาลศิริราช", "2022-05-01"),
+    },
+    {
+      id: "site-healthplus",
+      nameTh: "ร้านยา Health Plus (สาขาปิ่นเกล้า)",
+      sector: "community_pharmacy",
+      roleTh: "ผู้มีหน้าที่ปฏิบัติการ (นอกเวลาราชการ)",
+      addressTh: "ถนนบรมราชชนนี แขวงอรุณอมรินทร์ เขตบางกอกน้อย",
+      province: "กรุงเทพมหานคร",
+      isPrimary: false,
+      verification: selfDeclared(),
+    },
+  ],
+
+  // ── K. Disciplinary / Ethics standing (ประวัติสะอาด — ไม่มีการถูกลงโทษ) ────
+  disciplinary: [],
+
+  // ── L. Disclosure scope (ควบคุมข้อมูลที่แสดงตอนสแกน QR สาธารณะ) ────────────
+  // ตั้งใจไม่เปิด practiceSite / experience / contact เพื่อสาธิตการเคารพ privacy
+  disclosure: {
+    publicFields: ["photo", "license", "specializations", "endorsements", "competencies", "cpd"],
+    updatedAt: "2026-07-19",
+  },
+
   // ── สาขาที่สนใจ/มุ่งพัฒนา (ไม่ใช่ certified — ใช้เสริมการจับคู่) ───────────
   focusAreas: ["เภสัชบำบัด (Pharmacotherapy)", "ATMPs", "Cell & Gene Therapy"],
 

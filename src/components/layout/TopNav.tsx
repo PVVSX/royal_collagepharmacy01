@@ -33,7 +33,7 @@ const breadcrumbMap: Record<string, { trail: { label: string; href: string }[]; 
   "/finance/channels": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }, { label: "การเงิน", href: "/finance" }], current: "ช่องทางการชำระเงิน" },
   "/requests": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "คำร้องของฉัน" },
   "/admission": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "สมัครสอบออนไลน์" },
-  "/passport": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "หนังสือเดินทางวิชาชีพ" },
+  "/passport": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "Professional Profile" },
   "/news": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "ข่าวสารและประกาศ" },
   "/programs": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "หลักสูตรและรายวิชา" },
   "/programs/by-college": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }, { label: "หลักสูตร", href: "/programs" }], current: "แยกตามวิทยาลัย" },

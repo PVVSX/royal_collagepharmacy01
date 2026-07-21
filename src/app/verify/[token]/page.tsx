@@ -14,6 +14,8 @@ import {
   formatThaiDate,
   credentialTypeLabels,
   licenseStatusLabels,
+  endorsementLabels,
+  type DisclosureField,
 } from "@/lib/domain";
 
 export default function VerifyPage({ params }: { params: Promise<{ token: string }> }) {
@@ -24,7 +26,7 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 p-6 text-center">
         <span className="material-symbols-outlined mb-3 text-5xl text-red-500">gpp_bad</span>
-        <h1 className="text-xl font-bold">ไม่พบข้อมูลหนังสือเดินทางวิชาชีพ</h1>
+        <h1 className="text-xl font-bold">ไม่พบข้อมูล Professional Profile</h1>
         <p className="mt-1 text-sm text-muted-foreground">รหัสตรวจสอบ <span className="font-mono">{token}</span> ไม่ถูกต้องหรือถูกยกเลิก</p>
       </div>
     );
@@ -32,6 +34,8 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
 
   const licMeta = licenseStatusLabels[p.license.status];
   const verifiedCompetencies = p.competencies.filter((c) => c.verification.status === "verified").length;
+  // เคารพ disclosure scope: แสดงเฉพาะ field ที่เจ้าของยินยอมเปิดเผยผ่าน QR สาธารณะ
+  const show = (f: DisclosureField) => p.disclosure.publicFields.includes(f);
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-gradient-to-b from-primary/5 to-muted/20 p-4 py-10">
@@ -63,29 +67,57 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
           </div>
 
           {/* Specializations */}
-          <div className="mt-4 w-full text-left">
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">ความเชี่ยวชาญเฉพาะทาง</div>
-            <div className="space-y-1.5">
-              {p.specializations.map((s) => (
-                <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-                  <span className="text-xs font-medium">{s.specialtyTh} · {s.collegeShort}</span>
-                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">{credentialTypeLabels[s.type]}</span>
-                </div>
-              ))}
+          {show("specializations") && (
+            <div className="mt-4 w-full text-left">
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">ความเชี่ยวชาญเฉพาะทาง</div>
+              <div className="space-y-1.5">
+                {p.specializations.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                    <span className="text-xs font-medium">{s.specialtyTh} · {s.collegeShort}</span>
+                    <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">{credentialTypeLabels[s.type]}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="mt-4 flex w-full items-center justify-center gap-6 rounded-lg bg-muted/40 py-3 text-center">
-            <div>
-              <div className="text-lg font-bold text-primary">{verifiedCompetencies}</div>
-              <div className="text-[10px] text-muted-foreground">สมรรถนะที่รับรอง</div>
+          {/* Endorsements */}
+          {show("endorsements") && p.endorsements.length > 0 && (
+            <div className="mt-4 w-full text-left">
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">สิทธิเฉพาะทาง</div>
+              <div className="flex flex-wrap gap-1.5">
+                {p.endorsements.map((e) => (
+                  <span key={e.id} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium">
+                    <span className="material-symbols-outlined text-[13px] text-primary">{endorsementLabels[e.kind].icon}</span>
+                    {endorsementLabels[e.kind].th}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div className="h-8 w-px bg-border" />
-            <div>
-              <div className="text-lg font-bold text-primary">{p.cpd.currentCredits}</div>
-              <div className="text-[10px] text-muted-foreground">หน่วยกิต CPD</div>
+          )}
+
+          {(show("competencies") || show("cpd")) && (
+            <div className="mt-4 flex w-full items-center justify-center gap-6 rounded-lg bg-muted/40 py-3 text-center">
+              {show("competencies") && (
+                <div>
+                  <div className="text-lg font-bold text-primary">{verifiedCompetencies}</div>
+                  <div className="text-[10px] text-muted-foreground">สมรรถนะที่รับรอง</div>
+                </div>
+              )}
+              {show("competencies") && show("cpd") && <div className="h-8 w-px bg-border" />}
+              {show("cpd") && (
+                <div>
+                  <div className="text-lg font-bold text-primary">{p.cpd.currentCredits}</div>
+                  <div className="text-[10px] text-muted-foreground">หน่วยกิต CPD</div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
+
+          <p className="mt-3 flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
+            <span className="material-symbols-outlined text-[12px]">privacy_tip</span>
+            แสดงเฉพาะข้อมูลที่เจ้าของยินยอมเปิดเผย
+          </p>
         </div>
 
         {/* Footer */}

@@ -175,6 +175,89 @@ export interface AcademicWork extends Verifiable {
   venue?: string;
 }
 
+// ─── I. Endorsements (สิทธิ/ใบรับรองเฉพาะทางที่ขยายขอบเขตการปฏิบัติ) ──────────
+// แยกจาก specializations (วุฒิบัตร/หนังสืออนุมัติ): endorsement = สิทธิปฏิบัติเฉพาะ
+// เช่น ฉีดวัคซีน, บริบาลทางเภสัชกรรม, ผู้มีหน้าที่ปฏิบัติการ ตาม พ.ร.บ.ยา
+
+export type EndorsementKind =
+  | "immunization"          // การให้บริการฉีดวัคซีน
+  | "medication_therapy"    // การบริบาลทางเภสัชกรรม (MTM)
+  | "sterile_compounding"   // การเตรียมยาปราศจากเชื้อ
+  | "primary_care"          // เภสัชกรรมปฐมภูมิ
+  | "pharmacy_manager"      // ผู้มีหน้าที่ปฏิบัติการ/ผู้จัดการเภสัชกรรม
+  | "other";
+
+export interface Endorsement extends Verifiable {
+  id: string;
+  kind: EndorsementKind;
+  titleTh: string;
+  issuedAt: IsoDate;
+  /** ว่าง = ไม่มีวันหมดอายุ */
+  expiresAt?: IsoDate;
+  refNo?: string;
+}
+
+// ─── J. Practice Sites (สถานที่ประกอบวิชาชีพ — แบบมีโครงสร้าง) ────────────────
+
+export type PracticeSector =
+  | "hospital_public"
+  | "hospital_private"
+  | "community_pharmacy"
+  | "manufacturer"
+  | "academic"
+  | "regulator"
+  | "other";
+
+export interface PracticeSite extends Verifiable {
+  id: string;
+  nameTh: string;
+  sector: PracticeSector;
+  /** บทบาท ณ สถานที่นี้ เช่น "ผู้มีหน้าที่ปฏิบัติการ" ตาม พ.ร.บ.ยา */
+  roleTh?: string;
+  addressTh: string;
+  province: string;
+  isPrimary: boolean;
+}
+
+// ─── K. Disciplinary / Ethics standing (ประวัติจรรยาบรรณ) ────────────────────
+// array ว่าง = ประวัติสะอาด (ไม่มีการถูกลงโทษ) — UX แสดงสถานะเชิงบวก
+
+export type DisciplinaryAction =
+  | "warning"      // ตักเตือน
+  | "probation"    // ภาคทัณฑ์
+  | "fine"         // ปรับ
+  | "suspension"   // พักใช้ใบอนุญาต
+  | "revocation";  // เพิกถอนใบอนุญาต
+
+export interface DisciplinaryRecord extends Verifiable {
+  id: string;
+  action: DisciplinaryAction;
+  reasonTh: string;
+  date: IsoDate;
+  /** วันพ้นโทษ/ยุติเรื่อง (ว่าง = ยังมีผลอยู่) */
+  resolvedAt?: IsoDate;
+}
+
+// ─── L. Disclosure scope (ขอบเขตการเปิดเผยข้อมูลผ่าน public QR verify) ────────
+// เจ้าของควบคุมว่า "เมื่อถูกสแกน QR สาธารณะ" ให้แสดง field ใดบ้าง (consent/privacy)
+
+export type DisclosureField =
+  | "photo"
+  | "license"
+  | "specializations"
+  | "endorsements"
+  | "competencies"
+  | "cpd"
+  | "practiceSite"
+  | "experience"
+  | "contact";
+
+export interface DisclosureScope {
+  /** field ที่เจ้าของยินยอมให้เปิดเผยตอนสแกน QR สาธารณะ */
+  publicFields: DisclosureField[];
+  updatedAt: IsoDate;
+}
+
 // ─── The Passport (ประกอบทุกบล็อก) ──────────────────────────────────────────
 
 export interface ProfessionalPassport {
@@ -192,6 +275,10 @@ export interface ProfessionalPassport {
   cpd: CpdSummary;                 // E
   experience: WorkExperience[];    // F
   academicWork: AcademicWork[];    // G
+  endorsements: Endorsement[];         // I  — สิทธิ/ใบรับรองเฉพาะทาง
+  practiceSites: PracticeSite[];       // J  — สถานที่ประกอบวิชาชีพ
+  disciplinary: DisciplinaryRecord[];  // K  — ประวัติจรรยาบรรณ (ว่าง = สะอาด)
+  disclosure: DisclosureScope;         // L  — ขอบเขตการเปิดเผยข้อมูลสาธารณะ
 
   /** สาขาที่สนใจ/มุ่งพัฒนา (ใช้เสริมการจับคู่) — ยังไม่ใช่ certified */
   focusAreas: string[];
@@ -227,4 +314,43 @@ export const verificationLabels: Record<VerificationStatus, { th: string; tone: 
   pending: { th: "รอตรวจสอบ", tone: "warn" },
   self_declared: { th: "แจ้งด้วยตนเอง", tone: "muted" },
   rejected: { th: "ไม่ผ่าน", tone: "danger" },
+};
+
+export const endorsementLabels: Record<EndorsementKind, { th: string; icon: string }> = {
+  immunization: { th: "การให้บริการฉีดวัคซีน", icon: "vaccines" },
+  medication_therapy: { th: "การบริบาลทางเภสัชกรรม (MTM)", icon: "clinical_notes" },
+  sterile_compounding: { th: "การเตรียมยาปราศจากเชื้อ", icon: "sanitizer" },
+  primary_care: { th: "เภสัชกรรมปฐมภูมิ", icon: "local_hospital" },
+  pharmacy_manager: { th: "ผู้มีหน้าที่ปฏิบัติการ", icon: "storefront" },
+  other: { th: "สิทธิเฉพาะทางอื่นๆ", icon: "verified_user" },
+};
+
+export const practiceSectorLabels: Record<PracticeSector, string> = {
+  hospital_public: "โรงพยาบาลรัฐ",
+  hospital_private: "โรงพยาบาลเอกชน",
+  community_pharmacy: "ร้านยา / เภสัชกรรมชุมชน",
+  manufacturer: "โรงงานผลิตยา / อุตสาหการ",
+  academic: "สถาบันการศึกษา",
+  regulator: "หน่วยงานกำกับ / ราชการ",
+  other: "อื่นๆ",
+};
+
+export const disciplinaryActionLabels: Record<DisciplinaryAction, { th: string; tone: "warn" | "danger" }> = {
+  warning: { th: "ตักเตือน", tone: "warn" },
+  probation: { th: "ภาคทัณฑ์", tone: "warn" },
+  fine: { th: "ปรับ", tone: "warn" },
+  suspension: { th: "พักใช้ใบอนุญาต", tone: "danger" },
+  revocation: { th: "เพิกถอนใบอนุญาต", tone: "danger" },
+};
+
+export const disclosureFieldLabels: Record<DisclosureField, string> = {
+  photo: "รูปถ่าย",
+  license: "เลขที่ / สถานะใบอนุญาต",
+  specializations: "ความเชี่ยวชาญเฉพาะทาง",
+  endorsements: "สิทธิ / ใบรับรองเฉพาะทาง",
+  competencies: "สมรรถนะวิชาชีพ",
+  cpd: "หน่วยกิต CPD",
+  practiceSite: "สถานที่ประกอบวิชาชีพ",
+  experience: "ประสบการณ์วิชาชีพ",
+  contact: "ข้อมูลติดต่อ",
 };

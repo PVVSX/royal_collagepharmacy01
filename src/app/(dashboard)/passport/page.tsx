@@ -21,6 +21,10 @@ import {
   licenseStatusLabels,
   credentialTypeLabels,
   verificationLabels,
+  endorsementLabels,
+  practiceSectorLabels,
+  disciplinaryActionLabels,
+  disclosureFieldLabels,
   type Verification,
   type ProficiencyLevel,
 } from "@/lib/domain";
@@ -90,6 +94,14 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
   );
 }
 
+// อายุใบรับรอง: helper สำหรับ UX แจ้งเตือนหมดอายุ / ใกล้หมดอายุ (ภายใน 90 วัน)
+const DAY_MS = 86_400_000;
+const isExpired = (iso: string) => new Date(iso).getTime() < Date.now();
+const isExpiringSoon = (iso: string) => {
+  const diff = new Date(iso).getTime() - Date.now();
+  return diff >= 0 && diff <= 90 * DAY_MS;
+};
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function PassportPage() {
@@ -112,7 +124,7 @@ export default function PassportPage() {
         <a href="/dashboard" className="transition-colors hover:text-primary">หน้าหลัก</a>
         <span className="material-symbols-outlined text-[16px] text-muted-foreground/50">chevron_right</span>
         <span className="flex items-center gap-1 font-medium text-primary">
-          <span className="material-symbols-outlined text-[16px]">badge</span> หนังสือเดินทางวิชาชีพ
+          <span className="material-symbols-outlined text-[16px]">badge</span> Professional Profile
         </span>
       </div>
 
@@ -131,9 +143,8 @@ export default function PassportPage() {
             <div className="hidden shrink-0 text-right md:block">
               <div className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
                 <span className="material-symbols-outlined text-[15px]">badge</span>
-                หนังสือเดินทางวิชาชีพ
+                Professional Profile
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">Professional Passport</p>
             </div>
           </div>
         </div>
@@ -401,10 +412,127 @@ export default function PassportPage() {
         </div>
       </div>
 
+      {/* ══ I. Endorsements + J. Practice sites ══ */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {/* I. Endorsements */}
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+          <SectionHeader label="สิทธิและใบรับรองเฉพาะทาง" icon="badge" sub="สิทธิปฏิบัติที่ขยายขอบเขตการประกอบวิชาชีพ" />
+          <div className="space-y-3">
+            {p.endorsements.map((e) => {
+              const meta = endorsementLabels[e.kind];
+              const expired = e.expiresAt ? isExpired(e.expiresAt) : false;
+              const expSoon = e.expiresAt ? isExpiringSoon(e.expiresAt) : false;
+              return (
+                <div key={e.id} className="flex items-start gap-3 rounded-lg border border-border p-4">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <span className="material-symbols-outlined text-[20px]">{meta.icon}</span>
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-sm font-semibold leading-snug text-foreground">{e.titleTh}</h3>
+                      <VerifyBadge verification={e.verification} />
+                    </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {meta.th}{e.refNo ? ` · เลขที่ ${e.refNo}` : ""}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
+                      <span className="text-muted-foreground">ออกเมื่อ {formatThaiDate(e.issuedAt)}</span>
+                      {e.expiresAt && (
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-medium ${expired ? toneClass.danger : expSoon ? toneClass.warn : toneClass.muted}`}>
+                          <span className="material-symbols-outlined text-[12px]">{expired ? "event_busy" : "event"}</span>
+                          {expired ? "หมดอายุแล้ว" : expSoon ? "ใกล้หมดอายุ" : "ถึง"} {formatThaiDate(e.expiresAt)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* J. Practice sites */}
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+          <SectionHeader label="สถานที่ประกอบวิชาชีพ" icon="location_on" sub="สถานที่ปฏิบัติงานที่ขึ้นทะเบียน" />
+          <div className="space-y-3">
+            {p.practiceSites.map((s) => (
+              <div key={s.id} className={`rounded-lg border p-4 ${s.isPrimary ? "border-primary/40 bg-primary/5" : "border-border"}`}>
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground">{s.nameTh}</h3>
+                    {s.isPrimary && <span className="shrink-0 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-bold text-primary">หลัก</span>}
+                  </div>
+                  <VerifyBadge verification={s.verification} />
+                </div>
+                <p className="text-[11px] font-medium text-primary">{practiceSectorLabels[s.sector]}</p>
+                {s.roleTh && <p className="mt-0.5 text-xs text-foreground">{s.roleTh}</p>}
+                <p className="mt-1 flex items-start gap-1 text-[11px] text-muted-foreground">
+                  <span className="material-symbols-outlined text-[13px]">place</span>
+                  {s.addressTh} · {s.province}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ══ K. Ethics standing + L. Disclosure scope ══ */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {/* K. Disciplinary / ethics standing */}
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+          <SectionHeader label="สถานะทางจรรยาบรรณ" icon="gavel" sub="ประวัติการถูกลงโทษทางจรรยาบรรณวิชาชีพ" />
+          {p.disciplinary.length === 0 ? (
+            <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+              <span className="material-symbols-outlined text-[28px] text-emerald-600 dark:text-emerald-400">verified_user</span>
+              <div>
+                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">ไม่มีประวัติการถูกลงโทษทางจรรยาบรรณ</p>
+                <p className="text-[11px] text-emerald-700/70 dark:text-emerald-300/70">สถานะสะอาด ณ วันที่ตรวจสอบ · รับรองโดย{p.issuingAuthority.regulatorTh}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {p.disciplinary.map((d) => {
+                const meta = disciplinaryActionLabels[d.action];
+                return (
+                  <div key={d.id} className={`rounded-lg border p-4 ${toneClass[meta.tone]}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-bold">{meta.th}</span>
+                      <span className="text-[11px]">{d.resolvedAt ? `พ้นโทษ ${formatThaiDate(d.resolvedAt)}` : "ยังมีผล"}</span>
+                    </div>
+                    <p className="mt-1 text-xs">{d.reasonTh}</p>
+                    <p className="mt-1 text-[11px] opacity-70">เมื่อ {formatThaiDate(d.date)}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* L. Disclosure scope */}
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+          <SectionHeader label="การเปิดเผยข้อมูลสาธารณะ" icon="privacy_tip" sub="ควบคุมข้อมูลที่แสดงเมื่อถูกสแกน QR ตรวจสอบ" />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {(Object.keys(disclosureFieldLabels) as (keyof typeof disclosureFieldLabels)[]).map((f) => {
+              const on = p.disclosure.publicFields.includes(f);
+              return (
+                <div key={f} className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 ${on ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30"}`}>
+                  <span className={`text-xs font-medium ${on ? "text-foreground" : "text-muted-foreground"}`}>{disclosureFieldLabels[f]}</span>
+                  <span className={`material-symbols-outlined text-[18px] ${on ? "text-primary" : "text-muted-foreground/50"}`}>{on ? "visibility" : "visibility_off"}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-3 flex items-start gap-1.5 text-[11px] text-muted-foreground">
+            <span className="material-symbols-outlined text-[14px]">info</span>
+            รายการที่ปิดจะไม่แสดงต่อผู้ตรวจสอบภายนอก · ปรับปรุงล่าสุด {formatThaiDate(p.disclosure.updatedAt)}
+          </p>
+        </div>
+      </div>
+
       {/* Footer note */}
       <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
         <span className="material-symbols-outlined text-[14px]">shield</span>
-        ข้อมูลนี้เป็นหนังสือเดินทางวิชาชีพมาตรฐานกลาง ออกโดย{p.issuingAuthority.nameTh} · ปรับปรุงล่าสุด {formatThaiDate(p.updatedAt)}
+        ข้อมูลนี้เป็น Professional Profile มาตรฐานกลาง ออกโดย{p.issuingAuthority.nameTh} · ปรับปรุงล่าสุด {formatThaiDate(p.updatedAt)}
       </p>
 
       <Footer />
