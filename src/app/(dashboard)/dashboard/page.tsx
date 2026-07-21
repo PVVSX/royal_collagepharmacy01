@@ -16,24 +16,34 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 md:p-6 pb-16 max-w-[1280px] mx-auto">
-      <header className="mb-5">
-        <h1 className="text-lg md:text-xl font-semibold mb-0.5">
-          ยินดีต้อนรับกลับ, {d.studentName}
-        </h1>
-        <p className="text-xs text-muted-foreground">
-          รหัสประจำตัว: {d.studentId}
-        </p>
+      <header className="mb-5 overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+        <div className="border-b-2 border-primary bg-card px-5 py-4 md:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">ระบบสารสนเทศสมาชิก · ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย</p>
+              <h1 className="mt-0.5 text-lg font-bold tracking-tight md:text-xl">ยินดีต้อนรับ, {d.studentName}</h1>
+              <p className="text-xs text-muted-foreground">รหัสสมาชิก: <span className="font-mono">{d.studentId}</span></p>
+            </div>
+            <Link
+              href="/passport"
+              className="inline-flex items-center gap-2 self-start rounded-lg border border-primary/30 bg-primary/5 px-3.5 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 sm:self-auto"
+            >
+              <span className="material-symbols-outlined text-[18px]">badge</span>
+              เปิด Professional Profile
+            </Link>
+          </div>
+        </div>
       </header>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
         {[
-          { icon: "workspace_premium", label: "หน่วยกิต CPD", value: `${cpdData.currentCredits}/${cpdData.targetCredits}`, color: "text-primary", bg: "bg-primary/10", border: false, borderDestructive: false },
-          { icon: "credit_score", label: "หน่วยกิตฝึกอบรม", value: `${d.creditsEarned}/${d.creditsTotal}`, color: "text-chart-3", bg: "bg-chart-3/10", border: true, borderDestructive: false },
-          { icon: "how_to_reg", label: "สถานะการฝึกอบรม", value: d.trainingStatus, color: "text-secondary-foreground", bg: "bg-secondary/20", border: false, borderDestructive: false },
-          // { icon: "warning", label: "ยอดค้างชำระ", value: `฿${d.balanceDue.toLocaleString()}`, color: "text-destructive", bg: "bg-destructive/10", border: false, borderDestructive: true },
+          { icon: "workspace_premium", label: "หน่วยกิต CPD", value: `${cpdData.currentCredits}/${cpdData.targetCredits}`, color: "text-primary", bg: "bg-primary/10", borderColor: "border-l-primary" },
+          { icon: "credit_score", label: "หน่วยกิตฝึกอบรม", value: `${d.creditsEarned}/${d.creditsTotal}`, color: "text-chart-3", bg: "bg-chart-3/10", borderColor: "border-l-chart-3" },
+          { icon: "how_to_reg", label: "สถานะการฝึกอบรม", value: d.trainingStatus, color: "text-chart-4", bg: "bg-chart-4/10", borderColor: "border-l-chart-4" },
+          // { icon: "warning", label: "ยอดค้างชำระ", value: `฿${d.balanceDue.toLocaleString()}`, color: "text-destructive", bg: "bg-destructive/10", borderColor: "border-l-destructive" },
         ].map((m) => (
-          <Card key={m.label} className={`card-shadow ${m.border ? "border-l-4 border-l-chart-3" : ""} ${m.borderDestructive ? "border-l-4 border-l-destructive" : ""}`}>
+          <Card key={m.label} className={`card-shadow border-l-4 ${m.borderColor}`}>
             <CardContent className="p-4 flex items-center gap-3">
               <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${m.bg} flex-shrink-0`}>
                 <span className={`${iconClass} ${m.color}`}>{m.icon}</span>
@@ -62,7 +72,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* CPD Progress */}
-        <Card className="lg:col-span-2 card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
+        <Card className="lg:col-span-2 card-shadow hover:border-primary/40 transition-colors">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">ความคืบหน้าการสะสม CPD</CardTitle>
             <CardDescription className="text-xs">สะสมได้ {cpdData.currentCredits} จาก {cpdData.targetCredits} CPD · หมดอายุ {cpdData.expiryDate}</CardDescription>
@@ -106,7 +116,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Credits Donut */}
-        <Card className="card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
+        <Card className="card-shadow hover:border-primary/40 transition-colors">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">ความก้าวหน้าหน่วยกิต</CardTitle>
             <CardDescription className="text-xs">เก็บได้แล้ว {d.creditsEarned} จาก {d.creditsTotal} หน่วยกิต</CardDescription>
@@ -119,7 +129,7 @@ export default function DashboardPage() {
             
             <div className="grid grid-cols-2 gap-3 mt-1">
               {d.creditsBreakdown.map((item, i) => (
-                <div key={i} className="flex flex-col bg-muted/40 p-3.5 rounded-xl border border-border/50 hover:bg-muted/80 transition-colors">
+                <div key={i} className="flex flex-col bg-muted/40 p-3.5 rounded-lg border border-border/50 hover:bg-muted/80 transition-colors">
                   <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
                     <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: item.fill }} />
                     <span className="text-[11px] font-medium">{item.name}</span>

@@ -90,7 +90,7 @@ function CardContent({
   return (
     <div
       className={cn(
-        "relative bg-card rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group",
+        "relative bg-card rounded-lg border shadow-sm hover:border-primary/40 transition-colors duration-300 cursor-pointer group",
         step.status === "current" && "border-blue-300/50 dark:border-blue-700/30 shadow-md shadow-blue-500/5",
         step.status === "recommended" && "border-dashed border-muted-foreground/20 opacity-80 hover:opacity-100",
       )}
@@ -224,7 +224,7 @@ function CardContent({
                 {step.status === "recommended" && (step.reason || step.richDetails) && (
                   <div className="mt-3 space-y-2">
                     {step.reason && (
-                      <div className="p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/30 dark:border-amber-800/20">
+                      <div className="p-3 rounded-lg bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/30 dark:border-amber-800/20">
                         <div className="flex items-start gap-2">
                           <span className="material-symbols-outlined text-[14px] text-amber-500 mt-0.5 shrink-0">lightbulb</span>
                           <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">{step.reason}</p>
@@ -233,7 +233,7 @@ function CardContent({
                     )}
                     
                     {step.richDetails && (
-                      <div className="p-3 rounded-xl bg-blue-50/50 dark:bg-blue-950/10 border border-blue-200/30 dark:border-blue-800/20 relative overflow-hidden group/detail">
+                      <div className="p-3 rounded-lg bg-blue-50/50 dark:bg-blue-950/10 border border-blue-200/30 dark:border-blue-800/20 relative overflow-hidden group/detail">
                         {/* Decoration */}
                         <div className="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/5 rounded-full blur-xl group-hover/detail:bg-blue-500/10 transition-colors" />
                         
@@ -377,7 +377,7 @@ export default function PathwayPage() {
                 <button
                   onClick={() => setShowAll(true)}
                   className={cn(
-                    "group flex items-center gap-2.5 px-6 py-3 rounded-2xl",
+                    "group flex items-center gap-2.5 px-6 py-3 rounded-lg",
                     "bg-gradient-to-r from-[#5a5a28]/90 to-[#7a7a32]/90 hover:from-[#5a5a28] hover:to-[#7a7a32]",
                     "text-white font-semibold text-sm shadow-lg shadow-[#5a5a28]/20",
                     "hover:shadow-xl hover:shadow-[#5a5a28]/30 hover:scale-[1.02]",
@@ -405,7 +405,7 @@ export default function PathwayPage() {
                   onClick={() => setShowAll(false)}
                   className={cn(
                     "group flex items-center gap-2 px-5 py-2 rounded-full",
-                    "bg-card border shadow-sm hover:shadow-md",
+                    "bg-card border shadow-sm hover:border-primary/40 transition-colors",
                     "text-muted-foreground hover:text-foreground text-xs font-medium",
                     "transition-all duration-300"
                   )}
@@ -478,7 +478,7 @@ export default function PathwayPage() {
                   onClick={() => setShowAll(false)}
                   className={cn(
                     "group flex items-center gap-2 px-5 py-2 rounded-full",
-                    "bg-card border shadow-sm hover:shadow-md",
+                    "bg-card border shadow-sm hover:border-primary/40 transition-colors",
                     "text-muted-foreground hover:text-foreground text-xs font-medium",
                     "transition-all duration-300"
                   )}

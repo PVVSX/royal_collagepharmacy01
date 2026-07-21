@@ -32,7 +32,8 @@ const breadcrumbMap: Record<string, { trail: { label: string; href: string }[]; 
   "/finance": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "การเงิน" },
   "/finance/channels": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }, { label: "การเงิน", href: "/finance" }], current: "ช่องทางการชำระเงิน" },
   "/requests": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "คำร้องของฉัน" },
-  "/admission": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "สมัครเรียนออนไลน์" },
+  "/admission": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "สมัครสอบออนไลน์" },
+  "/passport": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "Professional Profile" },
   "/news": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "ข่าวสารและประกาศ" },
   "/programs": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }], current: "หลักสูตรและรายวิชา" },
   "/programs/by-college": { trail: [{ label: "หน้าหลัก", href: "/dashboard" }, { label: "หลักสูตร", href: "/programs" }], current: "แยกตามวิทยาลัย" },
@@ -62,7 +63,7 @@ export default function TopNav() {
   };
 
   return (
-    <header className="fixed top-4 right-2 left-2 z-50 flex h-14 items-center justify-between rounded-2xl glass-panel px-4 md:left-[280px] md:right-4 border-none shadow-sm">
+    <header className="sticky top-0 z-50 flex h-14 items-center justify-between bg-card border-b border-border px-4 md:px-6">
       {/* Breadcrumbs */}
       <Breadcrumb>
         <BreadcrumbList className="text-sm">
@@ -115,7 +116,7 @@ export default function TopNav() {
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80 rounded-xl">
+          <DropdownMenuContent align="end" className="w-80 rounded-lg">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <span className="font-semibold text-sm">การแจ้งเตือน</span>
               {notificationsData.filter(n => !n.isRead).length > 0 && (

@@ -47,7 +47,7 @@ export default function AdminDashboardPage() {
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <p className="text-sm font-medium text-slate-500">คำร้องสมัครเรียนรออนุมัติ</p>
+                <p className="text-sm font-medium text-slate-500">คำร้องสมัครสอบรออนุมัติ</p>
                 <p className="text-3xl font-bold text-slate-900">45</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
@@ -101,7 +101,7 @@ export default function AdminDashboardPage() {
         {/* Recent Applications */}
         <Card className="lg:col-span-2 shadow-sm border-slate-200">
           <CardHeader className="flex flex-row items-center justify-between pb-2 border-b">
-            <CardTitle className="text-lg font-bold">คำร้องสมัครเรียนล่าสุด</CardTitle>
+            <CardTitle className="text-lg font-bold">คำร้องสมัครสอบล่าสุด</CardTitle>
             <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">ดูทั้งหมด</Button>
           </CardHeader>
           <CardContent className="p-0">

@@ -60,7 +60,7 @@ export default function CPDPage() {
                   </div>
                 </div>
 
-                <div className="w-full bg-muted/30 p-4 rounded-xl border border-border/50 text-left">
+                <div className="w-full bg-muted/30 p-4 rounded-lg border border-border/50 text-left">
                   <div className="flex justify-between items-center mb-2 border-b border-border/50 pb-2">
                     <span className="text-xs text-muted-foreground">วันหมดอายุใบประกอบฯ</span>
                     <span className="text-sm font-semibold text-foreground">{cpdData.expiryDate}</span>
@@ -130,7 +130,7 @@ export default function CPDPage() {
                       </div>
                       
                       {/* Content Card */}
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border bg-card/50 shadow-sm transition-all hover:shadow-md hover:bg-muted/10">
+                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-lg border bg-card/50 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/10">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                           <Badge variant="outline" className="w-fit text-[10px] uppercase tracking-wider">{item.category}</Badge>
                           <span className="text-xs text-muted-foreground font-mono bg-muted/50 px-2 py-0.5 rounded">{item.date}</span>
@@ -163,7 +163,7 @@ export default function CPDPage() {
                 {cpdData.recommended.map((item) => (
                   <Dialog key={item.id}>
                     <DialogTrigger asChild>
-                      <Card className="group overflow-hidden border-muted-foreground/20 hover:border-primary/50 hover:shadow-md transition-all duration-300 ease-out active:scale-[0.97] cursor-pointer text-left">
+                      <Card className="group overflow-hidden border-muted-foreground/20 hover:border-primary/50 transition-all duration-300 ease-out active:scale-[0.97] cursor-pointer text-left">
                         <CardContent className="p-0">
                           <div className="p-4 bg-gradient-to-br from-card to-muted/30">
                             <div className="flex justify-between items-start mb-3">
@@ -184,7 +184,7 @@ export default function CPDPage() {
                       </Card>
                     </DialogTrigger>
                     
-                    <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl rounded-2xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 duration-300">
+                    <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-none shadow-2xl rounded-lg data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 duration-300">
                       {/* Image Banner */}
                       <div className="w-full h-48 md:h-56 relative bg-muted/50">
                         <img src={item.image || "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80"} alt={item.title} className="w-full h-full object-cover transition-opacity duration-500" loading="lazy" />
@@ -209,7 +209,7 @@ export default function CPDPage() {
                             <span className="material-symbols-outlined text-[18px] text-primary">info</span>
                             รายละเอียดกิจกรรม
                           </h4>
-                          <p className="text-sm text-foreground/80 leading-relaxed bg-muted/30 p-4 rounded-xl border border-border/50">
+                          <p className="text-sm text-foreground/80 leading-relaxed bg-muted/30 p-4 rounded-lg border border-border/50">
                             {item.description || "ไม่มีรายละเอียดเพิ่มเติม"}
                           </p>
                         </div>

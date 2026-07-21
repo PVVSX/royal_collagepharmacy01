@@ -56,19 +56,15 @@ export default function LoginPage() {
             </h1>
             <p className="text-lg text-white/80 font-medium">
               Royal Pharmacy College Portal<br />
-              ระบบบริหารจัดการการศึกษาและรับสมัครออนไลน์
+              ระบบสารสนเทศสมาชิกและการสอบวิชาชีพ
             </p>
           </motion.div>
         </div>
       </div>
 
       {/* Right Panel: Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative">
-        {/* Decorative elements for the form side */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/5 rounded-full blur-3xl -z-10 transform -translate-x-1/2 translate-y-1/2" />
-
-        <motion.div 
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative border-t-4 border-primary md:border-t-0">
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
@@ -82,13 +78,14 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">ยินดีต้อนรับกลับมา</h2>
-            <p className="text-sm text-muted-foreground">กรุณาเข้าสู่ระบบเพื่อเข้าใช้งาน E-Portfolio และบริการต่างๆ</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary mb-1">ระบบสารสนเทศสมาชิก · Member Portal</p>
+            <h2 className="text-2xl font-bold text-foreground mb-2">เข้าสู่ระบบ</h2>
+            <p className="text-sm text-muted-foreground">กรุณาเข้าสู่ระบบเพื่อเข้าใช้งาน Professional Profile และบริการต่างๆ</p>
           </div>
 
           <form className="space-y-5" onSubmit={handleLogin}>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700" htmlFor="email">
+              <label className="text-sm font-semibold text-foreground/80" htmlFor="email">
                 อีเมล (Email)
               </label>
               <div className="relative">
@@ -108,7 +105,7 @@ export default function LoginPage() {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-semibold text-gray-700" htmlFor="password">
+                <label className="text-sm font-semibold text-foreground/80" htmlFor="password">
                   รหัสผ่าน (Password)
                 </label>
                 <a href="#" onClick={(e) => { e.preventDefault(); toast.info("กรุณาติดต่อฝ่ายทะเบียนเพื่อรีเซ็ตรหัสผ่าน"); }} className="text-xs font-semibold text-primary hover:underline">
@@ -144,7 +141,7 @@ export default function LoginPage() {
               />
               <label
                 htmlFor="remember"
-                className="text-sm font-medium leading-none text-gray-600 cursor-pointer"
+                className="text-sm font-medium leading-none text-muted-foreground cursor-pointer"
               >
                 จดจำฉันไว้ในระบบ
               </label>

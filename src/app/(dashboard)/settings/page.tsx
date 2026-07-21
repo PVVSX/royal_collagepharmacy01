@@ -7,14 +7,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import {
+  getCurrentPassportSync,
+  disclosureFieldLabels,
+  type DisclosureField,
+} from "@/lib/domain";
 
 export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  
+
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+
+  const passport = getCurrentPassportSync();
+  const [publicFields, setPublicFields] = useState<DisclosureField[]>(passport.disclosure.publicFields);
+
+  const toggleDisclosureField = (field: DisclosureField) => {
+    setPublicFields((prev) =>
+      prev.includes(field) ? prev.filter((f) => f !== field) : [...prev, field]
+    );
+  };
+
+  const handleSaveDisclosure = () => {
+    toast.success("บันทึกการตั้งค่าการเปิดเผยข้อมูลเรียบร้อยแล้ว");
+  };
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +51,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="flex flex-col min-h-full p-4 md:p-6 pb-16 max-w-[1280px] mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">ตั้งค่าบัญชีและความปลอดภัย</h1>
         <p className="text-sm text-muted-foreground mt-1">จัดการรหัสผ่าน การยืนยันตัวตน และการแจ้งเตือน</p>
@@ -136,9 +154,33 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">qr_code_2</span>
+                การเปิดเผยข้อมูลผ่าน QR สาธารณะ
+              </CardTitle>
+              <CardDescription>เลือกข้อมูลที่จะแสดงเมื่อมีคนสแกน QR ตรวจสอบตัวตนของคุณ</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {(Object.keys(disclosureFieldLabels) as DisclosureField[]).map((field) => (
+                <div key={field} className="flex items-center justify-between">
+                  <div className="text-sm font-medium">{disclosureFieldLabels[field]}</div>
+                  <Switch
+                    checked={publicFields.includes(field)}
+                    onCheckedChange={() => toggleDisclosureField(field)}
+                  />
+                </div>
+              ))}
+              <Button size="sm" className="mt-2 w-full" onClick={handleSaveDisclosure}>
+                บันทึกการเปิดเผยข้อมูล
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );
