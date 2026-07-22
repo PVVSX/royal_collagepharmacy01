@@ -1,3 +1,6 @@
+
+
+
 # Member Dashboard Visual Redesign — Design Spec
 
 Date: 2026-07-20
