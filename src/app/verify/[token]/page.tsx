@@ -50,7 +50,7 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
             <img src={p.issuingAuthority.logoUrl} alt="ตรา" className="h-full w-full object-contain" />
           </div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-semibold text-success-on-soft">
-            <span className="material-symbols-outlined text-base">verified</span>
+            <span className="material-symbols-outlined text-15">verified</span>
             ยืนยันโดย{p.issuingAuthority.regulatorTh}
           </div>
         </div>

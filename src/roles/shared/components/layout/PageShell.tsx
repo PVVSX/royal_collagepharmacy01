@@ -7,9 +7,10 @@ const pageShellVariants = cva("mx-auto w-full px-4 pt-4 md:px-6 md:pt-6", {
   variants: {
     size: {
       app: "max-w-app",
-      wide: "max-w-6xl",
+      wide: "max-w-wide",
+      focused: "max-w-focused",
       content: "max-w-5xl",
-      form: "max-w-4xl",
+      form: "max-w-form",
       full: "max-w-none",
     },
     bottom: {

@@ -125,7 +125,7 @@ function CardContent({
 
         {/* Title */}
         <h3 className={cn(
-          "text-sm md:text-sm font-bold leading-snug mb-1",
+          "text-sm md:text-15 font-bold leading-snug mb-1",
           step.status === "recommended" ? "text-muted-foreground" : "text-foreground"
         )}>
           {step.title}
@@ -296,7 +296,7 @@ export default function PathwayPage() {
 
   return (
     <>
-      <PageShell size="wide" className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+      <PageShell size="focused" className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

@@ -259,7 +259,7 @@ export default function ExamApplicationPage() {
                       </div>
                       <div className="flex items-center"><span className="text-xs text-muted-foreground">{app.date}</span></div>
                       <div className="flex md:justify-end items-center gap-2 flex-wrap">
-                        <Badge variant={s.variant} className="text-2xs px-2 py-1">
+                        <Badge variant={s.variant} className="h-auto px-2 py-1 text-2xs">
                           <span className="material-symbols-outlined text-caption">{s.icon}</span>
                           {s.label}
                         </Badge>
@@ -504,7 +504,7 @@ export default function ExamApplicationPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2 mb-0.5">
-                            <span className="font-semibold text-sm text-foreground">{college.name}</span>
+                            <span className="font-semibold text-15 text-foreground">{college.name}</span>
                             <span className="text-xs text-muted-foreground font-mono">({college.abbr})</span>
                           </div>
                           <p className="text-xs text-muted-foreground leading-relaxed">{college.examDesc}</p>

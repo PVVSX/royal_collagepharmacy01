@@ -39,7 +39,7 @@ const PUBLISHERS = [
 const filterCheckboxClass =
   "size-[15px] rounded border-outline text-brand accent-brand focus:ring-brand";
 const filterInputClass =
-  "h-8 w-full rounded-md border border-outline bg-surface px-2 text-xs focus:outline-none focus:ring-1 focus:ring-brand";
+  "h-8 w-full rounded-md border border-outline bg-surface px-2 text-12 focus:outline-none focus:ring-1 focus:ring-brand";
 
 export default function ResearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -237,7 +237,7 @@ export default function ResearchPage() {
         <Button
           variant="outline"
           size="sm"
-          className="w-full h-8 text-xs font-medium"
+          className="w-full h-8 text-12 font-medium"
         >
           นำไปใช้
         </Button>
@@ -419,7 +419,7 @@ export default function ResearchPage() {
                 />
                 <div className="absolute right-0 bottom-0 left-0 max-h-[80vh] overflow-hidden rounded-t-2xl bg-surface-raised shadow-xl animate-in slide-in-from-bottom">
                   <div className="flex items-center justify-between border-b border-outline px-5 py-4">
-                    <h2 className="font-bold text-sm">
+                    <h2 className="font-bold text-15">
                       ตัวกรอง ({activeFilterCount})
                     </h2>
                     <button onClick={() => setMobileFilterOpen(false)}>
@@ -454,7 +454,7 @@ export default function ResearchPage() {
                     เรียงตาม:
                   </span>
                   <select
-                    className="cursor-pointer rounded-lg border border-outline bg-surface px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand"
+                    className="cursor-pointer rounded-lg border border-outline bg-surface px-2.5 py-1.5 text-12 focus:outline-none focus:ring-1 focus:ring-brand"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                   >
@@ -494,7 +494,7 @@ export default function ResearchPage() {
 
                         {/* Title */}
                         <h2 
-                          className="mb-1.5 flex cursor-pointer flex-col gap-2 text-base font-bold leading-snug text-content transition-colors hover:text-brand sm:flex-row sm:items-start md:text-base"
+                          className="mb-1.5 flex cursor-pointer flex-col gap-2 text-base font-bold leading-snug text-content transition-colors hover:text-brand sm:flex-row sm:items-start md:text-17"
                           onClick={() => item.content ? setSelectedArticle(item) : null}
                         >
                           <span>{item.title}</span>
@@ -511,7 +511,7 @@ export default function ResearchPage() {
                         </p>
 
                         {/* Journal & Year */}
-                        <p className="mb-3 text-xs text-content-muted">
+                        <p className="mb-3 text-12 text-content-muted">
                           {item.journal} ({item.year})
                         </p>
 

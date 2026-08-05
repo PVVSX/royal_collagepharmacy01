@@ -47,7 +47,7 @@ function VerifyBadge({ verification }: { verification: Verification }) {
   return (
     <Badge
       variant={toneVariant[meta.tone]}
-      className="rounded-full text-2xs"
+      className="h-auto rounded-full text-2xs"
       title={verification.verifiedBy ? `${meta.th} · ${verification.verifiedBy}` : meta.th}
     >
       <span className="material-symbols-outlined text-caption">{icon}</span>
@@ -78,7 +78,7 @@ function SectionHeader({ label, icon, sub }: { label: string; icon: string; sub?
     <div className="mb-4 flex items-center gap-2.5 border-b border-border pb-3">
       <span className="material-symbols-outlined text-xl text-primary">{icon}</span>
       <div>
-        <h2 className="text-sm font-bold tracking-tight text-foreground">{label}</h2>
+        <h2 className="text-15 font-bold tracking-tight text-foreground">{label}</h2>
         {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
       </div>
     </div>
@@ -134,7 +134,7 @@ export default function PassportPage() {
             </div>
             <div className="hidden shrink-0 text-right md:block">
               <div className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
-                <span className="material-symbols-outlined text-sm">badge</span>
+                <span className="material-symbols-outlined text-15">badge</span>
                 หนังสือเดินทางวิชาชีพ
               </div>
               <p className="mt-1 text-2xs text-muted-foreground">Professional Passport</p>
@@ -149,7 +149,7 @@ export default function PassportPage() {
             <div className="h-32 w-28 overflow-hidden rounded-md border-2 border-border bg-muted shadow-sm">
               <img src={p.identity.photoUrl} alt={fullNameTh(p)} className="h-full w-full object-cover object-top" />
             </div>
-            <Badge variant={toneVariant[licMeta.tone]} className="rounded-full text-2xs font-semibold">
+            <Badge variant={toneVariant[licMeta.tone]} className="h-auto rounded-full text-2xs font-semibold">
               <span className="material-symbols-outlined text-caption">
                 {licMeta.tone === "ok" ? "verified_user" : "gpp_maybe"}
               </span>
@@ -191,7 +191,7 @@ export default function PassportPage() {
                 <span className="text-muted-foreground">หมดอายุ</span>
                 <span className="font-semibold">{formatThaiDate(p.license.expiresAt)}</span>
               </div>
-              <Badge variant={expiryDays < 180 ? "warning" : "success"} className="flex h-auto w-full rounded-md px-2 py-1 text-2xs">
+              <Badge variant={expiryDays < 180 ? "warning" : "success"} className="flex h-auto w-full rounded-md border-0 px-2 py-1 text-2xs">
                 {expiryDays > 0 ? `เหลืออีก ${expiryDays} วัน` : "หมดอายุแล้ว"}
               </Badge>
             </div>

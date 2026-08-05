@@ -248,7 +248,7 @@ export default function StudentsPage() {
                   <div className="font-bold text-lg">{s.registeredCourses} <span className="text-sm font-normal text-muted-foreground">วิชา</span></div>
                 </div>
               </div>
-              <Badge variant="warning" className="text-3xs mt-2 inline-flex w-max items-center gap-1">
+              <Badge variant="warning" className="mt-2 inline-flex h-auto w-max items-center gap-1 border-0 text-3xs font-normal">
                 <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" /> กำลังดำเนินการสอบ 1 วิชา
               </Badge>
             </div>
@@ -263,7 +263,7 @@ export default function StudentsPage() {
                   <div className="font-bold text-lg">2568</div>
                 </div>
               </div>
-              <Badge variant="success" className="text-3xs mt-2 inline-flex w-max items-center gap-1">
+              <Badge variant="success" className="mt-2 inline-flex h-auto w-max items-center gap-1 border-0 text-3xs font-normal">
                 <span className="material-symbols-outlined text-xs">verified</span> สถานะ: ปกติ (Active)
               </Badge>
             </div>
