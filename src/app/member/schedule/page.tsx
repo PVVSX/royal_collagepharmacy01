@@ -15,7 +15,7 @@ const scheduleData = [
   { day: "เสาร์ (สัปดาห์ที่ 3)", type: "lab", subject: "Case Discussion: Internal Med.", room: "ห้องประชุมวิทยาลัย", start: 9, duration: 3 },
   { day: "เสาร์ (สัปดาห์ที่ 3)", type: "lab", subject: "Workshop: Pharmacotherapy Plan", room: "ห้องประชุมวิทยาลัย", start: 13, duration: 4 },
   
-  { day: "อาทิตย์ (สัปดาห์ที่ 3)", type: "lab", subject: "Bedside Teaching (Mock)", room: "ศูนย์จำลองสถานการณ์", start: 9, duration: 4 },
+  { day: "อาทิตย์ (สัปดาห์ที่ 3)", type: "lab", subject: "Bedside Teaching", room: "ศูนย์จำลองสถานการณ์", start: 9, duration: 4 },
   { day: "อาทิตย์ (สัปดาห์ที่ 3)", type: "lec", subject: "Seminar & Presentation", room: "ห้องประชุมวิทยาลัย", start: 14, duration: 3 },
 ];
 

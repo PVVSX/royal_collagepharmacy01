@@ -5,8 +5,13 @@ import { Search, BookOpen, Bookmark, FileText, ChevronDown, X, SlidersHorizontal
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { researchData, type ResearchArticle } from "@/roles/member/features/research/data/research";
+import { ResearchSubmissionDialog } from "@/roles/member/features/research/components/ResearchSubmissionDialog";
+import { ResearchSubmissionPanel } from "@/roles/member/features/research/components/ResearchSubmissionPanel";
 import Footer from "@/roles/shared/components/layout/Footer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useMockDb } from "@/providers/mock-db-provider";
+import { approvedResearchArticles } from "@/roles/shared/features/research/projection";
+import type { ResearchSubmission } from "@/roles/shared/features/research/types";
 
 const DOCUMENT_TYPES = [
   { label: "บทความวิจัย", count: 923 },
@@ -42,6 +47,7 @@ const filterInputClass =
   "h-8 w-full rounded-md border border-outline bg-surface px-2 text-12 focus:outline-none focus:ring-1 focus:ring-brand";
 
 export default function ResearchPage() {
+  const { researchSubmissions } = useMockDb();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
 
@@ -56,6 +62,8 @@ export default function ResearchPage() {
   const [sortBy, setSortBy] = useState("relevance");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<ResearchArticle | null>(null);
+  const [submissionOpen, setSubmissionOpen] = useState(false);
+  const [editingSubmission, setEditingSubmission] = useState<ResearchSubmission>();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +101,10 @@ export default function ResearchPage() {
 
   // Filter logic
   const filteredResults = useMemo(() => {
-    let results = [...researchData];
+    let results = [
+      ...approvedResearchArticles(researchSubmissions),
+      ...researchData,
+    ];
 
     if (activeQuery) {
       const q = activeQuery.toLowerCase();
@@ -144,6 +155,7 @@ export default function ResearchPage() {
     startYear,
     endYear,
     sortBy,
+    researchSubmissions,
   ]);
 
   /* ─── Filter sidebar content (shared between desktop & mobile) ─── */
@@ -365,6 +377,17 @@ export default function ResearchPage() {
           </div>
         </div>
 
+        <ResearchSubmissionPanel
+          onCreate={() => {
+            setEditingSubmission(undefined);
+            setSubmissionOpen(true);
+          }}
+          onEdit={(submission) => {
+            setEditingSubmission(submission);
+            setSubmissionOpen(true);
+          }}
+        />
+
         {/* ── Content Area ── */}
         <div className="px-2 md:px-4">
           <div className="flex gap-5">
@@ -493,15 +516,21 @@ export default function ResearchPage() {
                         </div>
 
                         {/* Title */}
-                        <h2 
-                          className="mb-1.5 flex cursor-pointer flex-col gap-2 text-base font-bold leading-snug text-content transition-colors hover:text-brand sm:flex-row sm:items-start md:text-17"
-                          onClick={() => item.content ? setSelectedArticle(item) : null}
-                        >
-                          <span>{item.title}</span>
-                          {item.content && (
-                            <span className="mt-0.5 shrink-0 rounded-full border border-brand/20 bg-brand-soft px-2 py-0.5 text-3xs font-medium text-brand">
-                              อ่านเนื้อหาเต็ม
-                            </span>
+                        <h2 className="mb-1.5 text-base font-bold leading-snug text-content md:text-17">
+                          {item.content ? (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedArticle(item)}
+                              className="flex w-full flex-col gap-2 rounded-sm text-left transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:flex-row sm:items-start"
+                              aria-label={`อ่านเนื้อหาเต็ม ${item.title}`}
+                            >
+                              <span>{item.title}</span>
+                              <span className="mt-0.5 shrink-0 rounded-full border border-brand/20 bg-brand-soft px-2 py-0.5 text-3xs font-medium text-brand">
+                                อ่านเนื้อหาเต็ม
+                              </span>
+                            </button>
+                          ) : (
+                            <span>{item.title}</span>
                           )}
                         </h2>
 
@@ -542,28 +571,32 @@ export default function ResearchPage() {
                             </span>{" "}
                             อ้างอิง
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 gap-1.5 px-2.5 text-2xs text-danger hover:bg-danger/10 hover:text-danger"
-                          >
-                            <FileText className="w-3.5 h-3.5" /> PDF
-                          </Button>
-
-                          <div className="ml-auto flex items-center gap-1 text-2xs text-content-muted/60">
-                            <span className="material-symbols-outlined text-caption">
-                              link
-                            </span>
-                            DOI:{" "}
-                            <a
-                              href={`https://doi.org/${item.doi}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-info hover:underline"
+                          {item.pdfUrl && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1.5 px-2.5 text-2xs text-danger hover:bg-danger/10 hover:text-danger"
                             >
-                              {item.doi}
-                            </a>
-                          </div>
+                              <FileText className="w-3.5 h-3.5" /> PDF
+                            </Button>
+                          )}
+
+                          {item.doi.trim() && (
+                            <div className="ml-auto flex items-center gap-1 text-2xs text-content-muted/60">
+                              <span className="material-symbols-outlined text-caption">
+                                link
+                              </span>
+                              DOI:{" "}
+                              <a
+                                href={`https://doi.org/${item.doi.trim()}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-info hover:underline"
+                              >
+                                {item.doi.trim()}
+                              </a>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -658,6 +691,16 @@ export default function ResearchPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ResearchSubmissionDialog
+        key={editingSubmission?.id ?? "new-research-submission"}
+        open={submissionOpen}
+        submission={editingSubmission}
+        onOpenChange={(open) => {
+          setSubmissionOpen(open);
+          if (!open) setEditingSubmission(undefined);
+        }}
+      />
 
       <Footer />
     </>

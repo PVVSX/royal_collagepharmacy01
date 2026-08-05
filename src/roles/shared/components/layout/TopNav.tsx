@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -24,6 +24,33 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
+const adminNotificationsData: typeof notificationsData = [
+  {
+    id: 1,
+    title: "การสมัครสอบ",
+    message: "มีใบสมัครสอบใหม่ 2 รายการรอการตรวจสอบ",
+    time: "15 นาทีที่แล้ว",
+    isRead: false,
+    type: "warning",
+  },
+  {
+    id: 2,
+    title: "คำร้อง",
+    message: "มีคำร้องใหม่ 5 รายการรอการพิจารณา",
+    time: "1 ชั่วโมงที่แล้ว",
+    isRead: false,
+    type: "info",
+  },
+  {
+    id: 3,
+    title: "งานวิจัย",
+    message: "มีผลงานวิจัย 1 รายการส่งเข้ามาเพื่อตรวจสอบ",
+    time: "เมื่อวานนี้",
+    isRead: true,
+    type: "success",
+  },
+];
+
 const breadcrumbMap: Record<string, { trail: { label: string; href: string }[]; current: string }> = {
   "/member/dashboard": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ภาพรวม" },
   "/member/students": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ข้อมูลของฉัน" },
@@ -32,12 +59,30 @@ const breadcrumbMap: Record<string, { trail: { label: string; href: string }[]; 
   "/member/finance": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "การเงิน" },
   "/member/finance/channels": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }, { label: "การเงิน", href: "/member/finance" }], current: "ช่องทางการชำระเงิน" },
   "/member/requests": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "คำร้องของฉัน" },
+  "/member/research": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ฐานข้อมูลงานวิจัย" },
   "/member/admission": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "สมัครสอบออนไลน์" },
   "/member/passport": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "หนังสือเดินทางวิชาชีพ" },
+  "/member/cpd": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "หน่วยกิตการศึกษาต่อเนื่อง" },
+  "/member/pathway": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "เส้นทางการศึกษา" },
   "/member/news": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ข่าวสารและประกาศ" },
+  "/member/help": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ศูนย์ช่วยเหลือ" },
+  "/member/settings": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ตั้งค่าบัญชีและความปลอดภัย" },
   "/member/programs": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "หลักสูตรและรายวิชา" },
   "/member/programs/by-college": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }, { label: "หลักสูตร", href: "/member/programs" }], current: "แยกตามวิทยาลัย" },
   "/member/programs/all": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }, { label: "หลักสูตร", href: "/member/programs" }], current: "รายวิชาทั้งหมด" },
+  "/admin/dashboard": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "ภาพรวม" },
+  "/admin/admissions": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "อนุมัติการสมัครสอบ" },
+  "/admin/requests": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "ตรวจสอบคำร้อง" },
+  "/admin/research": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "ตรวจสอบงานวิจัย" },
+  "/admin/registrations": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "อนุมัติการลงทะเบียน" },
+  "/admin/finance": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "ตรวจสอบการเงิน" },
+  "/admin/courses": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "จัดการรายวิชา" },
+  "/admin/courses/create": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }, { label: "จัดการรายวิชา", href: "/admin/courses" }], current: "ยื่นขอเปิดรายวิชาใหม่" },
+  "/admin/programs": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "จัดการหลักสูตร" },
+  "/admin/students": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "รายชื่อผู้เข้าศึกษา" },
+  "/admin/exams": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "บันทึกผลสอบ" },
+  "/admin/certificates": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "ออกวุฒิบัตร" },
+  "/admin/settings": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "ตั้งค่าระบบ" },
 };
 
 export default function TopNav() {
@@ -45,8 +90,29 @@ export default function TopNav() {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const isAdminRoute = pathname.startsWith("/admin");
+  const activeNotifications = isAdminRoute ? adminNotificationsData : notificationsData;
+  const unreadNotificationCount = activeNotifications.filter((notification) => !notification.isRead).length;
+  const activeProfile = isAdminRoute
+    ? {
+        title: "โปรไฟล์ผู้ดูแลระบบ",
+        description: "System Admin • Super Admin • admin@pharmacy.or.th",
+      }
+    : {
+        title: "โปรไฟล์ผู้ใช้",
+        description: "ภก. สมชาย ใจดี (somchai.j@student.rpc.ac.th)",
+      };
+  const adminStudentDetailMatch = pathname.match(/^\/admin\/students\/([^/]+)\/?$/);
 
-  let bc = breadcrumbMap[pathname];
+  let bc = adminStudentDetailMatch
+    ? {
+        trail: [
+          { label: "แอดมิน", href: "/admin/dashboard" },
+          { label: "รายชื่อผู้เข้าศึกษา", href: "/admin/students" },
+        ],
+        current: decodeURIComponent(adminStudentDetailMatch[1]),
+      }
+    : breadcrumbMap[pathname];
   if (!bc) {
     const keys = Object.keys(breadcrumbMap).sort((a, b) => b.length - a.length);
     for (const key of keys) {
@@ -70,13 +136,30 @@ export default function TopNav() {
     }
   };
 
+  const getNotificationDestination = (title: string) => {
+    if (title === "การเงิน") {
+      return isAdminRoute ? "/admin/finance" : "/member/finance";
+    }
+    if (title === "คำร้อง") {
+      return isAdminRoute ? "/admin/requests" : "/member/requests";
+    }
+    if (title === "การสมัครสอบ") {
+      return "/admin/admissions";
+    }
+    if (title === "งานวิจัย") {
+      return "/admin/research";
+    }
+
+    return isAdminRoute ? "/admin/dashboard" : "/member/news";
+  };
+
   return (
     <header className="fixed top-4 right-2 left-2 z-50 flex h-14 items-center justify-between rounded-2xl glass-panel px-4 md:left-sidebar md:right-4 border-none shadow-sm">
       {/* Breadcrumbs */}
       <Breadcrumb>
         <BreadcrumbList className="text-sm">
           {bc.trail.map((item, i) => (
-            <span key={i} className="flex items-center gap-1.5">
+            <Fragment key={`${item.href}-${i}`}>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
                   <Link href={item.href} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -87,7 +170,7 @@ export default function TopNav() {
               <BreadcrumbSeparator>
                 <span className="material-symbols-outlined text-sm text-muted-foreground/50">chevron_right</span>
               </BreadcrumbSeparator>
-            </span>
+            </Fragment>
           ))}
           <BreadcrumbItem>
             <BreadcrumbPage className="font-semibold text-primary text-sm">{bc.current}</BreadcrumbPage>
@@ -117,30 +200,29 @@ export default function TopNav() {
               variant="ghost"
               size="icon"
               className="relative h-8 w-8 rounded-lg"
+              aria-label={`การแจ้งเตือน${unreadNotificationCount > 0 ? ` (${unreadNotificationCount} รายการใหม่)` : ""}`}
             >
-              <span className="material-symbols-outlined text-xl text-muted-foreground">notifications</span>
-              {notificationsData.some(n => !n.isRead) && (
-                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-destructive ring-1 ring-card" />
+              <span aria-hidden="true" className="material-symbols-outlined text-xl text-muted-foreground">notifications</span>
+              {unreadNotificationCount > 0 && (
+                <span aria-hidden="true" className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-destructive ring-1 ring-card" />
               )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80 rounded-xl">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <span className="font-semibold text-sm">การแจ้งเตือน</span>
-              {notificationsData.filter(n => !n.isRead).length > 0 && (
-                <Badge variant="secondary" className="text-2xs px-1.5 py-0">{notificationsData.filter(n => !n.isRead).length} ใหม่</Badge>
+              {unreadNotificationCount > 0 && (
+                <Badge variant="secondary" className="text-2xs px-1.5 py-0">{unreadNotificationCount} ใหม่</Badge>
               )}
             </div>
             <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
-              {notificationsData.map(notif => (
-                <div 
+              {activeNotifications.map(notif => (
+                <DropdownMenuItem
                   key={notif.id}
-                  className={`flex items-start gap-3 p-4 hover:bg-muted/50 cursor-pointer transition-colors ${!notif.isRead ? 'bg-primary/5' : ''}`}
-                  onClick={() => {
+                  className={`flex cursor-pointer items-start gap-3 rounded-none p-4 transition-colors hover:bg-muted/50 focus:bg-muted/50 ${!notif.isRead ? 'bg-primary/5' : ''}`}
+                  onSelect={() => {
                     setIsNotifOpen(false);
-                    if (notif.title === 'การเงิน') router.push("/member/finance");
-                    else if (notif.title === 'คำร้อง') router.push("/member/requests");
-                    else router.push("/member/news");
+                    router.push(getNotificationDestination(notif.title));
                   }}
                 >
                   <div className={`${notif.type === 'warning' ? 'bg-destructive/10' : notif.type === 'success' ? 'bg-success-soft' : 'bg-primary/10'} p-2 rounded-full mt-0.5 flex-shrink-0`}>
@@ -153,7 +235,7 @@ export default function TopNav() {
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{notif.message}</p>
                     <p className="text-2xs text-muted-foreground mt-2">{notif.time}</p>
                   </div>
-                </div>
+                </DropdownMenuItem>
               ))}
             </div>
             <div className="p-2 border-t text-center">
@@ -182,10 +264,10 @@ export default function TopNav() {
           <DropdownMenuContent align="end" className="w-44 text-sm">
             <DropdownMenuLabel>ตั้งค่า</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => toast.info("โปรไฟล์ผู้ใช้", { description: "ภก. สมชาย ใจดี (somchai.j@student.rpc.ac.th)" })}>
+            <DropdownMenuItem onClick={() => toast.info(activeProfile.title, { description: activeProfile.description })}>
               <span className="material-symbols-outlined text-base mr-2">person</span> โปรไฟล์
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast.info("การตั้งค่า", { description: "เมนูตั้งค่าระบบกำลังพัฒนา" })}>
+            <DropdownMenuItem onClick={() => router.push(isAdminRoute ? "/admin/settings" : "/member/settings")}>
               <span className="material-symbols-outlined text-base mr-2">tune</span> การตั้งค่า
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => toast.info("ช่วยเหลือ", { description: "ติดต่อศูนย์ช่วยเหลือ โทร 0-2591-9992" })}>

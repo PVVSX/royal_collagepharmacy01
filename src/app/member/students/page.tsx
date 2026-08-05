@@ -3,7 +3,7 @@
 import Footer from "@/roles/shared/components/layout/Footer";
 import { toast } from "sonner";
 import { useState } from "react";
-import { studentDetailData, profileData, registrationData, financeData, requestsData } from "@/roles/shared/data";
+import { studentDetailData, profileData, registrationData } from "@/roles/shared/data";
 import { currentMemberPassport } from "@/roles/shared/member/domain";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,13 @@ import { PersonalInfoCard } from "@/roles/shared/member/components/PersonalInfoC
 import { AddressCard } from "@/roles/shared/member/components/AddressCard";
 import { WorkplaceCard } from "@/roles/shared/member/components/WorkplaceCard";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
+import { ResearchSubmissionDialog } from "@/roles/member/features/research/components/ResearchSubmissionDialog";
+import {
+  EducationTimeline,
+  MockFeeRuleNote,
+  StudentRecordBadge,
+  studentDocuments,
+} from "@/roles/shared/features/student-records";
 
 const icon20 = "material-symbols-outlined text-xl";
 const icon18 = "material-symbols-outlined text-lg";
@@ -29,19 +36,9 @@ const tabs = [
 export default function StudentsPage() {
   const s = studentDetailData;
   const [activeTab, setActiveTab] = useState("personal");
+  const [researchSubmissionOpen, setResearchSubmissionOpen] = useState(false);
 
   const icon16 = "material-symbols-outlined text-base";
-
-  const financeBadgeVariant: Record<string, "success" | "warning"> = {
-    paid: "success",
-    unpaid: "warning",
-  };
-
-  const requestBadgeVariant: Record<string, "success" | "warning" | "danger"> = {
-    approved: "success",
-    pending: "warning",
-    rejected: "danger",
-  };
 
   return (
     <PageShell className="space-y-6">
@@ -90,9 +87,11 @@ export default function StudentsPage() {
                     {profileData.personalInfo.title}{profileData.personalInfo.firstName} {profileData.personalInfo.lastName}
                     <span className="text-base md:text-lg text-muted-foreground font-medium ml-2">ภ.บ., BCP Candidate</span>
                   </h1>
-                  <Badge variant="active" className="mb-1 shrink-0">
-                    กำลังศึกษา
-                  </Badge>
+                  <StudentRecordBadge
+                    kind="training"
+                    status={s.trainingStatus}
+                    className="mb-1 shrink-0"
+                  />
                 </div>
                 
                 {/* Workplace & Context */}
@@ -263,16 +262,20 @@ export default function StudentsPage() {
                   <div className="font-bold text-lg">2568</div>
                 </div>
               </div>
-              <Badge variant="success" className="mt-2 inline-flex h-auto w-max items-center gap-1 border-0 text-3xs font-normal">
-                <span className="material-symbols-outlined text-xs">verified</span> สถานะ: ปกติ (Active)
-              </Badge>
+              <div className="mt-2">
+                <StudentRecordBadge
+                  kind="training"
+                  status={s.trainingStatus}
+                  className="h-auto text-3xs font-normal"
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content Layout - Sidebar Tabs + Content Panel */}
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex min-w-0 flex-col gap-6 lg:flex-row">
         {/* Left Sidebar Tabs */}
         <div className="w-full lg:w-64 shrink-0 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-hide">
           {tabs.map((tab) => (
@@ -292,9 +295,9 @@ export default function StudentsPage() {
         </div>
 
         {/* Right Content Panel */}
-        <div className="flex-1">
-          <Card className="min-h-[500px] border shadow-sm bg-card rounded-2xl overflow-hidden">
-            <CardContent className="p-6 md:p-8">
+        <div className="min-w-0 flex-1">
+          <Card className="min-h-[500px] min-w-0 overflow-hidden rounded-2xl border bg-card shadow-sm">
+            <CardContent className="min-w-0 p-6 md:p-8">
               {/* ---- Personal Info ---- */}
               {activeTab === "personal" && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -312,22 +315,7 @@ export default function StudentsPage() {
               {activeTab === "education" && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                   <h3 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-3 mb-6"><span className="material-symbols-outlined text-primary">history_edu</span> ประวัติการศึกษา</h3>
-                  <div className="relative border-l-2 border-primary/30 ml-4 space-y-8 mt-6">
-                    {s.educationTimeline.map((edu, i) => (
-                      <div key={i} className="relative pl-8">
-                        <span
-                          className={`absolute -left-[9px] top-1.5 w-4 h-4 rounded-full ring-4 ring-card ${
-                            edu.isCurrent ? "bg-primary shadow-lg" : "bg-muted-foreground/30"
-                          }`}
-                        />
-                        <h4 className="font-bold text-base text-foreground">{edu.degree}</h4>
-                        <p className="text-sm font-medium text-primary mt-1">
-                          {edu.institution} — {edu.field}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1 bg-muted px-2 py-1 rounded-md inline-block">{edu.period}</p>
-                      </div>
-                    ))}
-                  </div>
+                  <EducationTimeline entries={s.educationTimeline} />
                 </div>
               )}
 
@@ -388,7 +376,7 @@ export default function StudentsPage() {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                   <div className="flex justify-between items-center border-b border-border pb-3 mb-6">
                     <h3 className="text-xl font-bold flex items-center gap-2"><span className="material-symbols-outlined text-primary">biotech</span> ผลงานวิจัยและวิชาการ</h3>
-                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1 rounded-full"><span className={icon18}>add</span> เพิ่มผลงาน</Button>
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1 rounded-full" onClick={() => setResearchSubmissionOpen(true)}><span className={icon18}>add</span> เพิ่มผลงาน</Button>
                   </div>
                   
                   <div className="space-y-8">
@@ -431,117 +419,77 @@ export default function StudentsPage() {
 
               {/* ---- Registration Tab ---- */}
               {activeTab === "registration" && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-300">
                   <h3 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-3 mb-6"><span className="material-symbols-outlined text-primary">how_to_reg</span> วิชาที่ลงทะเบียน (เทอมปัจจุบัน)</h3>
-                  <div className="rounded-xl border overflow-hidden shadow-sm">
-                    <table className="w-full text-sm text-left">
+                  <div className="w-full max-w-full overflow-x-auto overscroll-x-contain rounded-xl border shadow-sm">
+                    <table className="min-w-[900px] w-full text-sm text-left">
+                      <caption className="sr-only">
+                        สถานะการลงทะเบียน การชำระเงิน และการตรวจสลิปของแต่ละวิชา
+                      </caption>
                       <thead className="bg-muted font-medium text-muted-foreground">
                         <tr>
                           <th className="px-5 py-3.5">รหัสวิชา</th>
                           <th className="px-5 py-3.5">ชื่อวิชา</th>
                           <th className="px-5 py-3.5 text-center">หน่วยกิต</th>
-                          <th className="px-5 py-3.5">สถานะ</th>
+                          <th className="px-5 py-3.5">การลงทะเบียน</th>
+                          <th className="px-5 py-3.5">การชำระเงิน</th>
+                          <th className="px-5 py-3.5">การตรวจสลิป</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y bg-card">
-                        {registrationData.courses.map((course, i) => (
-                          <tr key={i} className="hover:bg-muted/30 transition-colors">
+                        {registrationData.courses.map((course) => (
+                          <tr key={course.code} className="hover:bg-muted/30 transition-colors">
                             <td className="px-5 py-4 font-mono font-medium">{course.code}</td>
                             <td className="px-5 py-4 font-medium">{course.title}</td>
                             <td className="px-5 py-4 text-center font-bold text-primary">{course.credits}</td>
                             <td className="px-5 py-4">
-                              <Badge variant="success">ลงทะเบียนแล้ว</Badge>
+                              <StudentRecordBadge
+                                kind="enrollment"
+                                status={course.enrollmentStatus}
+                              />
+                            </td>
+                            <td className="px-5 py-4">
+                              <StudentRecordBadge
+                                kind="billing"
+                                status={course.billingStatus}
+                              />
+                            </td>
+                            <td className="px-5 py-4">
+                              <StudentRecordBadge
+                                kind="slipReview"
+                                status={course.slipReviewStatus}
+                              />
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                </div>
-              )}
-
-              {/* ---- Finance Tab ---- */}
-              {activeTab === "finance" && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  <h3 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-3 mb-6"><span className="material-symbols-outlined text-primary">payments</span> ประวัติการชำระเงิน</h3>
-                  <div className="space-y-3">
-                    {financeData.items.map((item, i) => (
-                      <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border bg-card gap-4 hover:shadow-sm transition-shadow">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${item.status === 'paid' ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning'}`}>
-                            <span className="material-symbols-outlined">{item.status === 'paid' ? 'check' : 'schedule'}</span>
-                          </div>
-                          <div>
-                            <div className="font-bold text-sm">{item.description}</div>
-                            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-xs">calendar_today</span> 
-                              กำหนดชำระ: {item.dueDate}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 pl-14 md:pl-0">
-                          <div className="text-lg font-bold text-foreground">฿{item.amount.toLocaleString()}</div>
-                          <Badge
-                            variant={financeBadgeVariant[item.status] ?? "warning"}
-                            className="min-w-[80px] justify-center"
-                          >
-                            {item.status === "paid" ? "ชำระแล้ว" : "รอชำระเงิน"}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ---- Requests Tab ---- */}
-              {activeTab === "requests" && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  <h3 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-3 mb-6"><span className="material-symbols-outlined text-primary">description</span> คำร้องของฉัน</h3>
-                  <div className="space-y-3">
-                    {requestsData.map((req, i) => (
-                      <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border bg-card gap-4 hover:shadow-sm transition-shadow">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0 text-muted-foreground">
-                            <span className="material-symbols-outlined">draft</span>
-                          </div>
-                          <div>
-                            <div className="font-bold text-sm">{req.type}</div>
-                            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                              <span className="material-symbols-outlined text-xs">calendar_clock</span> 
-                              ยื่นเมื่อ: {req.date}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="pl-14 md:pl-0">
-                          <Badge variant={requestBadgeVariant[req.status] ?? "warning"}>
-                            {req.status === "approved" ? "อนุมัติแล้ว" : req.status === "pending" ? "รอดำเนินการ" : "ปฏิเสธ"}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="mt-4">
+                    <MockFeeRuleNote />
                   </div>
                 </div>
               )}
 
               {/* ---- Documents Tab ---- */}
               {activeTab === "documents" && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-300">
                   <h3 className="text-xl font-bold flex items-center gap-2 border-b border-border pb-3 mb-6"><span className="material-symbols-outlined text-primary">folder</span> เอกสารของฉัน</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {[
-                      { name: "บัตรประจำตัวผู้เข้าศึกษา", ext: "PDF", icon: "badge" },
-                      { name: "ใบรับรองการเป็นผู้เข้าศึกษา", ext: "PDF", icon: "school" },
-                      { name: "ใบแจ้งผลการศึกษา (Transcript)", ext: "PDF", icon: "description" },
-                      { name: "ใบเสร็จรับเงินค่าลงทะเบียน", ext: "PDF", icon: "receipt" }
-                    ].map((doc, i) => (
-                      <div key={i} className="flex flex-col items-center justify-center p-6 rounded-2xl border bg-card hover:bg-primary/5 hover:border-primary/50 hover:shadow-md transition-all text-center cursor-pointer group" onClick={() => toast.info(`กำลังดาวน์โหลด: ${doc.name}`)}>
+                  <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {studentDocuments.map((doc) => (
+                      <button
+                        key={doc.id}
+                        type="button"
+                        className="group flex min-h-48 min-w-0 cursor-pointer flex-col items-center justify-center rounded-2xl border bg-card p-6 text-center transition-all hover:border-primary/50 hover:bg-primary/5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98]"
+                        onClick={() => toast.info(`กำลังดาวน์โหลด: ${doc.name}`)}
+                        aria-label={`ดาวน์โหลด ${doc.name}`}
+                      >
                         <div className="w-16 h-16 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center mb-4 transition-colors">
                           <span className="material-symbols-outlined text-3xl text-muted-foreground group-hover:text-primary transition-colors">{doc.icon}</span>
                         </div>
-                        <span className="text-sm font-bold group-hover:text-primary transition-colors">{doc.name}</span>
-                        <span className="text-xs font-semibold text-muted-foreground mt-1 bg-muted px-2 py-0.5 rounded-full group-hover:bg-background">{doc.ext}</span>
-                      </div>
+                        <span className="max-w-full break-words text-sm font-bold transition-colors group-hover:text-primary">{doc.name}</span>
+                        <span className="text-xs font-semibold text-muted-foreground mt-1 bg-muted px-2 py-0.5 rounded-full group-hover:bg-background">{doc.extension}</span>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -552,6 +500,7 @@ export default function StudentsPage() {
         </div>
       </div>
       
+      <ResearchSubmissionDialog open={researchSubmissionOpen} onOpenChange={setResearchSubmissionOpen} />
       <Footer />
     </PageShell>
   );

@@ -10,9 +10,9 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <div className="flex flex-1 flex-col md:pl-sidebar">
+      <div className="flex min-w-0 flex-1 flex-col md:pl-sidebar">
         <TopNav />
-        <main className="flex-1 pt-20 px-2 md:pr-4">
+        <main className="min-w-0 flex-1 pt-20 px-2 md:pr-4">
           <PageTransition>
             {children}
           </PageTransition>

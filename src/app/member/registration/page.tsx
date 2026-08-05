@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMockDb } from "@/providers/mock-db-provider";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
+import type { RegistrationCourseRecord } from "@/roles/shared/features/student-records";
 
-type Course = typeof initialData.courses[number];
+type Course = RegistrationCourseRecord;
 
 const statusMap: Record<string, { variant: "success" | "danger" | "brand"; label: string }> = {
   available: { variant: "success", label: "ว่าง" },
@@ -51,12 +52,22 @@ export default function RegistrationPage() {
   const selectedCredits = courses.filter((c) => c.status === "registered").reduce((sum, c) => sum + c.credits, 0);
 
   const handleAdd = (code: string) => {
-    setCourses((prev) => prev.map((c) => c.code === code ? { ...c, status: "registered" as const, enrolled: c.enrolled + 1 } : c));
+    setCourses((prev) => prev.map((c) => c.code === code ? {
+      ...c,
+      status: "registered" as const,
+      enrollmentStatus: "registered" as const,
+      enrolled: c.enrolled + 1,
+    } : c));
   };
 
   const handleWithdraw = (code: string) => {
     if (confirm("คุณต้องการถอนการลงทะเบียนวิชานี้?")) {
-      setCourses((prev) => prev.map((c) => c.code === code ? { ...c, status: "available" as const, enrolled: c.enrolled - 1 } : c));
+      setCourses((prev) => prev.map((c) => c.code === code ? {
+        ...c,
+        status: "available" as const,
+        enrollmentStatus: "cancelled" as const,
+        enrolled: Math.max(0, c.enrolled - 1),
+      } : c));
     }
   };
 

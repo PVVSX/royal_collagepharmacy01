@@ -120,8 +120,9 @@ export default function AdminFinancePage() {
                               <DialogTitle>ตรวจสอบหลักฐานการโอนเงิน</DialogTitle>
                             </DialogHeader>
                             <div className="py-4 space-y-4">
-                              <div className="bg-surface-container rounded-lg h-64 flex items-center justify-center text-content-muted font-medium">
-                                [ ภาพจำลองสลิปโอนเงิน ]
+                              <div className="bg-surface-container rounded-lg h-64 flex flex-col items-center justify-center gap-2 text-content-muted font-medium">
+                                <span className="material-symbols-outlined text-4xl" aria-hidden="true">receipt_long</span>
+                                <span>หลักฐานการชำระเงิน</span>
                               </div>
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div><span className="text-content-muted">ชื่อผู้โอน:</span> <span className="font-medium">{item.name}</span></div>

@@ -2,17 +2,27 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  StudentRecordBadge,
+  type TrainingStatus,
+} from "@/roles/shared/features/student-records";
 
 const mockStudents = [
-  { id: "RPC-2569-001", name: "ภญ. คาริน่า ยู", program: "เภสัชบำบัด", year: "2569", status: "active", email: "karina@example.com" },
-  { id: "RPC-2569-002", name: "ภก. สมชาย ใจดี", program: "เภสัชบำบัด", year: "2569", status: "active", email: "somchai@example.com" },
-  { id: "RPC-2568-124", name: "ภญ. สมหญิง รักชาติ", program: "เภสัชกรรมชุมชน", year: "2568", status: "active", email: "somying@example.com" },
-  { id: "RPC-2567-089", name: "ภก. มานะ อดทน", program: "การคุ้มครองผู้บริโภค", year: "2567", status: "graduated", email: "mana@example.com" },
-  { id: "RPC-2568-201", name: "ภญ. กานดา ศรีสุข", program: "เภสัชอุตสาหการ", year: "2568", status: "inactive", email: "kanda@example.com" },
-];
+  { id: "RPC-2569-001", name: "ภญ. คาริน่า ยู", program: "เภสัชบำบัด", year: "2569", trainingStatus: "normal", email: "karina@example.com" },
+  { id: "RPC-2569-002", name: "ภก. สมชาย ใจดี", program: "เภสัชบำบัด", year: "2569", trainingStatus: "normal", email: "somchai@example.com" },
+  { id: "RPC-2568-124", name: "ภญ. สมหญิง รักชาติ", program: "เภสัชกรรมชุมชน", year: "2568", trainingStatus: "maintaining", email: "somying@example.com" },
+  { id: "RPC-2567-089", name: "ภก. มานะ อดทน", program: "การคุ้มครองผู้บริโภค", year: "2567", trainingStatus: "completed", email: "mana@example.com" },
+  { id: "RPC-2568-201", name: "ภญ. กานดา ศรีสุข", program: "เภสัชอุตสาหการ", year: "2568", trainingStatus: "resigned", email: "kanda@example.com" },
+] satisfies readonly {
+  id: string;
+  name: string;
+  program: string;
+  year: string;
+  trainingStatus: TrainingStatus;
+  email: string;
+}[];
 
 export default function AdminStudentsPage() {
   const [students] = useState(mockStudents);
@@ -67,7 +77,7 @@ export default function AdminStudentsPage() {
                   <th className="px-4 py-3 font-medium">หลักสูตร</th>
                   <th className="px-4 py-3 font-medium">ปีการศึกษา</th>
                   <th className="px-4 py-3 font-medium">อีเมล</th>
-                  <th className="px-4 py-3 font-medium">สถานะ</th>
+                  <th className="px-4 py-3 font-medium">สถานะการฝึกอบรม</th>
                   <th className="px-4 py-3 font-medium text-right">จัดการ</th>
                 </tr>
               </thead>
@@ -87,9 +97,10 @@ export default function AdminStudentsPage() {
                     <td className="px-4 py-3 text-content-muted">{item.year}</td>
                     <td className="px-4 py-3 text-content-muted">{item.email}</td>
                     <td className="px-4 py-3">
-                      {item.status === 'active' && <Badge variant="success">กำลังศึกษา</Badge>}
-                      {item.status === 'graduated' && <Badge variant="info">สำเร็จการศึกษา</Badge>}
-                      {item.status === 'inactive' && <Badge variant="neutral">พ้นสภาพ</Badge>}
+                      <StudentRecordBadge
+                        kind="training"
+                        status={item.trainingStatus}
+                      />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <a href={`/admin/students/${item.id}`}>

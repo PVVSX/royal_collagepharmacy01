@@ -1,6 +1,17 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createAdmissionDocuments,
+  type AdmissionDocument,
+  type AdmissionDocumentStatus,
+} from "@/roles/shared/features/admissions/documents";
+import {
+  defaultResearchSubmissions,
+  type ResearchSubmission,
+  type ResearchSubmissionStatus,
+} from "@/roles/shared/features/research/types";
+import type { FileMetadata } from "@/roles/shared/features/file-metadata";
 
 // Types
 export type Status = "pending" | "approved" | "rejected";
@@ -12,6 +23,9 @@ export interface Admission {
   program: string;
   date: string;
   status: Status;
+  documents: AdmissionDocument[];
+  documentStatus: AdmissionDocumentStatus;
+  documentNote?: string;
 }
 
 export interface Payment {
@@ -87,6 +101,21 @@ interface MockDbContextType {
   admissions: Admission[];
   setAdmissions: React.Dispatch<React.SetStateAction<Admission[]>>;
   updateAdmissionStatus: (id: string, status: Status) => void;
+  updateAdmissionDocuments: (
+    id: string,
+    documents: AdmissionDocument[],
+    documentStatus?: AdmissionDocumentStatus,
+    documentNote?: string,
+  ) => void;
+
+  researchSubmissions: ResearchSubmission[];
+  setResearchSubmissions: React.Dispatch<React.SetStateAction<ResearchSubmission[]>>;
+  addResearchSubmission: (submission: ResearchSubmission) => void;
+  updateResearchSubmissionStatus: (
+    id: string,
+    status: ResearchSubmissionStatus,
+    reviewerNote?: string,
+  ) => void;
   
   payments: Payment[];
   setPayments: React.Dispatch<React.SetStateAction<Payment[]>>;
@@ -116,11 +145,199 @@ interface MockDbContextType {
   updateSettings: (settings: Partial<Settings>) => void;
 }
 
+const exampleSubmittedDocumentIds = new Set([
+  "application-photo",
+  "degree",
+  "license",
+  "transcript",
+  "recommendation",
+  "cv",
+  "permission",
+]);
+
+function createMockSubmittedDocuments(options?: { missingId?: string; accepted?: boolean }) {
+  return createAdmissionDocuments().map((document) => {
+    const isMissing = document.id === options?.missingId;
+    const hasFile = exampleSubmittedDocumentIds.has(document.id) && !isMissing;
+    return {
+      ...document,
+      file: hasFile
+        ? {
+            name: `${document.id}.pdf`,
+            type: "application/pdf",
+            size: 420000,
+            lastModified: 1783209600000,
+          }
+        : undefined,
+      reviewStatus: isMissing
+        ? "missing" as const
+        : hasFile && options?.accepted
+          ? "accepted" as const
+          : hasFile
+            ? "pending" as const
+            : "not_applicable" as const,
+      reviewerNote: isMissing ? "กรุณาแนบเอกสารฉบับที่อ่านวันหมดอายุได้ชัดเจน" : undefined,
+    };
+  });
+}
+
+function isFileMetadata(value: unknown): value is FileMetadata {
+  if (!value || typeof value !== "object") return false;
+  const file = value as Partial<FileMetadata>;
+  return (
+    typeof file.name === "string" &&
+    typeof file.type === "string" &&
+    typeof file.size === "number" &&
+    typeof file.lastModified === "number"
+  );
+}
+
+function isResearchSubmission(value: unknown): value is ResearchSubmission {
+  if (!value || typeof value !== "object") return false;
+  const submission = value as Partial<ResearchSubmission>;
+  return (
+    typeof submission.id === "string" &&
+    typeof submission.title === "string" &&
+    typeof submission.authors === "string" &&
+    typeof submission.type === "string" &&
+    typeof submission.field === "string" &&
+    typeof submission.journal === "string" &&
+    typeof submission.publisher === "string" &&
+    typeof submission.year === "number" &&
+    typeof submission.language === "string" &&
+    typeof submission.doi === "string" &&
+    typeof submission.abstract === "string" &&
+    typeof submission.consentToPublish === "boolean" &&
+    typeof submission.submittedAt === "string" &&
+    (submission.status === "pending" ||
+      submission.status === "approved" ||
+      submission.status === "rejected") &&
+    (!submission.articleFile || isFileMetadata(submission.articleFile)) &&
+    (!submission.acceptanceFile || isFileMetadata(submission.acceptanceFile))
+  );
+}
+
+function normalizeResearchSubmissions(value: unknown): ResearchSubmission[] {
+  if (!Array.isArray(value)) return defaultResearchSubmissions;
+  const validStored = value.filter(isResearchSubmission);
+  const storedIds = new Set(validStored.map((submission) => submission.id));
+  return [
+    ...validStored,
+    ...defaultResearchSubmissions.filter((submission) => !storedIds.has(submission.id)),
+  ];
+}
+
+function normalizeAdmissionDocuments(
+  value: unknown,
+  admissionStatus: Status,
+): AdmissionDocument[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    return admissionStatus === "approved"
+      ? createMockSubmittedDocuments({ accepted: true })
+      : createAdmissionDocuments();
+  }
+
+  const storedById = new Map(
+    value
+      .filter((document): document is Record<string, unknown> => (
+        Boolean(document) && typeof document === "object" && typeof document.id === "string"
+      ))
+      .map((document) => [document.id as string, document]),
+  );
+
+  return createAdmissionDocuments().map((requirement) => {
+    const stored = storedById.get(requirement.id);
+    if (!stored) return requirement;
+
+    const file = isFileMetadata(stored.file) ? stored.file : undefined;
+    const reviewStatus =
+      stored.reviewStatus === "accepted" ||
+      stored.reviewStatus === "missing" ||
+      stored.reviewStatus === "not_applicable" ||
+      stored.reviewStatus === "pending"
+        ? stored.reviewStatus
+        : file
+          ? admissionStatus === "approved" ? "accepted" : "pending"
+          : requirement.required ? "pending" : "not_applicable";
+
+    return {
+      ...requirement,
+      file,
+      reviewStatus,
+      reviewerNote: typeof stored.reviewerNote === "string" ? stored.reviewerNote : undefined,
+    };
+  });
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function normalizeAdmission(value: unknown): Admission | null {
+  if (!value || typeof value !== "object") return null;
+  const admission = value as Partial<Admission>;
+  if (
+    !isNonEmptyString(admission.id) ||
+    !isNonEmptyString(admission.name) ||
+    !isNonEmptyString(admission.license) ||
+    !isNonEmptyString(admission.program) ||
+    !isNonEmptyString(admission.date)
+  ) {
+    return null;
+  }
+
+  const status: Status = admission.status === "approved" || admission.status === "rejected"
+    ? admission.status
+    : "pending";
+  const documents = normalizeAdmissionDocuments(admission.documents, status);
+  const hasPendingDocumentReview = documents.some((document) => (
+    document.reviewStatus === "missing" ||
+    (Boolean(document.file) && document.reviewStatus !== "accepted")
+  ));
+  const documentStatus: AdmissionDocumentStatus = status === "approved"
+    ? "complete"
+    : hasPendingDocumentReview
+      ? "pending"
+      : "complete";
+
+  return {
+    id: admission.id.trim(),
+    name: admission.name.trim(),
+    license: admission.license.trim(),
+    program: admission.program.trim(),
+    date: admission.date.trim(),
+    status,
+    documents,
+    documentStatus,
+    documentNote: typeof admission.documentNote === "string"
+      ? admission.documentNote
+      : undefined,
+  };
+}
+
 const defaultAdmissions: Admission[] = [
-  { id: "APP-2026-001", name: "ภก. สมชาย ใจดี", license: "ภ.12345", program: "เภสัชบำบัด", date: "24 มิ.ย. 2569", status: "pending" },
-  { id: "APP-2026-002", name: "ภญ. สมหญิง รักชาติ", license: "ภ.23456", program: "เภสัชกรรมชุมชน", date: "23 มิ.ย. 2569", status: "pending" },
-  { id: "APP-2026-003", name: "ภก. มานะ อดทน", license: "ภ.34567", program: "การคุ้มครองผู้บริโภค", date: "22 มิ.ย. 2569", status: "approved" },
+  { id: "APP-2026-001", name: "ภก. สมชาย ใจดี", license: "ภ.12345", program: "เภสัชบำบัด", date: "24 มิ.ย. 2569", status: "pending", documents: createMockSubmittedDocuments(), documentStatus: "pending" },
+  { id: "APP-2026-002", name: "ภญ. สมหญิง รักชาติ", license: "ภ.23456", program: "เภสัชกรรมชุมชน", date: "23 มิ.ย. 2569", status: "pending", documents: createMockSubmittedDocuments({ missingId: "license" }), documentStatus: "pending", documentNote: "หากต้องการแนบสำเนาใบประกอบวิชาชีพ กรุณาใช้ไฟล์ที่เห็นวันหมดอายุชัดเจน" },
+  { id: "APP-2026-003", name: "ภก. มานะ อดทน", license: "ภ.34567", program: "การคุ้มครองผู้บริโภค", date: "22 มิ.ย. 2569", status: "approved", documents: createMockSubmittedDocuments({ accepted: true }), documentStatus: "complete" },
 ];
+
+function normalizeAdmissions(value: unknown): Admission[] {
+  const storedAdmissions = Array.isArray(value) ? value : [];
+  const normalizedAdmissions: Admission[] = [];
+  const storedIds = new Set<string>();
+
+  storedAdmissions.forEach((storedAdmission) => {
+    const admission = normalizeAdmission(storedAdmission);
+    if (!admission || storedIds.has(admission.id)) return;
+    normalizedAdmissions.push(admission);
+    storedIds.add(admission.id);
+  });
+
+  return [
+    ...normalizedAdmissions,
+    ...defaultAdmissions.filter((admission) => !storedIds.has(admission.id)),
+  ];
+}
 
 const defaultPayments: Payment[] = [
   { id: "PAY-2569-001", studentId: "RPC-2569-001", name: "ภญ. คาริน่า ยู", program: "เภสัชบำบัด", amount: 25000, date: "24 มิ.ย. 2569", status: "pending", type: "ค่าลงทะเบียนเรียน" },
@@ -160,6 +377,7 @@ const MockDbContext = createContext<MockDbContextType | undefined>(undefined);
 
 export function MockDbProvider({ children }: { children: ReactNode }) {
   const [admissions, setAdmissions] = useState<Admission[]>([]);
+  const [researchSubmissions, setResearchSubmissions] = useState<ResearchSubmission[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [courseRequests, setCourseRequests] = useState<CourseRequest[]>([]);
@@ -172,16 +390,36 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(k);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const p = (v: string | null, d: any) => v ? JSON.parse(v) : d;
+    const p = (v: string | null, d: any) => {
+      if (!v) return d;
+      try {
+        return JSON.parse(v);
+      } catch {
+        return d;
+      }
+    };
+
+    const normalizedAdmissions = normalizeAdmissions(
+      p(s("mock_admissions"), defaultAdmissions),
+    );
+
+    const parsedResearchSubmissions = p(
+      s("mock_researchSubmissions"),
+      defaultResearchSubmissions,
+    );
+    const asArray = <T,>(value: unknown, fallback: T[]): T[] => (
+      Array.isArray(value) ? value as T[] : fallback
+    );
 
     /* eslint-disable react-hooks/set-state-in-effect */
-    setAdmissions(p(s("mock_admissions"), defaultAdmissions));
-    setPayments(p(s("mock_payments"), defaultPayments));
-    setPrograms(p(s("mock_programs"), defaultPrograms));
-    setCourseRequests(p(s("mock_courseRequests"), defaultCourseRequests));
-    setRegistrations(p(s("mock_registrations"), defaultRegistrations));
-    setExamRequests(p(s("mock_examRequests"), defaultExamRequests));
-    setCertificates(p(s("mock_certificates"), defaultCertificates));
+    setAdmissions(normalizedAdmissions);
+    setResearchSubmissions(normalizeResearchSubmissions(parsedResearchSubmissions));
+    setPayments(asArray(p(s("mock_payments"), defaultPayments), defaultPayments));
+    setPrograms(asArray(p(s("mock_programs"), defaultPrograms), defaultPrograms));
+    setCourseRequests(asArray(p(s("mock_courseRequests"), defaultCourseRequests), defaultCourseRequests));
+    setRegistrations(asArray(p(s("mock_registrations"), defaultRegistrations), defaultRegistrations));
+    setExamRequests(asArray(p(s("mock_examRequests"), defaultExamRequests), defaultExamRequests));
+    setCertificates(asArray(p(s("mock_certificates"), defaultCertificates), defaultCertificates));
     setSettings(p(s("mock_settings"), defaultSettings));
 
     setIsLoaded(true);
@@ -190,6 +428,7 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoaded) return;
     localStorage.setItem("mock_admissions", JSON.stringify(admissions));
+    localStorage.setItem("mock_researchSubmissions", JSON.stringify(researchSubmissions));
     localStorage.setItem("mock_payments", JSON.stringify(payments));
     localStorage.setItem("mock_programs", JSON.stringify(programs));
     localStorage.setItem("mock_courseRequests", JSON.stringify(courseRequests));
@@ -197,9 +436,42 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("mock_examRequests", JSON.stringify(examRequests));
     localStorage.setItem("mock_certificates", JSON.stringify(certificates));
     localStorage.setItem("mock_settings", JSON.stringify(settings));
-  }, [admissions, payments, programs, courseRequests, registrations, examRequests, certificates, settings, isLoaded]);
+  }, [admissions, researchSubmissions, payments, programs, courseRequests, registrations, examRequests, certificates, settings, isLoaded]);
 
-  const updateAdmissionStatus = (id: string, status: Status) => setAdmissions(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+  const updateAdmissionStatus = (id: string, status: Status) => setAdmissions((previous) => previous.map((admission) => {
+    if (admission.id !== id) return admission;
+    if (status !== "approved") return { ...admission, status };
+
+    return {
+      ...admission,
+      status,
+      documentStatus: "complete",
+      documents: admission.documents.map((document) => ({
+        ...document,
+        reviewStatus: document.file ? "accepted" : "not_applicable",
+        reviewerNote: undefined,
+      })),
+      documentNote: undefined,
+    };
+  }));
+  const updateAdmissionDocuments = (
+    id: string,
+    documents: AdmissionDocument[],
+    documentStatus: AdmissionDocumentStatus = "pending",
+    documentNote?: string,
+  ) => setAdmissions((previous) => previous.map((admission) => (
+    admission.id === id
+      ? { ...admission, documents, documentStatus, documentNote }
+      : admission
+  )));
+  const addResearchSubmission = (submission: ResearchSubmission) => setResearchSubmissions((previous) => [submission, ...previous]);
+  const updateResearchSubmissionStatus = (
+    id: string,
+    status: ResearchSubmissionStatus,
+    reviewerNote?: string,
+  ) => setResearchSubmissions((previous) => previous.map((submission) => (
+    submission.id === id ? { ...submission, status, reviewerNote } : submission
+  )));
   const updatePaymentStatus = (id: string, status: Status) => setPayments(prev => prev.map(p => p.id === id ? { ...p, status } : p));
   const addPayment = (payment: Payment) => setPayments(prev => [payment, ...prev]);
   const updateCourseRequestStatus = (id: string, status: Status) => setCourseRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
@@ -211,7 +483,8 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
   return (
     <MockDbContext.Provider
       value={{
-        admissions, setAdmissions, updateAdmissionStatus,
+        admissions, setAdmissions, updateAdmissionStatus, updateAdmissionDocuments,
+        researchSubmissions, setResearchSubmissions, addResearchSubmission, updateResearchSubmissionStatus,
         payments, setPayments, updatePaymentStatus, addPayment,
         programs, setPrograms,
         courseRequests, setCourseRequests, updateCourseRequestStatus,

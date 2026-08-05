@@ -128,7 +128,7 @@ function SidebarNav({ pathname }: { pathname: string }) {
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate text-sidebar-foreground">ภก. สมชาย ใจดี</p>
-            <p className="text-xs opacity-90 text-sidebar-foreground/70">Student (Tester)</p>
+            <p className="text-xs opacity-90 text-sidebar-foreground/70">ผู้เข้ารับการฝึกอบรม</p>
           </div>
           <button
             onClick={() => router.push("/")}

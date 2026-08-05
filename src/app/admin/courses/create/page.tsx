@@ -8,6 +8,7 @@ import { useMockDb } from "@/providers/mock-db-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RESPONSIBLE_INSTITUTION_LABEL } from "@/roles/shared/features/courses/responsible-institution";
 
 export default function CreateCoursePage() {
   const router = useRouter();
@@ -47,7 +48,7 @@ export default function CreateCoursePage() {
       setCourseRequests(prev => [newRequest, ...prev]);
       
       toast.success("ส่งคำขอเปิดรายวิชาสำเร็จ", {
-        description: "ข้อมูลถูกส่งไปยังสภาเภสัชกรรมเพื่อรอการอนุมัติแล้ว",
+        description: `ข้อมูลรายวิชาและ${RESPONSIBLE_INSTITUTION_LABEL}ถูกส่งเพื่อตรวจสอบแล้ว`,
       });
       
       router.push("/admin/courses");
@@ -64,7 +65,7 @@ export default function CreateCoursePage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-content tracking-tight">ยื่นขอเปิดรายวิชาใหม่</h1>
-          <p className="text-sm text-content-muted mt-1">กรอกข้อมูลรายวิชาเพื่อให้สภาเภสัชกรรมตรวจสอบและรับรอง</p>
+          <p className="text-sm text-content-muted mt-1">ระบุข้อมูลรายวิชาและสถาบันหลักเพื่อให้สภาเภสัชกรรมตรวจสอบและรับรอง</p>
         </div>
       </div>
 
@@ -72,7 +73,7 @@ export default function CreateCoursePage() {
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <label htmlFor="collegeName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">วิทยาลัย / สถาบันฝึกอบรม</label>
+              <label htmlFor="collegeName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{RESPONSIBLE_INSTITUTION_LABEL}</label>
               <select
                 id="collegeName"
                 name="collegeName"
@@ -80,12 +81,16 @@ export default function CreateCoursePage() {
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={formData.collegeName}
                 onChange={handleChange}
+                aria-describedby="collegeName-description"
               >
-                <option value="">-- เลือกวิทยาลัย --</option>
+                <option value="">-- เลือก{RESPONSIBLE_INSTITUTION_LABEL} --</option>
                 {programs.map(p => (
                   <option key={p.id} value={p.name}>{p.name}</option>
                 ))}
               </select>
+              <p id="collegeName-description" className="text-xs leading-relaxed text-content-muted">
+                วิทยาลัยหรือสถาบันที่รับผิดชอบการจัดการและรับรองรายวิชานี้
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

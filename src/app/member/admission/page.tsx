@@ -22,6 +22,12 @@ import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { useMockDb } from "@/providers/mock-db-provider";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { FileUploadField } from "@/roles/shared/components/forms/FileUploadField";
+import {
+  createAdmissionDocuments,
+  getAdmissionDocumentProgress,
+  type AdmissionDocument,
+} from "@/roles/shared/features/admissions/documents";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -37,7 +43,7 @@ const colleges = [
     name: "วิทยาลัยเภสัชบำบัด",
     abbr: "วภท.",
     icon: "local_hospital",
-    examDesc: "สอบประเมินความรู้ Board Certified Pharmacotherapy (BCP) — สอบข้อเขียน, ปากเปล่าข้างเตียง, โครงร่างวิทยานิพนธ์",
+    examDesc: "สอบประเมินความรู้ Board Certified Pharmacotherapy (BCP): สอบข้อเขียน, ปากเปล่าข้างเตียง, โครงร่างวิทยานิพนธ์",
     credential: "วุฒิบัตรฯ สาขาเภสัชบำบัด",
   },
   {
@@ -70,14 +76,16 @@ const colleges = [
 
 export default function ExamApplicationPage() {
   const router = useRouter();
-  const { settings, admissions, setAdmissions } = useMockDb();
+  const { settings, admissions, setAdmissions, updateAdmissionDocuments } = useMockDb();
 
   const [started, setStarted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedCollege, setSelectedCollege] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
+  const [completionKind, setCompletionKind] = useState<"application" | "documents" | null>(null);
   const [payingApp, setPayingApp] = useState<typeof admissions[0] | null>(null);
+  const [documents, setDocuments] = useState<AdmissionDocument[]>(createAdmissionDocuments);
+  const [editingAdmissionId, setEditingAdmissionId] = useState<string>();
 
   // Payment dialog state
   const [payRef, setPayRef] = useState("");
@@ -120,12 +128,64 @@ export default function ExamApplicationPage() {
     else setCurrentStep((p) => Math.min(p + 1, 3));
   };
 
-  const handlePrev = () => setCurrentStep((p) => Math.max(p - 1, 1));
+  const handlePrev = () => {
+    if (editingAdmissionId && currentStep === 2) return;
+    setCurrentStep((previous) => Math.max(previous - 1, 1));
+  };
+
+  const documentProgress = getAdmissionDocumentProgress(documents);
+  const memberAdmissions = admissions.filter((application) => (
+    application.license === profileData.personalInfo.licenseNumber
+  ));
+
+  const updateDocumentFile = (id: string, file?: AdmissionDocument["file"]) => {
+    setDocuments((previous) => previous.map((document) => (
+      document.id === id
+        ? {
+            ...document,
+            file,
+            reviewStatus: file ? "pending" : document.required ? "pending" : "not_applicable",
+            reviewerNote: undefined,
+          }
+        : document
+    )));
+  };
+
+  const continueDocuments = (application: typeof admissions[number]) => {
+    setDocuments(application.documents);
+    setEditingAdmissionId(application.id);
+    setSelectedCollege(colleges.find((college) => (
+      application.program.includes(college.id.replace("วิทยาลัย", "")) ||
+      college.name.includes(application.program) ||
+      college.credential.includes(application.program)
+    ))?.id ?? colleges[0].id);
+    setCurrentStep(2);
+    setStarted(true);
+  };
 
   const submitApplication = () => {
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
+      const hasDocumentsToReview = documents.some((document) => (
+        Boolean(document.file) || document.reviewStatus === "missing"
+      ));
+      const documentStatus = hasDocumentsToReview ? "pending" : "complete";
+
+      if (editingAdmissionId) {
+        updateAdmissionDocuments(
+          editingAdmissionId,
+          documents,
+          documentStatus,
+        );
+        toast.success("ส่งเอกสารเพิ่มเติมเรียบร้อยแล้ว", {
+          description: "เจ้าหน้าที่จะตรวจสอบเอกสารอีกครั้ง",
+        });
+        setEditingAdmissionId(undefined);
+        setCompletionKind("documents");
+        return;
+      }
+
       const newId = `EXM-2569-${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`;
       setAdmissions((prev) => [
         {
@@ -135,13 +195,15 @@ export default function ExamApplicationPage() {
           program: selectedCollege || "ไม่ระบุ",
           date: new Date().toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" }),
           status: "pending",
+          documents,
+          documentStatus,
         },
         ...prev,
       ]);
       toast.success("ส่งใบสมัครสอบเรียบร้อยแล้ว", {
         description: "ระบบได้รับข้อมูลของคุณแล้ว กรุณารอการตรวจสอบจากเจ้าหน้าที่",
       });
-      setIsComplete(true);
+      setCompletionKind("application");
     }, 1500);
   };
 
@@ -149,6 +211,8 @@ export default function ExamApplicationPage() {
     setStarted(false);
     setCurrentStep(1);
     setSelectedCollege("");
+    setDocuments(createAdmissionDocuments());
+    setEditingAdmissionId(undefined);
   };
 
   // ── Closed ──────────────────────────────────────────────────────────────────
@@ -169,20 +233,32 @@ export default function ExamApplicationPage() {
   }
 
   // ── Complete ─────────────────────────────────────────────────────────────────
-  if (isComplete) {
+  if (completionKind) {
+    const isDocumentResubmission = completionKind === "documents";
+    const returnToAdmission = () => {
+      setCompletionKind(null);
+      resetToLanding();
+      router.replace("/member/admission");
+    };
+
     return (
         <PageShell size="content" className="flex min-h-[70vh] flex-col items-center justify-center text-center duration-500 animate-in fade-in zoom-in-95">
           <div className="w-24 h-24 bg-success-soft rounded-full flex items-center justify-center mb-6 shadow-sm">
             <span className="material-symbols-outlined text-success text-5xl">check_circle</span>
         </div>
-        <h1 className="text-3xl font-bold mb-2">ส่งใบสมัครสอบสำเร็จแล้ว!</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          {isDocumentResubmission ? "ส่งเอกสารเพิ่มเติมสำเร็จแล้ว!" : "ส่งใบสมัครสอบสำเร็จแล้ว!"}
+        </h1>
         <p className="text-muted-foreground max-w-md mb-8">
-          ระบบได้รับข้อมูลการสมัครสอบของคุณเรียบร้อยแล้ว<br />
-          คุณสามารถติดตามสถานะได้ที่หน้านี้ หรือเมนู <strong>“ข้อมูลของฉัน”</strong>
+          {isDocumentResubmission
+            ? "ระบบได้รับเอกสารเพิ่มเติมของคุณแล้ว เจ้าหน้าที่จะตรวจสอบอีกครั้ง"
+            : "ระบบได้รับข้อมูลการสมัครสอบของคุณเรียบร้อยแล้ว"}
+          <br />
+          คุณสามารถติดตามสถานะได้ที่หน้าสมัครสอบ
         </p>
         <div className="flex gap-4">
-          <Button variant="outline" onClick={() => { setIsComplete(false); resetToLanding(); }}>กลับหน้าสมัครสอบ</Button>
-          <Button onClick={() => router.push("/member/students")}>ดูสถานะการสมัคร</Button>
+          <Button variant="outline" onClick={returnToAdmission}>กลับหน้าสมัครสอบ</Button>
+          <Button onClick={returnToAdmission}>ดูสถานะการสมัคร</Button>
         </div>
       </PageShell>
     );
@@ -225,10 +301,10 @@ export default function ExamApplicationPage() {
                 <span className="material-symbols-outlined text-lg text-primary">receipt_long</span>
                 สถานะการสมัครสอบ
               </h2>
-              <span className="text-xs text-muted-foreground">{admissions.length} รายการ</span>
+              <span className="text-xs text-muted-foreground">{memberAdmissions.length} รายการ</span>
             </div>
 
-            {admissions.length === 0 ? (
+            {memberAdmissions.length === 0 ? (
               <div className="border border-dashed border-border rounded-xl py-10 text-center text-muted-foreground">
                 <span className="material-symbols-outlined text-3xl mb-2 block">inbox</span>
                 <p className="text-sm">ยังไม่มีประวัติการสมัครสอบ</p>
@@ -241,7 +317,7 @@ export default function ExamApplicationPage() {
                   <span>วันที่ยื่น</span>
                   <span className="text-right">สถานะ</span>
                 </div>
-                {admissions.map((app) => {
+                {memberAdmissions.map((app) => {
                   const statusMap: Record<string, { label: string; variant: "warning" | "success" | "danger" | "info"; icon: string }> = {
                     pending: { label: "รอดำเนินการ", variant: "warning", icon: "pending" },
                     approved: { label: "อนุมัติให้สอบ", variant: "success", icon: "check_circle" },
@@ -249,6 +325,12 @@ export default function ExamApplicationPage() {
                     reviewing: { label: "กำลังตรวจสอบ", variant: "info", icon: "manage_search" },
                   };
                   const s = statusMap[app.status] ?? statusMap.pending;
+                  const documentStatusMap = {
+                    pending: { label: "มีเอกสารรอตรวจ", variant: "info" as const },
+                    complete: { label: "ตรวจเอกสารแล้ว", variant: "success" as const },
+                    incomplete: { label: "มีข้อเสนอแนะเรื่องเอกสาร", variant: "warning" as const },
+                  };
+                  const documentStatus = documentStatusMap[app.documentStatus];
                   const isApproved = app.status === "approved";
                   return (
                     <div key={app.id} className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr_100px_auto] gap-2 md:gap-4 px-5 py-4 hover:bg-muted/20 transition-colors items-center">
@@ -256,6 +338,7 @@ export default function ExamApplicationPage() {
                       <div>
                         <p className="text-sm font-medium leading-snug">{app.program}</p>
                         <p className="text-xs text-muted-foreground">{app.name}</p>
+                        {app.documentNote && <p className="mt-1 text-xs text-danger">{app.documentNote}</p>}
                       </div>
                       <div className="flex items-center"><span className="text-xs text-muted-foreground">{app.date}</span></div>
                       <div className="flex md:justify-end items-center gap-2 flex-wrap">
@@ -263,6 +346,14 @@ export default function ExamApplicationPage() {
                           <span className="material-symbols-outlined text-caption">{s.icon}</span>
                           {s.label}
                         </Badge>
+                        <Badge variant={documentStatus.variant} className="h-auto px-2 py-1 text-2xs">
+                          {documentStatus.label}
+                        </Badge>
+                        {app.status === "pending" && (
+                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => continueDocuments(app)}>
+                            จัดการเอกสาร
+                          </Button>
+                        )}
                         {isApproved && (
                           <Button
                             size="sm"
@@ -292,7 +383,7 @@ export default function ExamApplicationPage() {
                     </div>
                     <DialogTitle className="text-xl mb-2">ส่งหลักฐานการชำระเงินแล้ว</DialogTitle>
                     <DialogDescription className="max-w-sm">
-                      เจ้าหน้าที่จะตรวจสอบหลักฐานและยืนยันสิทธิ์การสอบภายใน 1–2 วันทำการ
+                      เจ้าหน้าที่จะตรวจสอบหลักฐานและยืนยันสิทธิ์การสอบภายใน 1-2 วันทำการ
                     </DialogDescription>
                     <Button className="mt-6 min-w-32" onClick={() => setPayingApp(null)}>ปิด</Button>
                   </div>
@@ -535,6 +626,41 @@ export default function ExamApplicationPage() {
                 <AddressCard title="ที่อยู่ตามบัตรประชาชน" icon="home" data={profileData.personalInfo} isReadOnly={true} showContactInfo={false} />
                 <AddressCard title="ที่อยู่ปัจจุบัน/ที่ติดต่อได้" icon="contact_mail" data={profileData.personalInfo} isReadOnly={true} showContactInfo={true} />
                 <WorkplaceCard data={profileData.workHistory} isReadOnly={true} />
+
+                <section className="rounded-xl border border-border bg-card p-5" aria-labelledby="admission-documents-heading">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 id="admission-documents-heading" className="text-base font-semibold">เอกสารประกอบการสมัคร</h3>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                        เอกสารทุกประเภทเป็นทางเลือก สามารถส่งคำร้องได้ทันทีและกลับมาแนบเพิ่มเติมภายหลัง
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="w-fit shrink-0">
+                      แนบแล้ว {documentProgress.attached}/{documentProgress.total} รายการ
+                    </Badge>
+                  </div>
+
+                  <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                    {documents.map((document) => (
+                      <div key={document.id} className="rounded-lg border border-border bg-muted/20 p-3">
+                        <FileUploadField
+                          compact
+                          label={document.label}
+                          description={document.hint ?? "เอกสารแนบทางเลือก"}
+                          required={false}
+                          value={document.file}
+                          onChange={(file) => updateDocumentFile(document.id, file)}
+                        />
+                        {document.reviewerNote && (
+                          <p className="mt-2 rounded-md bg-danger-soft px-2.5 py-2 text-xs text-danger-on-soft">
+                            เจ้าหน้าที่: {document.reviewerNote}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                </section>
               </motion.div>
             )}
 
@@ -575,6 +701,19 @@ export default function ExamApplicationPage() {
                         <span className="text-sm text-muted-foreground">เลขที่ใบประกอบวิชาชีพ</span>
                         <span className="text-sm font-semibold font-mono">{profileData.personalInfo.licenseNumber}</span>
                       </div>
+                      <div className="flex items-start justify-between gap-4 py-3">
+                        <span className="text-sm text-muted-foreground">เอกสารประกอบ</span>
+                        <div className="text-right">
+                          <Badge variant="outline">
+                            {documentProgress.attached > 0
+                              ? `แนบแล้ว ${documentProgress.attached}/${documentProgress.total} รายการ`
+                              : "ยังไม่ได้แนบเอกสาร"}
+                          </Badge>
+                          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+                            การแนบเอกสารเป็นทางเลือกและไม่ขัดขวางการส่งคำร้อง
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="mt-5 flex items-start gap-2.5 p-4 rounded-xl bg-muted/30 border border-border/50 text-xs text-muted-foreground">
@@ -601,7 +740,7 @@ export default function ExamApplicationPage() {
 
         {/* Navigation Buttons */}
         <div className="flex justify-between items-center pt-6 mt-4 border-t">
-          <Button variant="outline" onClick={handlePrev} disabled={currentStep === 1} className="w-24 gap-1">
+          <Button variant="outline" onClick={handlePrev} disabled={currentStep === 1 || Boolean(editingAdmissionId && currentStep === 2)} className="w-24 gap-1">
             <span className="material-symbols-outlined text-sm">arrow_back</span> กลับ
           </Button>
           <Button

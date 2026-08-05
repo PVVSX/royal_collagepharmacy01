@@ -36,7 +36,6 @@ const BANK_BACKGROUND_CLASS: Record<string, string> = {
 export default function PaymentDialog({ item, onOpenChange, onSubmitted }: PaymentDialogProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [referenceNo, setReferenceNo] = useState(`INV-2569-${String(item.id).padStart(3, "0")}`);
-  const [amount, setAmount] = useState(String(item.amount));
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [copiedAccount, setCopiedAccount] = useState("");
@@ -76,10 +75,6 @@ export default function PaymentDialog({ item, onOpenChange, onSubmitted }: Payme
     setError("");
     if (!referenceNo.trim()) {
       setError("กรุณากรอกเลขที่เอกสารหรือ Reference No.");
-      return;
-    }
-    if (!amount || Number(amount) <= 0) {
-      setError("กรุณาระบุจำนวนเงินที่โอนให้ถูกต้อง");
       return;
     }
     if (!file) {
@@ -183,9 +178,16 @@ export default function PaymentDialog({ item, onOpenChange, onSubmitted }: Payme
                     <Input id="payment-reference" value={referenceNo} onChange={(event) => setReferenceNo(event.target.value)} />
                   </div>
                   <div className="space-y-1.5">
-                    <label htmlFor="payment-amount" className="text-xs font-medium">จำนวนเงินที่โอน</label>
+                    <label htmlFor="payment-amount" className="text-xs font-medium">จำนวนเงินที่ต้องชำระ</label>
                     <div className="relative">
-                      <Input id="payment-amount" type="number" min="0.01" step="0.01" className="pr-12" value={amount} onChange={(event) => setAmount(event.target.value)} />
+                      <Input
+                        id="payment-amount"
+                        type="text"
+                        className="pr-12"
+                        value={item.amount.toLocaleString()}
+                        readOnly
+                        aria-readonly="true"
+                      />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">บาท</span>
                     </div>
                   </div>

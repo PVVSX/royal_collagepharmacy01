@@ -1,7 +1,14 @@
 "use client";
 
-import { use, useState } from "react";
-import { studentDetailData, profileData, registrationData, financeData, requestsData } from "@/roles/shared/data";
+import { use, useMemo, useState } from "react";
+import {
+  studentDetailData,
+  profileData,
+  registrationData,
+  financeData,
+  requestsData,
+  resolveMockPaymentOwner,
+} from "@/roles/shared/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +17,16 @@ import { AddressCard } from "@/roles/shared/member/components/AddressCard";
 import { WorkplaceCard } from "@/roles/shared/member/components/WorkplaceCard";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import Link from "next/link";
+import {
+  EducationTimeline,
+  MockFeeRuleNote,
+  StudentRecordBadge,
+  getEstimatedOutstandingAmount,
+  getMockPaymentBreakdown,
+  getOutstandingBaseAmount,
+  mergeStudentRecordPaymentStatuses,
+} from "@/roles/shared/features/student-records";
+import { useMockDb } from "@/providers/mock-db-provider";
 
 const icon18 = "material-symbols-outlined text-lg";
 
@@ -27,6 +44,17 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
   const studentId = resolvedParams.id;
   const s = studentDetailData; // In real app, fetch based on studentId
   const [activeTab, setActiveTab] = useState("personal");
+  const { payments } = useMockDb();
+  const financeItems = useMemo(
+    () => mergeStudentRecordPaymentStatuses(
+      financeData.items,
+      payments,
+      resolveMockPaymentOwner(studentId),
+    ),
+    [payments, studentId],
+  );
+  const outstandingBaseAmount = getOutstandingBaseAmount(financeItems);
+  const estimatedOutstandingAmount = getEstimatedOutstandingAmount(financeItems);
 
   return (
     <PageShell bottom="none" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 p-0 md:p-0">
@@ -70,9 +98,11 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <Badge variant="success" className="px-3 py-1 text-sm">
-                กำลังศึกษา (Active)
-              </Badge>
+              <StudentRecordBadge
+                kind="training"
+                status={s.trainingStatus}
+                className="px-3 py-1 text-sm"
+              />
               <div className="text-sm font-medium text-content-muted">
                 {s.college} (ปีการศึกษา {s.trainingYear})
               </div>
@@ -95,7 +125,12 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
             </div>
             <div>
               <p className="text-xs text-content-muted mb-1">ยอดค้างชำระ</p>
-              <p className="text-xl font-bold text-danger">฿0.00</p>
+              <p className="text-xl font-bold text-danger">
+                ฿{outstandingBaseAmount.toLocaleString()}
+              </p>
+              <p className="mt-0.5 text-xs text-content-muted">
+                ประมาณการรวมค่าธรรมเนียม ฿{estimatedOutstandingAmount.toLocaleString()}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -135,22 +170,7 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
           {activeTab === "education" && (
             <div className="animate-in fade-in slide-in-from-right-4">
               <h3 className="text-lg font-bold border-b border-border pb-2 mb-6">ประวัติการศึกษา</h3>
-              <div className="relative border-l-2 border-border ml-3 space-y-8">
-                {s.educationTimeline.map((edu, i) => (
-                  <div key={i} className="relative pl-8">
-                    <span
-                      className={`absolute -left-[9px] top-1.5 w-4 h-4 rounded-full ring-4 ring-card ${
-                        edu.isCurrent ? "bg-primary" : "bg-muted-foreground/30"
-                      }`}
-                    />
-                    <h4 className="font-bold text-sm">{edu.degree}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {edu.institution} — {edu.field}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{edu.period}</p>
-                  </div>
-                ))}
-              </div>
+              <EducationTimeline entries={s.educationTimeline} />
             </div>
           )}
 
@@ -176,29 +196,52 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
           {activeTab === "registration" && (
             <div className="animate-in fade-in slide-in-from-right-4">
               <h3 className="text-lg font-bold border-b border-border pb-2 mb-6">วิชาที่ลงทะเบียน (เทอมปัจจุบัน)</h3>
-              <div className="rounded-md border overflow-hidden">
-                <table className="w-full text-sm text-left">
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="min-w-[860px] w-full text-sm text-left">
+                  <caption className="sr-only">
+                    สถานะการลงทะเบียน การชำระเงิน และการตรวจสลิปของแต่ละวิชา
+                  </caption>
                   <thead className="bg-surface-container-low font-medium text-content-muted">
                     <tr>
                       <th className="px-4 py-3">รหัสวิชา</th>
                       <th className="px-4 py-3">ชื่อวิชา</th>
                       <th className="px-4 py-3">หน่วยกิต</th>
-                      <th className="px-4 py-3">สถานะ</th>
+                      <th className="px-4 py-3">การลงทะเบียน</th>
+                      <th className="px-4 py-3">การชำระเงิน</th>
+                      <th className="px-4 py-3">การตรวจสลิป</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {registrationData.courses.map((course, i) => (
-                      <tr key={i} className="hover:bg-surface-container-low">
+                    {registrationData.courses.map((course) => (
+                      <tr key={course.code} className="hover:bg-surface-container-low">
                         <td className="px-4 py-3 font-mono">{course.code}</td>
                         <td className="px-4 py-3">{course.title}</td>
                         <td className="px-4 py-3">{course.credits}</td>
                         <td className="px-4 py-3">
-                          <Badge variant="success">ลงทะเบียนแล้ว</Badge>
+                          <StudentRecordBadge
+                            kind="enrollment"
+                            status={course.enrollmentStatus}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <StudentRecordBadge
+                            kind="billing"
+                            status={course.billingStatus}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <StudentRecordBadge
+                            kind="slipReview"
+                            status={course.slipReviewStatus}
+                          />
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div className="mt-4">
+                <MockFeeRuleNote />
               </div>
             </div>
           )}
@@ -207,21 +250,44 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
           {activeTab === "finance" && (
             <div className="animate-in fade-in slide-in-from-right-4">
               <h3 className="text-lg font-bold border-b border-border pb-2 mb-6">ประวัติการชำระเงิน</h3>
+              <div className="mb-4">
+                <MockFeeRuleNote />
+              </div>
               <div className="space-y-4">
-                {financeData.items.map((item, i) => (
-                  <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border bg-card gap-4">
-                    <div>
-                      <div className="font-semibold text-sm">{item.description}</div>
-                      <div className="text-xs text-muted-foreground mt-1">กำหนดชำระ: {item.dueDate}</div>
+                {financeItems.map((item) => {
+                  const breakdown = getMockPaymentBreakdown(
+                    item.amount,
+                    item.billingStatus,
+                  );
+
+                  return (
+                    <div key={item.id} className="flex flex-col gap-4 rounded-lg border bg-card p-4 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <div className="font-semibold text-sm">{item.description}</div>
+                        <div className="text-xs text-muted-foreground mt-1">กำหนดชำระ: {item.dueDate}</div>
+                        {item.billingStatus !== "paid" && (
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            ประมาณการยอดชำระ ฿{breakdown.total.toLocaleString()}
+                            {breakdown.lateFee > 0
+                              ? ` (ค่าปรับ ฿${breakdown.lateFee.toLocaleString()} และค่าธรรมเนียม ฿${breakdown.transactionFee.toLocaleString()})`
+                              : ` (ค่าธรรมเนียม ฿${breakdown.transactionFee.toLocaleString()})`}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 md:justify-end">
+                        <div className="text-base font-bold text-primary">฿{item.amount.toLocaleString()}</div>
+                        <StudentRecordBadge
+                          kind="billing"
+                          status={item.billingStatus}
+                        />
+                        <StudentRecordBadge
+                          kind="slipReview"
+                          status={item.slipReviewStatus}
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-base font-bold text-primary">฿{item.amount.toLocaleString()}</div>
-                      <Badge variant={item.status === "paid" ? "success" : "warning"}>
-                        {item.status === "paid" ? "ชำระแล้ว" : "รอชำระเงิน"}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

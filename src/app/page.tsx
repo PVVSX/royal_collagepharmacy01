@@ -46,7 +46,7 @@ export default function LoginPage() {
             transition={{ duration: 0.7, delay: 0.2 }}
           >
             <div className="w-20 h-20 rounded-xl bg-content-on-image/10 backdrop-blur-md p-3 mb-6 border border-content-on-image/20 shadow-lg">
-              <img src="/logo_pharmacy.jpg" alt="Logo" className="w-full h-full object-contain" />
+              <img src="/logo_pharmacy.jpg" alt="ตราสัญลักษณ์ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-4xl font-bold mb-4 leading-tight">
               ราชวิทยาลัยเภสัชกรรม<br />แห่งประเทศไทย
@@ -69,7 +69,7 @@ export default function LoginPage() {
         >
           <div className="md:hidden flex flex-col items-center mb-8">
             <div className="w-20 h-20 bg-surface-raised rounded-full shadow-sm border border-border p-3 mb-4">
-              <img src="/logo_pharmacy.jpg" alt="Logo" className="w-full h-full object-contain" />
+              <img src="/logo_pharmacy.jpg" alt="ตราสัญลักษณ์ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-xl font-bold text-center text-primary">ราชวิทยาลัยเภสัชกรรม<br/>แห่งประเทศไทย</h1>
           </div>
@@ -158,7 +158,7 @@ export default function LoginPage() {
 
           <div className="mt-8 text-center text-sm text-muted-foreground">
             ยังไม่มีบัญชีผู้ใช้งาน?{" "}
-            <a href="#" onClick={(e) => { e.preventDefault(); toast.info("ฟีเจอร์ลงทะเบียนด้วยตนเองกำลังพัฒนา"); }} className="font-semibold text-primary hover:underline">
+            <a href="#" onClick={(e) => { e.preventDefault(); toast.info("กรุณาติดต่อเจ้าหน้าที่เพื่อขอเปิดบัญชีผู้ใช้งาน"); }} className="font-semibold text-primary hover:underline">
               ลงทะเบียนใหม่
             </a>
           </div>

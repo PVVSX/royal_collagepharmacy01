@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { profileData, studentDetailData } from "@/roles/shared/data";
+import { PrintProvenance } from "@/roles/shared/components/print/PrintProvenance";
 
 export default function PrintProfilePage() {
   const p = profileData;
@@ -9,15 +10,17 @@ export default function PrintProfilePage() {
 
   useEffect(() => {
     // Automatically open print dialog when component mounts
-    setTimeout(() => {
+    const timer = window.setTimeout(() => {
       window.print();
     }, 500);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center py-10 print:py-0 print:bg-white">
       {/* A4 Canvas */}
-      <div className="bg-white w-[210mm] min-h-[297mm] shadow-lg print:shadow-none p-[20mm] text-black font-sans relative">
+      <div className="relative min-h-[297mm] w-[210mm] bg-white px-[20mm] pt-[20mm] pb-[34mm] font-sans text-black shadow-lg print:shadow-none">
         
         {/* Header */}
         <div className="text-center mb-8 border-b-2 border-black pb-6 relative">
@@ -115,6 +118,8 @@ export default function PrintProfilePage() {
           <div>({p.personalInfo.title}{p.personalInfo.firstName} {p.personalInfo.lastName})</div>
           <div className="text-gray-600 mt-1">ผู้ให้ข้อมูล</div>
         </div>
+
+        <PrintProvenance documentTitle="ประวัติส่วนบุคคล (Curriculum Vitae)" />
         
         {/* Print styling helper */}
         <style dangerouslySetInnerHTML={{__html: `

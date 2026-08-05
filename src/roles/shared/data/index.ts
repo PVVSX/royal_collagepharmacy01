@@ -8,6 +8,12 @@
 // ══════════════════════════════════════════════════════
 
 import { currentMemberPassport as MEMBER } from "@/roles/shared/member/domain/member";
+import type {
+  EducationTimelineEntry,
+  FinanceItemRecord,
+  PaymentOwnerScope,
+  RegistrationCourseRecord,
+} from "@/roles/shared/features/student-records";
 
 // ชื่อ-รหัสผู้ใช้ปัจจุบัน (derive จาก SSOT)
 const meFullName = `${MEMBER.identity.titleTh}${MEMBER.identity.firstNameTh} ${MEMBER.identity.lastNameTh}`;
@@ -15,6 +21,24 @@ const meId = MEMBER.memberId;
 const meLicense = MEMBER.license.licenseNumber;
 const meCpdCredits = MEMBER.cpd.currentCredits;
 const meCpdTarget = MEMBER.cpd.targetCredits;
+
+// Payment records created before the member SSOT used either the license number
+// or the old RPC mock ID. New records always use studentId; aliases stay read-only.
+export const currentMemberPaymentOwner = {
+  studentId: meId,
+  legacyStudentIds: [meLicense, "RPC-2569-002"],
+} satisfies PaymentOwnerScope;
+
+export function resolveMockPaymentOwner(studentId: string): PaymentOwnerScope {
+  const currentMemberIds = [
+    currentMemberPaymentOwner.studentId,
+    ...currentMemberPaymentOwner.legacyStudentIds,
+  ];
+
+  return currentMemberIds.includes(studentId)
+    ? currentMemberPaymentOwner
+    : { studentId };
+}
 
 // ===== Navigation =====
 export const sidebarNavItems = [
@@ -285,11 +309,60 @@ export const studentDetailData = {
   creditsEarned: 18, // mock
   creditsTotal: 36, // mock
   status: "active" as const,
+  trainingStatus: "normal" as const,
   registeredCourses: 3,
   educationTimeline: [
-    { degree: "วุฒิบัตรเภสัชบำบัด (BCP — กำลังฝึกอบรม)", field: "เภสัชกรรมบำบัด", institution: "วิทยาลัยเภสัชบำบัดแห่งประเทศไทย", period: "2568 - ปัจจุบัน", isCurrent: true },
-    { degree: "เภสัชศาสตรบัณฑิต (ภ.บ.)", field: "เภสัชศาสตร์", institution: "คณะเภสัชศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย", period: "2558 - 2564", isCurrent: false },
-  ],
+    {
+      degree: "วุฒิบัตรเภสัชบำบัด (BCP กำลังฝึกอบรม)",
+      field: "เภสัชกรรมบำบัด",
+      institution: "วิทยาลัยเภสัชบำบัดแห่งประเทศไทย",
+      parentInstitution: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย",
+      period: "2568 - ปัจจุบัน",
+      isCurrent: true,
+      qualificationType: "specialty_training",
+      trainingStatus: "normal",
+    },
+    {
+      degree: "หลักสูตรฝึกอบรมด้านการดูแลผู้ป่วยโรคเรื้อรัง",
+      field: "การบริบาลทางเภสัชกรรม",
+      institution: "วิทยาลัยเภสัชบำบัดแห่งประเทศไทย",
+      parentInstitution: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย",
+      period: "2569 - ปัจจุบัน",
+      isCurrent: true,
+      qualificationType: "short_course",
+      trainingStatus: "maintaining",
+    },
+    {
+      degree: "หลักสูตรฝึกอบรมระยะสั้นด้านการบริหารเภสัชกิจ",
+      field: "การบริหารเภสัชกิจ",
+      institution: "วิทยาลัยการบริหารเภสัชกิจแห่งประเทศไทย",
+      parentInstitution: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย",
+      period: "2567",
+      isCurrent: false,
+      qualificationType: "short_course",
+      trainingStatus: "completed",
+    },
+    {
+      degree: "หลักสูตรฝึกอบรมระยะสั้นด้านเภสัชสารสนเทศ",
+      field: "เภสัชสารสนเทศ",
+      institution: "วิทยาลัยเภสัชกรรมชุมชนแห่งประเทศไทย",
+      parentInstitution: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย",
+      period: "2566",
+      isCurrent: false,
+      qualificationType: "short_course",
+      trainingStatus: "resigned",
+    },
+    {
+      degree: "เภสัชศาสตรบัณฑิต (ภ.บ.)",
+      field: "เภสัชศาสตร์",
+      institution: "คณะเภสัชศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย",
+      parentInstitution: "จุฬาลงกรณ์มหาวิทยาลัย",
+      period: "2558 - 2564",
+      isCurrent: false,
+      qualificationType: "degree",
+      trainingStatus: "completed",
+    },
+  ] satisfies EducationTimelineEntry[],
 };
 
 // ===== Registration =====
@@ -301,21 +374,81 @@ export const registrationData = {
   maxCredits: 36,
 
   courses: [
-    { code: "วภท-301", title: "องค์ความรู้ทางเภสัชบำบัดเฉพาะทาง (สอบข้อเขียน)", credits: 12, schedule: "จันทร์ 09:00-12:00", room: "ห้อง BCP-101", capacity: 20, enrolled: 18, status: "registered" },
-    { code: "วภท-302", title: "การสอบปากเปล่าข้างเตียงผู้ป่วย (Bedside Examination)", credits: 12, schedule: "อังคาร 09:00-12:00", room: "Ward 1", capacity: 20, enrolled: 15, status: "registered" },
-    { code: "วภท-303", title: "การสอบโครงร่างวิทยานิพนธ์ (Thesis Proposal)", credits: 12, schedule: "พุธ 13:00-16:00", room: "ห้อง BCP-102", capacity: 20, enrolled: 12, status: "registered" },
-  ],
+    {
+      code: "วภท-301",
+      title: "องค์ความรู้ทางเภสัชบำบัดเฉพาะทาง (สอบข้อเขียน)",
+      credits: 12,
+      schedule: "จันทร์ 09:00-12:00",
+      room: "ห้อง BCP-101",
+      capacity: 20,
+      enrolled: 18,
+      status: "registered",
+      enrollmentStatus: "registered",
+      billingStatus: "overdue",
+      slipReviewStatus: "not_submitted",
+    },
+    {
+      code: "วภท-302",
+      title: "การสอบปากเปล่าข้างเตียงผู้ป่วย (Bedside Examination)",
+      credits: 12,
+      schedule: "อังคาร 09:00-12:00",
+      room: "Ward 1",
+      capacity: 20,
+      enrolled: 15,
+      status: "registered",
+      enrollmentStatus: "registered",
+      billingStatus: "paid",
+      slipReviewStatus: "approved",
+    },
+    {
+      code: "วภท-303",
+      title: "การสอบโครงร่างวิทยานิพนธ์ (Thesis Proposal)",
+      credits: 12,
+      schedule: "พุธ 13:00-16:00",
+      room: "ห้อง BCP-102",
+      capacity: 20,
+      enrolled: 12,
+      status: "registered",
+      enrollmentStatus: "registered",
+      billingStatus: "awaiting_payment",
+      slipReviewStatus: "pending_review",
+    },
+  ] satisfies RegistrationCourseRecord[],
 };
 
 // ===== Finance (REAL bank accounts + fees from origin docs) =====
 export const financeData = {
   totalFees: 23000,
-  outstandingBalance: 20000,
+  outstandingBalance: 20500,
   items: [
-    { id: 1, description: "ค่าลงทะเบียนฝึกอบรม ประจำปี 2569", amount: 20000, dueDate: "30 ก.ย. 2569", status: "unpaid" },
-    { id: 2, description: "ค่าสมัครสอบหนังสืออนุมัติ", amount: 2500, dueDate: "15 ส.ค. 2569", status: "paid" },
-    { id: 3, description: "ค่าลงทะเบียนแรกเข้า", amount: 500, dueDate: "15 ส.ค. 2569", status: "pending" },
-  ],
+    {
+      id: 1,
+      description: "ค่าลงทะเบียนฝึกอบรม ประจำปี 2569",
+      amount: 20000,
+      dueDate: "30 มิ.ย. 2569",
+      status: "unpaid",
+      billingStatus: "overdue",
+      slipReviewStatus: "not_submitted",
+    },
+    {
+      id: 2,
+      description: "ค่าสมัครสอบหนังสืออนุมัติ",
+      amount: 2500,
+      dueDate: "15 ส.ค. 2569",
+      status: "paid",
+      billingStatus: "paid",
+      slipReviewStatus: "approved",
+    },
+    {
+      id: 3,
+      description: "ค่าลงทะเบียนแรกเข้า",
+      amount: 500,
+      dueDate: "15 ส.ค. 2569",
+      status: "pending",
+      billingStatus: "awaiting_payment",
+      slipReviewStatus: "pending_review",
+    },
+  ] satisfies FinanceItemRecord[],
   bankAccounts: [
     { bank: "ธนาคารไทยพาณิชย์", bankEn: "SCB", branch: "สาขาสยามสแควร์", accountNumber: "038-461658-1", accountName: "วิทยาลัยคุ้มครองผู้บริโภคด้านยาฯ" },
     { bank: "ธนาคารกรุงไทย", bankEn: "KTB", branch: "สาขากระทรวงสาธารณสุข", accountNumber: "142-1-06705-6", accountName: "สภาเภสัชกรรม" },

@@ -2,11 +2,16 @@
 
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
-import { financeData, profileData } from "@/roles/shared/data";
 import {
-  mergePaymentStatuses,
+  currentMemberPaymentOwner,
+  financeData,
+  profileData,
+} from "@/roles/shared/data";
+import {
+  getOutstandingBaseAmount,
+  mergeStudentRecordPaymentStatuses,
   type PaymentStatusItem,
-} from "@/roles/member/features/finance/lib/payment-status";
+} from "@/roles/shared/features/student-records";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,22 +35,23 @@ export default function FinancePage() {
 
   const items = useMemo(
     () =>
-      mergePaymentStatuses(
+      mergeStudentRecordPaymentStatuses(
         d.items,
         adminPayments,
+        currentMemberPaymentOwner,
       ),
     [adminPayments, d.items],
   );
 
   const [selectedItem, setSelectedItem] = useState<PaymentItem | null>(null);
-  const outstandingBalance = items.filter((item) => item.status === "unpaid").reduce((sum, item) => sum + item.amount, 0);
+  const outstandingBalance = getOutstandingBaseAmount(items);
 
   const handleSubmitted = (itemId: number) => {
     const item = items.find(i => i.id === itemId);
     if (item) {
       const newPayment: Payment = {
         id: `PAY-2026-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-        studentId: profileData.personalInfo.licenseNumber || "รอตรวจสอบ",
+        studentId: currentMemberPaymentOwner.studentId,
         name: `${profileData.personalInfo.firstName} ${profileData.personalInfo.lastName}`,
         program: "เภสัชบำบัด",
         amount: item.amount,
