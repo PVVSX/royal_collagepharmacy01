@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useMockDb } from "@/context/MockDbContext";
+import { useMockDb } from "@/providers/mock-db-provider";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageShell } from "@/roles/shared/components/layout/PageShell";
 
-const statusMap: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-  pending_approval: { variant: "outline", label: "รอการอนุมัติออกวุฒิบัตร" },
-  issued: { variant: "default", label: "ออกวุฒิบัตรแล้ว" },
+const statusMap: Record<string, { variant: "warning" | "success"; label: string }> = {
+  pending_approval: { variant: "warning", label: "รอการอนุมัติออกวุฒิบัตร" },
+  issued: { variant: "success", label: "ออกวุฒิบัตรแล้ว" },
 };
 
 export default function CertificatesManagementPage() {
@@ -36,16 +37,16 @@ export default function CertificatesManagementPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 pb-24 max-w-[1280px] mx-auto">
+    <PageShell bottom="roomy">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">ออกหนังสือรับรองและวุฒิบัตร</h1>
-        <p className="text-sm text-slate-500 mt-1">อนุมัติและออกวุฒิบัตรวิชาชีพเภสัชกรรมให้กับผู้ที่สอบผ่านเกณฑ์ (สภาเภสัชกรรม)</p>
+        <h1 className="text-2xl font-bold text-content tracking-tight">ออกหนังสือรับรองและวุฒิบัตร</h1>
+        <p className="text-sm text-content-muted mt-1">อนุมัติและออกวุฒิบัตรวิชาชีพเภสัชกรรมให้กับผู้ที่สอบผ่านเกณฑ์ (สภาเภสัชกรรม)</p>
       </div>
 
       <Card className="card-shadow">
         <CardHeader className="pb-4 border-b">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <div className="flex bg-slate-100/80 p-1 rounded-lg w-fit">
+            <div className="flex bg-surface-container p-1 rounded-lg w-fit">
               {[
                 { id: "all", label: "ทั้งหมด" },
                 { id: "pending_approval", label: "รอการอนุมัติ" },
@@ -56,8 +57,8 @@ export default function CertificatesManagementPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
                     activeTab === tab.id
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                      ? "bg-surface-raised text-brand shadow-sm"
+                      : "text-content-muted hover:text-content hover:bg-surface-container-high"
                   }`}
                 >
                   {tab.label}
@@ -66,10 +67,10 @@ export default function CertificatesManagementPage() {
             </div>
             
             <div className="relative w-full sm:w-64">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-content-muted text-lg">search</span>
               <Input
                 placeholder="ค้นหาผู้เข้าศึกษา, หลักสูตร..."
-                className="pl-9 bg-slate-50/50"
+                className="pl-9 bg-surface-container-low"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -79,7 +80,7 @@ export default function CertificatesManagementPage() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/50">
+              <TableHeader className="bg-surface-container-low">
                 <TableRow>
                   <TableHead>ข้อมูลเภสัชกร</TableHead>
                   <TableHead>หลักสูตรวุฒิบัตร</TableHead>
@@ -96,12 +97,12 @@ export default function CertificatesManagementPage() {
                       <TableRow key={req.id} className="group">
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-slate-900">{req.studentName}</span>
-                            <span className="text-xs text-slate-500">{req.studentId}</span>
+                            <span className="font-medium text-content">{req.studentName}</span>
+                            <span className="text-xs text-content-muted">{req.studentId}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-slate-900 font-medium">{req.program}</TableCell>
-                        <TableCell className="text-slate-500">{req.issuedAt}</TableCell>
+                        <TableCell className="text-content font-medium">{req.program}</TableCell>
+                        <TableCell className="text-content-muted">{req.issuedAt}</TableCell>
                         <TableCell>
                           <Badge variant={statusInfo.variant} className="font-medium">
                             {statusInfo.label}
@@ -109,7 +110,7 @@ export default function CertificatesManagementPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           {req.status === "pending_approval" ? (
-                            <Button size="sm" variant="default" className="h-8 bg-primary hover:bg-primary/90" onClick={() => handleIssue(req.id)}>
+                            <Button size="sm" variant="default" className="h-8" onClick={() => handleIssue(req.id)}>
                               อนุมัติและออกวุฒิบัตร
                             </Button>
                           ) : (
@@ -124,7 +125,7 @@ export default function CertificatesManagementPage() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-slate-500">
+                    <TableCell colSpan={5} className="h-32 text-center text-content-muted">
                       ไม่พบข้อมูลผู้ขอวุฒิบัตร
                     </TableCell>
                   </TableRow>
@@ -134,6 +135,6 @@ export default function CertificatesManagementPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }

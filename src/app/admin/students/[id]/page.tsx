@@ -1,16 +1,17 @@
 "use client";
 
 import { use, useState } from "react";
-import { studentDetailData, profileData, registrationData, financeData, requestsData } from "@/data";
+import { studentDetailData, profileData, registrationData, financeData, requestsData } from "@/roles/shared/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PersonalInfoCard } from "@/components/profile/PersonalInfoCard";
-import { AddressCard } from "@/components/profile/AddressCard";
-import { WorkplaceCard } from "@/components/profile/WorkplaceCard";
+import { PersonalInfoCard } from "@/roles/shared/member/components/PersonalInfoCard";
+import { AddressCard } from "@/roles/shared/member/components/AddressCard";
+import { WorkplaceCard } from "@/roles/shared/member/components/WorkplaceCard";
+import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import Link from "next/link";
 
-const icon18 = "material-symbols-outlined text-[18px]";
+const icon18 = "material-symbols-outlined text-lg";
 
 const tabs = [
   { key: "personal", icon: "badge", label: "ข้อมูลส่วนตัว" },
@@ -28,7 +29,7 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
   const [activeTab, setActiveTab] = useState("personal");
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-[1280px]">
+    <PageShell bottom="none" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 p-0 md:p-0">
       {/* Breadcrumb & Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -39,29 +40,29 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
               {studentId}
             </span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">ข้อมูลผู้เข้าศึกษา</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-content">ข้อมูลผู้เข้าศึกษา</h1>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 text-slate-700 bg-white border-slate-200 shadow-sm">
+          <Button variant="outline" className="gap-2 text-content bg-surface-raised border-border shadow-sm">
             <span className={icon18}>edit</span> แก้ไขข้อมูล
           </Button>
-          <Button className="gap-2 bg-slate-900 hover:bg-slate-800 text-white shadow-sm">
+          <Button className="gap-2 shadow-sm">
             <span className={icon18}>autorenew</span> อัปเดตสถานะ
           </Button>
         </div>
       </div>
 
       {/* Hero Header Card */}
-      <Card className="shadow-sm border-slate-200 overflow-hidden">
-        <div className="h-24 bg-gradient-to-r from-slate-800 to-slate-900"></div>
+      <Card className="shadow-sm border-border overflow-hidden">
+        <div className="h-24 bg-gradient-to-r from-brand-strong to-brand"></div>
         <CardContent className="p-6 relative pt-0">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-end -mt-12 mb-6">
-            <div className="w-24 h-24 rounded-xl border-4 border-white shadow-md bg-white overflow-hidden shrink-0">
+            <div className="w-24 h-24 rounded-xl border-4 border-surface-raised shadow-md bg-surface-raised overflow-hidden shrink-0">
               <img src="/somchai_profile.png" alt={s.name} className="w-full h-full object-cover object-top" />
             </div>
             <div className="flex-1 space-y-1">
-              <h2 className="text-2xl font-bold text-slate-900">{s.name}</h2>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+              <h2 className="text-2xl font-bold text-content">{s.name}</h2>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-content-muted">
                 <span className="flex items-center gap-1"><span className={icon18}>badge</span> รหัส: {s.id}</span>
                 <span className="flex items-center gap-1"><span className={icon18}>assignment_ind</span> ใบประกอบ: {s.licenseNumber}</span>
                 <span className="flex items-center gap-1"><span className={icon18}>mail</span> {profileData.personalInfo.email}</span>
@@ -69,40 +70,40 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 px-3 py-1 text-sm">
+              <Badge variant="success" className="px-3 py-1 text-sm">
                 กำลังศึกษา (Active)
               </Badge>
-              <div className="text-sm font-medium text-slate-600">
+              <div className="text-sm font-medium text-content-muted">
                 {s.college} (ปีการศึกษา {s.trainingYear})
               </div>
             </div>
           </div>
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-surface-container-low rounded-xl border border-border">
             <div>
-              <p className="text-xs text-slate-500 mb-1">หน่วยกิต CPD</p>
-              <p className="text-xl font-bold text-slate-900">{s.cpdCredits} <span className="text-sm text-slate-500 font-normal">/ {s.cpdTarget}</span></p>
+              <p className="text-xs text-content-muted mb-1">หน่วยกิต CPD</p>
+              <p className="text-xl font-bold text-content">{s.cpdCredits} <span className="text-sm text-content-muted font-normal">/ {s.cpdTarget}</span></p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 mb-1">หน่วยกิตสะสม</p>
-              <p className="text-xl font-bold text-slate-900">{s.creditsEarned} <span className="text-sm text-slate-500 font-normal">/ {s.creditsTotal}</span></p>
+              <p className="text-xs text-content-muted mb-1">หน่วยกิตสะสม</p>
+              <p className="text-xl font-bold text-content">{s.creditsEarned} <span className="text-sm text-content-muted font-normal">/ {s.creditsTotal}</span></p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 mb-1">วิชาที่ลงทะเบียน</p>
-              <p className="text-xl font-bold text-slate-900">{s.registeredCourses}</p>
+              <p className="text-xs text-content-muted mb-1">วิชาที่ลงทะเบียน</p>
+              <p className="text-xl font-bold text-content">{s.registeredCourses}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500 mb-1">ยอดค้างชำระ</p>
-              <p className="text-xl font-bold text-red-600">฿0.00</p>
+              <p className="text-xs text-content-muted mb-1">ยอดค้างชำระ</p>
+              <p className="text-xl font-bold text-danger">฿0.00</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Tabs Layout */}
-      <Card className="shadow-sm border-slate-200">
-        <div className="flex border-b border-border overflow-x-auto bg-slate-50 px-2 rounded-t-xl">
+      <Card className="shadow-sm border-border">
+        <div className="flex border-b border-border overflow-x-auto bg-surface-container-low px-2 rounded-t-xl">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -110,7 +111,7 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
               className={`flex items-center gap-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
                 activeTab === tab.key
                   ? "border-primary text-primary"
-                  : "border-transparent text-slate-500 hover:text-slate-900"
+                  : "border-transparent text-content-muted hover:text-content"
               }`}
             >
               <span className={icon18}>{tab.icon}</span>
@@ -177,7 +178,7 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
               <h3 className="text-lg font-bold border-b border-border pb-2 mb-6">วิชาที่ลงทะเบียน (เทอมปัจจุบัน)</h3>
               <div className="rounded-md border overflow-hidden">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 font-medium text-slate-500">
+                  <thead className="bg-surface-container-low font-medium text-content-muted">
                     <tr>
                       <th className="px-4 py-3">รหัสวิชา</th>
                       <th className="px-4 py-3">ชื่อวิชา</th>
@@ -187,12 +188,12 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
                   </thead>
                   <tbody className="divide-y">
                     {registrationData.courses.map((course, i) => (
-                      <tr key={i} className="hover:bg-slate-50">
+                      <tr key={i} className="hover:bg-surface-container-low">
                         <td className="px-4 py-3 font-mono">{course.code}</td>
                         <td className="px-4 py-3">{course.title}</td>
                         <td className="px-4 py-3">{course.credits}</td>
                         <td className="px-4 py-3">
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">ลงทะเบียนแล้ว</Badge>
+                          <Badge variant="success">ลงทะเบียนแล้ว</Badge>
                         </td>
                       </tr>
                     ))}
@@ -215,7 +216,7 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-base font-bold text-primary">฿{item.amount.toLocaleString()}</div>
-                      <Badge variant="outline" className={item.status === "paid" ? "bg-green-50 text-green-700 border-green-200" : "bg-amber-50 text-amber-700 border-amber-200"}>
+                      <Badge variant={item.status === "paid" ? "success" : "warning"}>
                         {item.status === "paid" ? "ชำระแล้ว" : "รอชำระเงิน"}
                       </Badge>
                     </div>
@@ -234,16 +235,16 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
                   <div key={i} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border bg-card gap-4">
                     <div>
                       <div className="font-semibold text-sm flex items-center gap-2">
-                        <span className="material-symbols-outlined text-slate-400 text-base">description</span>
+                        <span className="material-symbols-outlined text-content-muted text-base">description</span>
                         {req.type}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">ยื่นเมื่อ: {req.date}</div>
                     </div>
                     <div className="flex gap-2 items-center">
-                      <Badge variant="outline" className={
-                        req.status === "approved" ? "bg-green-50 text-green-700 border-green-200" :
-                        req.status === "pending" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                        "bg-red-50 text-red-700 border-red-200"
+                      <Badge variant={
+                        req.status === "approved" ? "success" :
+                        req.status === "pending" ? "warning" :
+                        "danger"
                       }>
                         {req.status === "approved" ? "อนุมัติ" : req.status === "pending" ? "รอดำเนินการ" : "ปฏิเสธ"}
                       </Badge>
@@ -256,6 +257,6 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
           )}
         </div>
       </Card>
-    </div>
+    </PageShell>
   );
 }

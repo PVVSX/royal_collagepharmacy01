@@ -25,7 +25,7 @@ export default function LoginPage() {
       if (email.toLowerCase() === "admin" && password === "2323") {
         router.push("/admin/dashboard");
       } else {
-        router.push("/dashboard");
+        router.push("/member/dashboard");
       }
     }, 1500);
   };
@@ -34,13 +34,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
       
       {/* Left Panel: Background Image */}
-      <div className="hidden md:flex md:w-1/2 lg:w-[55%] relative flex-col justify-end p-12 text-white overflow-hidden">
-        <div 
-          className="absolute inset-0 z-0 bg-cover bg-center" 
-          style={{ backgroundImage: "url('/login_bg.png')" }} 
-        />
+      <div className="hidden md:flex md:w-1/2 lg:w-[55%] relative flex-col justify-end p-12 text-content-on-image overflow-hidden">
+        <div className="absolute inset-0 z-0 bg-[url('/login_bg.png')] bg-cover bg-center" />
         {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 z-10 bg-gradient-to-t from-[#203a15]/90 via-[#2a4e1b]/40 to-transparent" />
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-login-overlay-strong/90 via-login-overlay/40 to-transparent" />
         
         <div className="relative z-20 max-w-xl">
           <motion.div
@@ -48,13 +45,13 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            <div className="w-20 h-20 rounded-xl bg-white/10 backdrop-blur-md p-3 mb-6 border border-white/20 shadow-lg">
+            <div className="w-20 h-20 rounded-xl bg-content-on-image/10 backdrop-blur-md p-3 mb-6 border border-content-on-image/20 shadow-lg">
               <img src="/logo_pharmacy.jpg" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-4xl font-bold mb-4 leading-tight">
               ราชวิทยาลัยเภสัชกรรม<br />แห่งประเทศไทย
             </h1>
-            <p className="text-lg text-white/80 font-medium">
+            <p className="text-lg text-content-on-image/80 font-medium">
               Royal Pharmacy College Portal<br />
               ระบบสารสนเทศสมาชิกและการสอบวิชาชีพ
             </p>
@@ -71,14 +68,14 @@ export default function LoginPage() {
           className="w-full max-w-sm"
         >
           <div className="md:hidden flex flex-col items-center mb-8">
-            <div className="w-20 h-20 bg-white rounded-full shadow-sm border border-border p-3 mb-4">
+            <div className="w-20 h-20 bg-surface-raised rounded-full shadow-sm border border-border p-3 mb-4">
               <img src="/logo_pharmacy.jpg" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-xl font-bold text-center text-primary">ราชวิทยาลัยเภสัชกรรม<br/>แห่งประเทศไทย</h1>
           </div>
 
           <div className="mb-8">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary mb-1">ระบบสารสนเทศสมาชิก · Member Portal</p>
+            <p className="text-2xs font-semibold uppercase tracking-wider text-primary mb-1">ระบบสารสนเทศสมาชิก · Member Portal</p>
             <h2 className="text-2xl font-bold text-foreground mb-2">เข้าสู่ระบบ</h2>
             <p className="text-sm text-muted-foreground">กรุณาเข้าสู่ระบบเพื่อเข้าใช้งานหนังสือเดินทางวิชาชีพและบริการต่างๆ</p>
           </div>
@@ -90,7 +87,7 @@ export default function LoginPage() {
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
-                  <span className="material-symbols-outlined text-[20px]">mail</span>
+                  <span className="material-symbols-outlined text-xl">mail</span>
                 </span>
                 <Input 
                   id="email" 
@@ -114,7 +111,7 @@ export default function LoginPage() {
               </div>
               <div className="relative">
                 <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
-                  <span className="material-symbols-outlined text-[20px]">lock</span>
+                  <span className="material-symbols-outlined text-xl">lock</span>
                 </span>
                 <Input 
                   id="password" 
@@ -126,7 +123,7 @@ export default function LoginPage() {
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground transition-colors">
-                  <span className="material-symbols-outlined text-[20px]">
+                  <span className="material-symbols-outlined text-xl">
                     {showPassword ? "visibility" : "visibility_off"}
                   </span>
                 </button>
@@ -137,7 +134,7 @@ export default function LoginPage() {
               <input 
                 type="checkbox" 
                 id="remember" 
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary accent-[#137333]"
+                className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-brand"
               />
               <label
                 htmlFor="remember"

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { useMockDb } from "@/context/MockDbContext";
+import { useMockDb } from "@/providers/mock-db-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,8 +63,8 @@ export default function CreateCoursePage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">ยื่นขอเปิดรายวิชาใหม่</h1>
-          <p className="text-sm text-slate-500 mt-1">กรอกข้อมูลรายวิชาเพื่อให้สภาเภสัชกรรมตรวจสอบและรับรอง</p>
+          <h1 className="text-2xl font-bold text-content tracking-tight">ยื่นขอเปิดรายวิชาใหม่</h1>
+          <p className="text-sm text-content-muted mt-1">กรอกข้อมูลรายวิชาเพื่อให้สภาเภสัชกรรมตรวจสอบและรับรอง</p>
         </div>
       </div>
 

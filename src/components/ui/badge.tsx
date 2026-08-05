@@ -19,6 +19,22 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        neutral:
+          "border-neutral-border bg-neutral-soft text-neutral-on-soft [a]:hover:bg-neutral-soft/80",
+        brand:
+          "border-brand-border bg-brand-soft text-brand-on-soft [a]:hover:bg-brand-soft/80",
+        success:
+          "border-success-border bg-success-soft text-success-on-soft [a]:hover:bg-success-soft/80",
+        active:
+          "border-status-active-border bg-status-active-soft text-status-active-foreground [a]:hover:bg-status-active-soft/80",
+        warning:
+          "border-warning-border bg-warning-soft text-warning-on-soft [a]:hover:bg-warning-soft/80",
+        info:
+          "border-info-border bg-info-soft text-info-on-soft [a]:hover:bg-info-soft/80",
+        infoOverlay:
+          "border-info-overlay-border bg-info-overlay text-info-overlay-foreground",
+        danger:
+          "border-danger-border bg-danger-soft text-danger-on-soft [a]:hover:bg-danger-soft/80",
       },
     },
     defaultVariants: {

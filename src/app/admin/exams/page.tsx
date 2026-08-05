@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useMockDb } from "@/context/MockDbContext";
+import { useMockDb } from "@/providers/mock-db-provider";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageShell } from "@/roles/shared/components/layout/PageShell";
 
 const statusMap: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
   pending: { variant: "outline", label: "รอการตรวจสอบ" },
@@ -31,16 +32,16 @@ export default function ExamsManagementPage() {
   });
 
   return (
-    <div className="p-4 md:p-6 pb-24 max-w-[1280px] mx-auto">
+    <PageShell size="app" bottom="roomy" className="space-y-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">จัดการการสอบประเมินความรู้</h1>
-        <p className="text-sm text-slate-500 mt-1">ตรวจสอบสิทธิ์การสอบและบันทึกผลสอบของผู้เข้าศึกษา</p>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">จัดการการสอบประเมินความรู้</h1>
+        <p className="text-sm text-muted-foreground mt-1">ตรวจสอบสิทธิ์การสอบและบันทึกผลสอบของผู้เข้าศึกษา</p>
       </div>
 
       <Card className="card-shadow">
         <CardHeader className="pb-4 border-b">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <div className="flex bg-slate-100/80 p-1 rounded-lg w-fit">
+            <div className="flex bg-surface-container p-1 rounded-lg w-fit">
               {[
                 { id: "all", label: "ทั้งหมด" },
                 { id: "pending", label: "รอตรวจสิทธิ์" },
@@ -52,8 +53,8 @@ export default function ExamsManagementPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
                     activeTab === tab.id
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                      ? "bg-background text-primary shadow-sm"
+                      : "text-content-muted hover:text-foreground hover:bg-surface-container-low"
                   }`}
                 >
                   {tab.label}
@@ -62,10 +63,10 @@ export default function ExamsManagementPage() {
             </div>
             
             <div className="relative w-full sm:w-64">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">search</span>
               <Input
                 placeholder="ค้นหาผู้เข้าศึกษา, หลักสูตร..."
-                className="pl-9 bg-slate-50/50"
+                className="pl-9 bg-surface-container"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -75,7 +76,7 @@ export default function ExamsManagementPage() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/50">
+              <TableHeader className="bg-surface-container">
                 <TableRow>
                   <TableHead>ข้อมูลผู้เข้าศึกษา</TableHead>
                   <TableHead>หลักสูตร</TableHead>
@@ -93,19 +94,19 @@ export default function ExamsManagementPage() {
                       <TableRow key={req.id} className="group">
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-slate-900">{req.studentName}</span>
-                            <span className="text-xs text-slate-500">{req.studentId}</span>
+                            <span className="font-medium text-foreground">{req.studentName}</span>
+                            <span className="text-xs text-muted-foreground">{req.studentId}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-slate-600">{req.program}</TableCell>
+                        <TableCell className="text-muted-foreground">{req.program}</TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="text-slate-900">{req.examType}</span>
-                            {req.examDate && <span className="text-xs text-slate-500">สอบ: {req.examDate}</span>}
+                            <span className="text-foreground">{req.examType}</span>
+                            {req.examDate && <span className="text-xs text-muted-foreground">สอบ: {req.examDate}</span>}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <a href="#" className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                          <a href="#" className="flex items-center gap-1 text-sm text-info hover:underline">
                             <span className="material-symbols-outlined text-base">description</span>
                             ดูไฟล์แนบ
                           </a>
@@ -122,11 +123,11 @@ export default function ExamsManagementPage() {
                             </div>
                           ) : req.status === "approved" ? (
                             <div className="flex items-center justify-end gap-2">
-                              <Button size="sm" variant="default" className="h-8 bg-emerald-600 hover:bg-emerald-700" onClick={() => updateExamRequestStatus(req.id, "passed")}>สอบผ่าน</Button>
+                              <Button size="sm" variant="default" className="h-8 bg-success text-success-foreground hover:bg-success/90" onClick={() => updateExamRequestStatus(req.id, "passed")}>สอบผ่าน</Button>
                               <Button size="sm" variant="destructive" className="h-8" onClick={() => updateExamRequestStatus(req.id, "failed")}>สอบไม่ผ่าน</Button>
                             </div>
                           ) : (
-                            <span className="text-slate-400 text-sm">ประเมินแล้ว</span>
+                            <span className="text-muted-foreground text-sm">ประเมินแล้ว</span>
                           )}
                         </TableCell>
                       </TableRow>
@@ -134,7 +135,7 @@ export default function ExamsManagementPage() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                       ไม่พบข้อมูลผู้ขอสอบ
                     </TableCell>
                   </TableRow>
@@ -144,6 +145,6 @@ export default function ExamsManagementPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }

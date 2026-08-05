@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { profileData, studentDetailData } from "@/data";
+import { profileData, studentDetailData } from "@/roles/shared/data";
 
 export default function PrintProfilePage() {
   const p = profileData;

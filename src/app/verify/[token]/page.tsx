@@ -14,7 +14,15 @@ import {
   formatThaiDate,
   credentialTypeLabels,
   licenseStatusLabels,
-} from "@/lib/domain";
+} from "@/roles/shared/member/domain";
+
+type CellTone = "ok" | "warn" | "danger";
+
+const CELL_TONE_CLASSES: Record<CellTone, string> = {
+  ok: "text-success",
+  warn: "text-warning",
+  danger: "text-danger",
+};
 
 export default function VerifyPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
@@ -23,7 +31,7 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
   if (!p) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 p-6 text-center">
-        <span className="material-symbols-outlined mb-3 text-5xl text-red-500">gpp_bad</span>
+        <span className="material-symbols-outlined mb-3 text-5xl text-danger">gpp_bad</span>
         <h1 className="text-xl font-bold">ไม่พบข้อมูลหนังสือเดินทางวิชาชีพ</h1>
         <p className="mt-1 text-sm text-muted-foreground">รหัสตรวจสอบ <span className="font-mono">{token}</span> ไม่ถูกต้องหรือถูกยกเลิก</p>
       </div>
@@ -37,12 +45,12 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
     <div className="flex min-h-screen flex-col items-center bg-gradient-to-b from-primary/5 to-muted/20 p-4 py-10">
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
         {/* Header */}
-        <div className="border-b-2 border-primary bg-primary/[0.06] px-6 py-5 text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-md border border-border bg-white p-1.5">
+        <div className="border-b-2 border-primary bg-brand-soft px-6 py-5 text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-md border border-border bg-surface-raised p-1.5">
             <img src={p.issuingAuthority.logoUrl} alt="ตรา" className="h-full w-full object-contain" />
           </div>
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-            <span className="material-symbols-outlined text-[15px]">verified</span>
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-semibold text-success-on-soft">
+            <span className="material-symbols-outlined text-base">verified</span>
             ยืนยันโดย{p.issuingAuthority.regulatorTh}
           </div>
         </div>
@@ -64,12 +72,12 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
 
           {/* Specializations */}
           <div className="mt-4 w-full text-left">
-            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">ความเชี่ยวชาญเฉพาะทาง</div>
+            <div className="mb-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">ความเชี่ยวชาญเฉพาะทาง</div>
             <div className="space-y-1.5">
               {p.specializations.map((s) => (
                 <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
                   <span className="text-xs font-medium">{s.specialtyTh} · {s.collegeShort}</span>
-                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">{credentialTypeLabels[s.type]}</span>
+                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-2xs font-semibold text-primary">{credentialTypeLabels[s.type]}</span>
                 </div>
               ))}
             </div>
@@ -78,18 +86,18 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
           <div className="mt-4 flex w-full items-center justify-center gap-6 rounded-lg bg-muted/40 py-3 text-center">
             <div>
               <div className="text-lg font-bold text-primary">{verifiedCompetencies}</div>
-              <div className="text-[10px] text-muted-foreground">สมรรถนะที่รับรอง</div>
+              <div className="text-2xs text-muted-foreground">สมรรถนะที่รับรอง</div>
             </div>
             <div className="h-8 w-px bg-border" />
             <div>
               <div className="text-lg font-bold text-primary">{p.cpd.currentCredits}</div>
-              <div className="text-[10px] text-muted-foreground">หน่วยกิต CPD</div>
+              <div className="text-2xs text-muted-foreground">หน่วยกิต CPD</div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border bg-muted/20 px-6 py-3 text-center text-[11px] text-muted-foreground">
+        <div className="border-t border-border bg-muted/20 px-6 py-3 text-center text-2xs text-muted-foreground">
           ตรวจสอบเมื่อ {formatThaiDate(new Date().toISOString())} · รหัส <span className="font-mono">{p.verifyToken}</span>
         </div>
       </div>
@@ -98,11 +106,11 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
   );
 }
 
-function Cell({ label, value, tone }: { label: string; value: string; tone?: "ok" | "warn" | "danger" }) {
-  const color = tone === "danger" ? "text-red-600" : tone === "warn" ? "text-amber-600" : "text-foreground";
+function Cell({ label, value, tone }: { label: string; value: string; tone?: CellTone }) {
+  const color = tone ? CELL_TONE_CLASSES[tone] : "text-foreground";
   return (
     <div className="rounded-lg border border-border px-3 py-2">
-      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className={`mt-0.5 text-sm font-semibold ${color}`}>{value}</div>
     </div>
   );

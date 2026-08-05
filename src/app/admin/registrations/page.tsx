@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useMockDb, Status } from "@/context/MockDbContext";
+import { useMockDb, Status } from "@/providers/mock-db-provider";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageShell } from "@/roles/shared/components/layout/PageShell";
 
-const statusMap: Record<Status, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-  pending: { variant: "outline", label: "รอการตรวจสอบ" },
-  approved: { variant: "default", label: "ยืนยันการลงทะเบียนแล้ว" },
-  rejected: { variant: "destructive", label: "ไม่อนุมัติ/ถูกยกเลิก" },
+const statusMap: Record<Status, { variant: "warning" | "success" | "danger"; label: string }> = {
+  pending: { variant: "warning", label: "รอการตรวจสอบ" },
+  approved: { variant: "success", label: "ยืนยันการลงทะเบียนแล้ว" },
+  rejected: { variant: "danger", label: "ไม่อนุมัติ/ถูกยกเลิก" },
 };
 
 export default function RegistrationsApprovalPage() {
@@ -29,18 +30,18 @@ export default function RegistrationsApprovalPage() {
   });
 
   return (
-    <div className="p-4 md:p-6 pb-24 max-w-[1280px] mx-auto">
+    <PageShell bottom="roomy">
       <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">ตรวจสอบการลงทะเบียนเรียน</h1>
-          <p className="text-sm text-slate-500 mt-1">อนุมัติและยืนยันสิทธิ์การลงทะเบียนรายวิชาของผู้เข้าศึกษาเข้าสู่ระบบวิทยาลัย</p>
+          <h1 className="text-2xl font-bold text-content tracking-tight">ตรวจสอบการลงทะเบียนเรียน</h1>
+          <p className="text-sm text-content-muted mt-1">อนุมัติและยืนยันสิทธิ์การลงทะเบียนรายวิชาของผู้เข้าศึกษาเข้าสู่ระบบวิทยาลัย</p>
         </div>
       </div>
 
       <Card className="card-shadow">
         <CardHeader className="pb-4 border-b">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <div className="flex bg-slate-100/80 p-1 rounded-lg w-fit">
+            <div className="flex bg-surface-sunken p-1 rounded-lg w-fit">
               {[
                 { id: "all", label: "ทั้งหมด" },
                 { id: "pending", label: "รอตรวจสอบ" },
@@ -52,8 +53,8 @@ export default function RegistrationsApprovalPage() {
                   onClick={() => setActiveTab(tab.id as Status | "all")}
                   className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
                     activeTab === tab.id
-                      ? "bg-white text-primary shadow-sm"
-                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                      ? "bg-surface-raised text-brand shadow-sm"
+                      : "text-content-muted hover:text-content hover:bg-surface-container-high"
                   }`}
                 >
                   {tab.label}
@@ -62,10 +63,10 @@ export default function RegistrationsApprovalPage() {
             </div>
             
             <div className="relative w-full sm:w-64">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-content-muted text-lg">search</span>
               <Input
                 placeholder="ค้นหารหัสประจำตัว, ชื่อ, รหัสวิชา..."
-                className="pl-9 bg-slate-50/50"
+                className="pl-9 bg-surface-container-low"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -75,7 +76,7 @@ export default function RegistrationsApprovalPage() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-slate-50/50">
+              <TableHeader className="bg-surface-container-low">
                 <TableRow>
                   <TableHead className="w-[120px]">รหัสการลงทะเบียน</TableHead>
                   <TableHead>ข้อมูลผู้เข้าศึกษา</TableHead>
@@ -91,20 +92,20 @@ export default function RegistrationsApprovalPage() {
                     const statusInfo = statusMap[reg.status];
                     return (
                       <TableRow key={reg.id} className="group">
-                        <TableCell className="font-medium text-slate-900">{reg.id}</TableCell>
+                        <TableCell className="font-medium text-content">{reg.id}</TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-slate-900">{reg.studentName}</span>
-                            <span className="text-xs text-slate-500">{reg.studentId}</span>
+                            <span className="font-medium text-content">{reg.studentName}</span>
+                            <span className="text-xs text-content-muted">{reg.studentId}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-slate-900">{reg.courseCode}</span>
-                            <span className="text-xs text-slate-500">{reg.courseTitle}</span>
+                            <span className="font-medium text-content">{reg.courseCode}</span>
+                            <span className="text-xs text-content-muted">{reg.courseTitle}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-slate-600">{reg.term}</TableCell>
+                        <TableCell className="text-content-muted">{reg.term}</TableCell>
                         <TableCell>
                           <Badge variant={statusInfo.variant} className="font-medium">
                             {statusInfo.label}
@@ -116,7 +117,7 @@ export default function RegistrationsApprovalPage() {
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="h-8 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300"
+                                className="h-8 border-success-border text-success hover:bg-success-soft"
                                 onClick={() => updateRegistrationStatus(reg.id, "approved")}
                               >
                                 ยืนยันสิทธิ์
@@ -124,14 +125,14 @@ export default function RegistrationsApprovalPage() {
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="h-8 text-rose-600 border-rose-200 hover:bg-rose-50 hover:border-rose-300"
+                                className="h-8 border-danger-border text-danger hover:bg-danger-soft"
                                 onClick={() => updateRegistrationStatus(reg.id, "rejected")}
                               >
                                 ยกเลิก
                               </Button>
                             </div>
                           ) : (
-                            <Button size="sm" variant="ghost" className="h-8 text-slate-400">
+                            <Button size="sm" variant="ghost" className="h-8 text-content-muted">
                               <span className="material-symbols-outlined text-lg">visibility</span>
                             </Button>
                           )}
@@ -141,7 +142,7 @@ export default function RegistrationsApprovalPage() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-slate-500">
+                    <TableCell colSpan={6} className="h-32 text-center text-content-muted">
                       ไม่พบข้อมูลการลงทะเบียนเรียน
                     </TableCell>
                   </TableRow>
@@ -151,6 +152,6 @@ export default function RegistrationsApprovalPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageShell>
   );
 }
