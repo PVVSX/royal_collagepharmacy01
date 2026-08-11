@@ -547,7 +547,6 @@ export const cpdData = {
   targetCredits: 100,
   expiryDate: "30 กันยายน 2570",
   timeLeft: "1 ปี 3 เดือน",
-  status: "active", // "active", "warning", "completed"
   breakdown: [
     { category: "ประชุมวิชาการ", value: 40, fill: "var(--color-chart-1)" },
     { category: "เรียนออนไลน์ (e-Learning)", value: 15, fill: "var(--color-chart-2)" },

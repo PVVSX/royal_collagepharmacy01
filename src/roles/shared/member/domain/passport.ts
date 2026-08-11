@@ -148,6 +148,12 @@ export interface CpdSummary {
   activities: CpdActivity[];
 }
 
+export type ContinuingEducationStatus =
+  | "active"
+  | "warning"
+  | "completed"
+  | "non_compliant";
+
 // ─── F. Professional Experience (ประสบการณ์วิชาชีพ) ─────────────────────────
 
 export interface WorkExperience extends Verifiable {

@@ -2,78 +2,364 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import type { FileMetadata } from "@/roles/shared/features/file-metadata";
 import {
   HISTORICAL_REQUESTS,
+  getRequestCategory,
+  isHandwrittenSignature,
+  progressForStatus,
+  type HandwrittenSignature,
+  type MockESignature,
   type MockRequest,
+  type RequestActorRole,
   type RequestCategoryId,
+  type RequestComment,
+  type RequestCourseSnapshot,
+  type RequestDocument,
+  type RequestEvent,
+  type RequestEventType,
   type RequestStatus,
 } from "./request-schema";
 
-const STORAGE_KEY = "royal-college.mock-requests.v1";
+const STORAGE_KEY = "royal-college.mock-requests.v2";
+const LEGACY_STORAGE_KEY = "royal-college.mock-requests.v1";
 const STORAGE_EVENT = "royal-college:requests-updated";
 
-function cloneHistoricalRequests(): MockRequest[] {
-  return HISTORICAL_REQUESTS.map((request) => ({
+function cloneHandwrittenSignature(signature: HandwrittenSignature): HandwrittenSignature {
+  return {
+    version: 1,
+    strokes: signature.strokes.map((stroke) => stroke.map((point) => ({ ...point }))),
+  };
+}
+
+function cloneRequest(request: MockRequest): MockRequest {
+  return {
     ...request,
     requester: { ...request.requester },
     fields: request.fields.map((field) => ({ ...field })),
-    attachment: request.attachment ? { ...request.attachment } : undefined,
+    courses: request.courses.map((course) => ({ ...course })),
+    documents: request.documents.map((document) => ({
+      ...document,
+      file: document.file ? { ...document.file } : undefined,
+    })),
+    comments: request.comments.map((comment) => ({ ...comment })),
+    events: request.events.map((event) => ({ ...event })),
     progress: [...request.progress],
-  }));
+    mockSignature: request.mockSignature ? {
+      ...request.mockSignature,
+      handwrittenSignature: request.mockSignature.handwrittenSignature
+        ? cloneHandwrittenSignature(request.mockSignature.handwrittenSignature)
+        : undefined,
+    } : undefined,
+  };
 }
 
-function isRequestStatus(value: unknown): value is RequestStatus {
-  return (
-    value === "pending" ||
+function cloneHistoricalRequests() {
+  return HISTORICAL_REQUESTS.map(cloneRequest);
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function normalizeStatus(value: unknown): RequestStatus | null {
+  if (value === "pending") return "staff_review";
+  if (value === "approved") return "signed";
+  if (
+    value === "staff_review" ||
     value === "needs_information" ||
-    value === "approved" ||
+    value === "awaiting_president_signature" ||
+    value === "signed" ||
     value === "rejected"
-  );
+  ) {
+    return value;
+  }
+  return null;
 }
 
-function isRequestCategory(value: unknown): value is RequestCategoryId | "legacy" {
-  return (
+function normalizeCategory(value: unknown): RequestCategoryId | "legacy" | null {
+  if (
     value === "exam" ||
     value === "certificate" ||
     value === "training" ||
+    value === "internship_letter" ||
     value === "completion" ||
     value === "legacy"
-  );
+  ) {
+    return value;
+  }
+  return null;
 }
 
-function isStoredRequest(value: unknown): value is MockRequest {
-  if (!value || typeof value !== "object") return false;
-  const request = value as Partial<MockRequest>;
-  const requester = request.requester as Partial<MockRequest["requester"]> | undefined;
-  const attachment = request.attachment as Partial<NonNullable<MockRequest["attachment"]>> | undefined;
-  return (
-    typeof request.id === "string" &&
-    isRequestCategory(request.categoryId) &&
-    typeof request.typeLabel === "string" &&
-    typeof request.title === "string" &&
-    typeof request.displayDate === "string" &&
-    typeof request.createdAt === "string" &&
-    typeof request.updatedAt === "string" &&
-    isRequestStatus(request.status) &&
-    typeof requester?.memberId === "string" &&
-    typeof requester.name === "string" &&
-    typeof requester.email === "string" &&
-    Array.isArray(request.fields) &&
-    request.fields.every(
-      (field) =>
-        Boolean(field) &&
-        typeof field.id === "string" &&
-        typeof field.label === "string" &&
-        typeof field.value === "string",
-    ) &&
-    Array.isArray(request.progress) &&
-    request.progress.every((progress) => typeof progress === "string") &&
-    (!attachment ||
-      (typeof attachment.name === "string" &&
-        typeof attachment.type === "string" &&
-        typeof attachment.size === "number" &&
-        typeof attachment.lastModified === "number"))
-  );
+function normalizeFile(value: unknown): FileMetadata | undefined {
+  if (!isObject(value)) return undefined;
+  if (
+    !isString(value.name) ||
+    !isString(value.type) ||
+    typeof value.size !== "number" ||
+    typeof value.lastModified !== "number"
+  ) {
+    return undefined;
+  }
+  return {
+    name: value.name,
+    type: value.type,
+    size: value.size,
+    lastModified: value.lastModified,
+  };
+}
+
+function normalizeCourses(value: unknown): RequestCourseSnapshot[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((course) => {
+    if (
+      !isObject(course) ||
+      !isString(course.code) ||
+      !isString(course.title) ||
+      typeof course.credits !== "number"
+    ) {
+      return [];
+    }
+    return [{
+      code: course.code,
+      title: course.title,
+      credits: course.credits,
+      term: isString(course.term) ? course.term : undefined,
+      schedule: isString(course.schedule) ? course.schedule : undefined,
+    }];
+  });
+}
+
+function normalizeDocuments(
+  value: unknown,
+  legacyAttachment: unknown,
+  categoryId: RequestCategoryId | "legacy",
+): RequestDocument[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((document) => {
+      if (!isObject(document) || !isString(document.id) || !isString(document.label)) {
+        return [];
+      }
+      const reviewStatus = document.reviewStatus === "accepted" ||
+        document.reviewStatus === "missing" ||
+        document.reviewStatus === "not_applicable"
+        ? document.reviewStatus
+        : "pending";
+      return [{
+        id: document.id,
+        label: document.label,
+        required: document.required === true,
+        file: normalizeFile(document.file),
+        reviewStatus,
+        reviewerNote: isString(document.reviewerNote) ? document.reviewerNote : undefined,
+      }];
+    });
+  }
+
+  const file = normalizeFile(legacyAttachment);
+  if (file) {
+    return [{
+      id: "legacy-attachment",
+      label: "ไฟล์แนบจากระบบเดิม",
+      required: false,
+      file,
+      reviewStatus: "pending",
+    }];
+  }
+
+  if (categoryId === "legacy") return [];
+  return (getRequestCategory(categoryId)?.documents ?? []).map((requirement) => ({
+    id: requirement.id,
+    label: requirement.label,
+    required: requirement.required ?? false,
+    reviewStatus: "not_applicable",
+  }));
+}
+
+function isActorRole(value: unknown): value is RequestActorRole {
+  return value === "member" || value === "staff" || value === "president" || value === "system";
+}
+
+function isEventType(value: unknown): value is RequestEventType {
+  return value === "submitted" ||
+    value === "information_requested" ||
+    value === "resubmitted" ||
+    value === "forwarded_for_signature" ||
+    value === "signed" ||
+    value === "rejected" ||
+    value === "migrated";
+}
+
+function normalizeComments(value: unknown, raw: Record<string, unknown>): RequestComment[] {
+  const comments = Array.isArray(value)
+    ? value.flatMap((comment) => {
+        if (
+          !isObject(comment) ||
+          !isString(comment.id) ||
+          !isActorRole(comment.actorRole) ||
+          !isString(comment.actorName) ||
+          !isString(comment.message) ||
+          !isString(comment.createdAt)
+        ) {
+          return [];
+        }
+        return [{
+          id: comment.id,
+          actorRole: comment.actorRole,
+          actorName: comment.actorName,
+          message: comment.message,
+          createdAt: comment.createdAt,
+        }];
+      })
+    : [];
+
+  if (comments.length === 0 && isString(raw.reviewerNote)) {
+    comments.push({
+      id: `comment-migrated-${isString(raw.id) ? raw.id : "unknown"}`,
+      actorRole: "staff",
+      actorName: isString(raw.reviewedBy) ? raw.reviewedBy : "เจ้าหน้าที่",
+      message: raw.reviewerNote,
+      createdAt: isString(raw.reviewedAt)
+        ? raw.reviewedAt
+        : isString(raw.updatedAt) ? raw.updatedAt : new Date(0).toISOString(),
+    });
+  }
+  return comments;
+}
+
+function normalizeEvents(value: unknown, raw: Record<string, unknown>, status: RequestStatus): RequestEvent[] {
+  const events = Array.isArray(value)
+    ? value.flatMap((event) => {
+        if (
+          !isObject(event) ||
+          !isString(event.id) ||
+          !isEventType(event.type) ||
+          !isActorRole(event.actorRole) ||
+          !isString(event.actorName) ||
+          !isString(event.createdAt)
+        ) {
+          return [];
+        }
+        return [{
+          id: event.id,
+          type: event.type,
+          actorRole: event.actorRole,
+          actorName: event.actorName,
+          createdAt: event.createdAt,
+          note: isString(event.note) ? event.note : undefined,
+        }];
+      })
+    : [];
+
+  if (events.length > 0) return events;
+  const id = isString(raw.id) ? raw.id : "unknown";
+  const createdAt = isString(raw.createdAt) ? raw.createdAt : new Date(0).toISOString();
+  const updatedAt = isString(raw.updatedAt) ? raw.updatedAt : createdAt;
+  const requester = isObject(raw.requester) && isString(raw.requester.name)
+    ? raw.requester.name
+    : "สมาชิก";
+  const migrated: RequestEvent[] = [
+    { id: `event-migrated-${id}-submitted`, type: "submitted", actorRole: "member", actorName: requester, createdAt },
+    { id: `event-migrated-${id}`, type: "migrated", actorRole: "system", actorName: "ระบบ", createdAt: updatedAt },
+  ];
+  if (status === "signed") {
+    migrated.push({ id: `event-migrated-${id}-signed`, type: "signed", actorRole: "system", actorName: "ระบบเดิม", createdAt: updatedAt });
+  } else if (status === "rejected") {
+    migrated.push({ id: `event-migrated-${id}-rejected`, type: "rejected", actorRole: "staff", actorName: "เจ้าหน้าที่", createdAt: updatedAt });
+  }
+  return migrated;
+}
+
+function normalizeSignature(value: unknown): MockESignature | undefined {
+  if (!isObject(value) || value.kind !== "mock_e_sign") return undefined;
+  const keys = [
+    "signerAssignmentId",
+    "signerUserId",
+    "signerName",
+    "signerRoleLabel",
+    "collegeCode",
+    "signedAt",
+    "documentFingerprint",
+    "consentText",
+  ] as const;
+  if (!keys.every((key) => isString(value[key]))) return undefined;
+  return {
+    kind: "mock_e_sign",
+    signerAssignmentId: value.signerAssignmentId as string,
+    signerUserId: value.signerUserId as string,
+    signerName: value.signerName as string,
+    signerRoleLabel: value.signerRoleLabel as string,
+    collegeCode: value.collegeCode as string,
+    signedAt: value.signedAt as string,
+    documentFingerprint: value.documentFingerprint as string,
+    stampLabel: isString(value.stampLabel)
+      ? value.stampLabel
+      : "ลงนามอิเล็กทรอนิกส์โดยประธานวิทยาลัย",
+    consentText: value.consentText as string,
+    handwrittenSignature: isHandwrittenSignature(value.handwrittenSignature)
+      ? cloneHandwrittenSignature(value.handwrittenSignature)
+      : undefined,
+  };
+}
+
+export function normalizeStoredRequest(value: unknown): MockRequest | null {
+  if (!isObject(value)) return null;
+  const categoryId = normalizeCategory(value.categoryId);
+  const status = normalizeStatus(value.status);
+  const requester = isObject(value.requester) ? value.requester : null;
+  if (
+    !categoryId ||
+    !status ||
+    !isString(value.id) ||
+    !isString(value.typeLabel) ||
+    !isString(value.title) ||
+    !isString(value.displayDate) ||
+    !isString(value.createdAt) ||
+    !isString(value.updatedAt) ||
+    !requester ||
+    !isString(requester.memberId) ||
+    !isString(requester.name) ||
+    !isString(requester.email) ||
+    !Array.isArray(value.fields)
+  ) {
+    return null;
+  }
+
+  const fields = value.fields.flatMap((field) => {
+    if (!isObject(field) || !isString(field.id) || !isString(field.label) || !isString(field.value)) {
+      return [];
+    }
+    return [{ id: field.id, label: field.label, value: field.value }];
+  });
+
+  return {
+    id: value.id,
+    categoryId,
+    typeLabel: value.typeLabel,
+    title: value.title,
+    displayDate: value.displayDate,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+    status,
+    collegeCode: isString(value.collegeCode) ? value.collegeCode : "วภท.",
+    requester: {
+      memberId: requester.memberId,
+      name: requester.name,
+      email: requester.email,
+    },
+    fields,
+    applicantNote: isString(value.applicantNote) ? value.applicantNote : undefined,
+    courses: normalizeCourses(value.courses),
+    documents: normalizeDocuments(value.documents, value.attachment, categoryId),
+    comments: normalizeComments(value.comments, value),
+    events: normalizeEvents(value.events, value, status),
+    progress: progressForStatus(status),
+    mockSignature: normalizeSignature(value.mockSignature),
+  };
 }
 
 function mergeHistoricalRequests(storedRequests: MockRequest[]) {
@@ -81,20 +367,26 @@ function mergeHistoricalRequests(storedRequests: MockRequest[]) {
   const missingHistorical = cloneHistoricalRequests().filter(
     (request) => !storedIds.has(request.id),
   );
-  return [...storedRequests, ...missingHistorical].sort((a, b) =>
-    b.createdAt.localeCompare(a.createdAt),
+  return [...storedRequests, ...missingHistorical].sort((left, right) =>
+    right.createdAt.localeCompare(left.createdAt),
   );
 }
 
 function readStoredRequests(): MockRequest[] {
-  const serialized = window.localStorage.getItem(STORAGE_KEY);
+  const current = window.localStorage.getItem(STORAGE_KEY);
+  const legacy = current ? null : window.localStorage.getItem(LEGACY_STORAGE_KEY);
+  const serialized = current ?? legacy;
   if (!serialized) return cloneHistoricalRequests();
 
   const parsed: unknown = JSON.parse(serialized);
-  if (!Array.isArray(parsed) || !parsed.every(isStoredRequest)) {
+  if (!Array.isArray(parsed)) throw new Error("รูปแบบข้อมูลคำร้องที่บันทึกไว้ไม่ถูกต้อง");
+  const normalized = parsed.map(normalizeStoredRequest);
+  if (normalized.some((request) => request === null)) {
     throw new Error("รูปแบบข้อมูลคำร้องที่บันทึกไว้ไม่ถูกต้อง");
   }
-  return mergeHistoricalRequests(parsed);
+  const migrated = normalized as MockRequest[];
+  if (legacy) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+  return mergeHistoricalRequests(migrated);
 }
 
 export function useRequestStore() {
@@ -113,16 +405,13 @@ export function useRequestStore() {
       const fallbackRequests = cloneHistoricalRequests();
       requestsRef.current = fallbackRequests;
       setRequests(fallbackRequests);
-      setStorageError(
-        "ไม่สามารถอ่านข้อมูลคำร้องที่บันทึกไว้ได้ กรุณาลองใหม่อีกครั้ง",
-      );
+      setStorageError("ไม่สามารถอ่านข้อมูลคำร้องที่บันทึกไว้ได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
       setIsReady(true);
     }
   }, []);
 
   useEffect(() => {
-    // Hydrate the client-only mock store after the server-compatible seed render.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     reload();
     window.addEventListener("storage", reload);
@@ -139,26 +428,21 @@ export function useRequestStore() {
       setStorageError("");
       window.dispatchEvent(new Event(STORAGE_EVENT));
     } catch {
-      setStorageError(
-        "บันทึกข้อมูลลงเครื่องไม่สำเร็จ การเปลี่ยนแปลงนี้อาจหายไปเมื่อรีเฟรชหน้า",
-      );
+      setStorageError("บันทึกข้อมูลลงเครื่องไม่สำเร็จ การเปลี่ยนแปลงนี้อาจหายไปเมื่อรีเฟรชหน้า");
     }
   }, []);
 
-  const addRequest = useCallback(
-    (request: MockRequest) => {
-      const next = [request, ...requestsRef.current];
-      requestsRef.current = next;
-      setRequests(next);
-      persist(next);
-    },
-    [persist],
-  );
+  const addRequest = useCallback((request: MockRequest) => {
+    const next = [request, ...requestsRef.current];
+    requestsRef.current = next;
+    setRequests(next);
+    persist(next);
+  }, [persist]);
 
   const updateRequest = useCallback(
     (requestId: string, updater: (request: MockRequest) => MockRequest) => {
       const next = requestsRef.current.map((request) =>
-        request.id === requestId ? updater(request) : request,
+        request.id === requestId ? updater(cloneRequest(request)) : request,
       );
       requestsRef.current = next;
       setRequests(next);
@@ -167,11 +451,5 @@ export function useRequestStore() {
     [persist],
   );
 
-  return {
-    requests,
-    storageError,
-    isReady,
-    addRequest,
-    updateRequest,
-  };
+  return { requests, storageError, isReady, addRequest, updateRequest };
 }

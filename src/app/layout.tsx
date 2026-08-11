@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Kanit } from "next/font/google";
 import { Toaster } from "sonner";
 import { MockDbProvider } from "@/providers/mock-db-provider";
+import { organizationBrand } from "@/roles/shared/brand/organization";
 import "./globals.css";
 
 const geist = Geist({
@@ -26,11 +27,15 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/favicon-32x32.png", sizes: "27x32", type: "image/png" },
-      { url: "/favicon-16x16.png", sizes: "13x16", type: "image/png" },
+      { url: organizationBrand.royalCollege.assets.favicon32, sizes: "32x32", type: "image/png" },
+      { url: organizationBrand.royalCollege.assets.favicon16, sizes: "16x16", type: "image/png" },
     ],
-    shortcut: "/favicon.ico",
-    apple: "/apple-icon.png",
+    shortcut: organizationBrand.royalCollege.assets.favicon,
+    apple: [{
+      url: organizationBrand.royalCollege.assets.appleTouchIcon,
+      sizes: "180x180",
+      type: "image/png",
+    }],
   },
 };
 

@@ -1,57 +1,127 @@
 "use client";
 
 import { useState } from "react";
-import { useMockDb, Status } from "@/providers/mock-db-provider";
+import { toast } from "sonner";
+import { useMockDb, type Registration } from "@/providers/mock-db-provider";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
+import {
+  registrationStatusMeta,
+  type RegistrationStatus,
+} from "@/roles/shared/features/registration";
 
-const statusMap: Record<Status, { variant: "warning" | "success" | "danger"; label: string }> = {
-  pending: { variant: "warning", label: "รอการตรวจสอบ" },
-  approved: { variant: "success", label: "ยืนยันการลงทะเบียนแล้ว" },
-  rejected: { variant: "danger", label: "ไม่อนุมัติ/ถูกยกเลิก" },
+type ReviewAction = {
+  registration: Registration;
+  target: RegistrationStatus;
+  label: string;
+  requiresReason: boolean;
 };
+
+const tabs: { id: RegistrationStatus | "all"; label: string }[] = [
+  { id: "all", label: "ทั้งหมด" },
+  { id: "pending", label: "รอตรวจสอบ" },
+  { id: "needs_info", label: "รอข้อมูลเพิ่ม" },
+  { id: "approved", label: "อนุมัติแล้ว" },
+  { id: "drop_pending", label: "รออนุมัติถอน" },
+  { id: "rejected", label: "ไม่อนุมัติ" },
+  { id: "withdrawn", label: "ถอนแล้ว" },
+];
+
+function actionsFor(registration: Registration): Omit<ReviewAction, "registration">[] {
+  if (registration.status === "pending") {
+    return [
+      { target: "approved", label: "อนุมัติการลงทะเบียน", requiresReason: false },
+      { target: "needs_info", label: "ขอข้อมูลเพิ่มเติม", requiresReason: true },
+      { target: "rejected", label: "ไม่อนุมัติ", requiresReason: true },
+    ];
+  }
+  if (registration.status === "drop_pending") {
+    return [
+      { target: "withdrawn", label: "อนุมัติการถอน", requiresReason: false },
+      { target: "approved", label: "ไม่อนุมัติการถอน", requiresReason: true },
+    ];
+  }
+  return [];
+}
 
 export default function RegistrationsApprovalPage() {
   const { registrations, updateRegistrationStatus } = useMockDb();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<Status | "all">("all");
+  const [activeTab, setActiveTab] = useState<RegistrationStatus | "all">("all");
+  const [reviewAction, setReviewAction] = useState<ReviewAction | null>(null);
+  const [reason, setReason] = useState("");
+  const [historyRegistration, setHistoryRegistration] = useState<Registration | null>(null);
 
-  const filteredRegistrations = registrations.filter((reg) => {
-    const matchesSearch = 
-      reg.studentName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      reg.courseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      reg.studentId.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === "all" || reg.status === activeTab;
+  const filteredRegistrations = registrations.filter((registration) => {
+    const query = searchQuery.toLowerCase();
+    const matchesSearch = registration.studentName.toLowerCase().includes(query) ||
+      registration.courseCode.toLowerCase().includes(query) ||
+      registration.studentId.toLowerCase().includes(query);
+    const matchesTab = activeTab === "all" || registration.status === activeTab;
     return matchesSearch && matchesTab;
   });
 
+  const openReview = (registration: Registration, action: Omit<ReviewAction, "registration">) => {
+    setReason("");
+    setReviewAction({ registration, ...action });
+  };
+
+  const confirmReview = () => {
+    if (!reviewAction) return;
+    if (reviewAction.requiresReason && !reason.trim()) {
+      toast.error("กรุณาระบุเหตุผล");
+      return;
+    }
+    try {
+      updateRegistrationStatus(reviewAction.registration.id, reviewAction.target, reason);
+      toast.success(reviewAction.label, {
+        description: reviewAction.target === "approved" && reviewAction.registration.status === "pending"
+          ? "ระบบเปิดใบแจ้งชำระเงินแล้ว"
+          : undefined,
+      });
+      setReviewAction(null);
+      setReason("");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ไม่สามารถเปลี่ยนสถานะได้");
+    }
+  };
+
   return (
     <PageShell bottom="roomy">
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-content tracking-tight">ตรวจสอบการลงทะเบียนเรียน</h1>
-          <p className="text-sm text-content-muted mt-1">อนุมัติและยืนยันสิทธิ์การลงทะเบียนรายวิชาของผู้เข้าศึกษาเข้าสู่ระบบวิทยาลัย</p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-content tracking-tight">ตรวจสอบการลงทะเบียนเรียน</h1>
+        <p className="text-sm text-content-muted mt-1">อนุมัติ ขอข้อมูลเพิ่ม และตรวจประวัติการเปลี่ยนสถานะ</p>
       </div>
 
       <Card className="card-shadow">
         <CardHeader className="pb-4 border-b">
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <div className="flex bg-surface-sunken p-1 rounded-lg w-fit">
-              {[
-                { id: "all", label: "ทั้งหมด" },
-                { id: "pending", label: "รอตรวจสอบ" },
-                { id: "approved", label: "ยืนยันแล้ว" },
-                { id: "rejected", label: "ถูกยกเลิก" },
-              ].map((tab) => (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap bg-surface-sunken p-1 rounded-lg w-fit">
+              {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as Status | "all")}
-                  className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                     activeTab === tab.id
                       ? "bg-surface-raised text-brand shadow-sm"
                       : "text-content-muted hover:text-content hover:bg-surface-container-high"
@@ -61,14 +131,13 @@ export default function RegistrationsApprovalPage() {
                 </button>
               ))}
             </div>
-            
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-80">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-content-muted text-lg">search</span>
               <Input
-                placeholder="ค้นหารหัสประจำตัว, ชื่อ, รหัสวิชา..."
+                placeholder="ค้นหารหัสประจำตัว ชื่อ หรือรหัสวิชา..."
                 className="pl-9 bg-surface-container-low"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(event) => setSearchQuery(event.target.value)}
               />
             </div>
           </div>
@@ -78,73 +147,68 @@ export default function RegistrationsApprovalPage() {
             <Table>
               <TableHeader className="bg-surface-container-low">
                 <TableRow>
-                  <TableHead className="w-[120px]">รหัสการลงทะเบียน</TableHead>
-                  <TableHead>ข้อมูลผู้เข้าศึกษา</TableHead>
-                  <TableHead>รายวิชาที่ลงทะเบียน</TableHead>
+                  <TableHead className="w-[140px]">รหัสคำขอ</TableHead>
+                  <TableHead>ผู้เข้าศึกษา</TableHead>
+                  <TableHead>รายวิชา</TableHead>
                   <TableHead>ภาคการศึกษา</TableHead>
                   <TableHead>สถานะ</TableHead>
+                  <TableHead>หมายเหตุล่าสุด</TableHead>
                   <TableHead className="text-right">จัดการ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRegistrations.length > 0 ? (
-                  filteredRegistrations.map((reg) => {
-                    const statusInfo = statusMap[reg.status];
-                    return (
-                      <TableRow key={reg.id} className="group">
-                        <TableCell className="font-medium text-content">{reg.id}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-content">{reg.studentName}</span>
-                            <span className="text-xs text-content-muted">{reg.studentId}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-content">{reg.courseCode}</span>
-                            <span className="text-xs text-content-muted">{reg.courseTitle}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-content-muted">{reg.term}</TableCell>
-                        <TableCell>
-                          <Badge variant={statusInfo.variant} className="font-medium">
-                            {statusInfo.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {reg.status === "pending" ? (
-                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="h-8 border-success-border text-success hover:bg-success-soft"
-                                onClick={() => updateRegistrationStatus(reg.id, "approved")}
-                              >
-                                ยืนยันสิทธิ์
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="h-8 border-danger-border text-danger hover:bg-danger-soft"
-                                onClick={() => updateRegistrationStatus(reg.id, "rejected")}
-                              >
-                                ยกเลิก
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button size="sm" variant="ghost" className="h-8 text-content-muted">
-                              <span className="material-symbols-outlined text-lg">visibility</span>
-                            </Button>
+                {filteredRegistrations.length > 0 ? filteredRegistrations.map((registration) => {
+                  const statusInfo = registrationStatusMeta[registration.status];
+                  const actions = actionsFor(registration);
+                  return (
+                    <TableRow key={registration.id}>
+                      <TableCell className="font-medium text-content">{registration.id}</TableCell>
+                      <TableCell>
+                        <p className="font-medium text-content">{registration.studentName}</p>
+                        <p className="text-xs text-content-muted">{registration.studentId}</p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-medium text-content">{registration.courseCode}</p>
+                        <p className="text-xs text-content-muted">{registration.courseTitle}</p>
+                      </TableCell>
+                      <TableCell className="text-content-muted">{registration.term}</TableCell>
+                      <TableCell><Badge variant={statusInfo.variant}>{statusInfo.label}</Badge></TableCell>
+                      <TableCell className="max-w-56 text-xs text-content-muted">
+                        {registration.reviewReason || "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="sm" className="h-8" onClick={() => setHistoryRegistration(registration)}>
+                            ประวัติ
+                          </Button>
+                          {actions.length > 0 && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-8 gap-1">
+                                  อนุมัติลงทะเบียน
+                                  <span className="material-symbols-outlined text-base">arrow_drop_down</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {actions.map((action) => (
+                                  <DropdownMenuItem
+                                    key={`${registration.id}-${action.target}`}
+                                    variant={action.target === "rejected" ? "destructive" : "default"}
+                                    onSelect={() => openReview(registration, action)}
+                                  >
+                                    {action.label}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                ) : (
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                }) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-content-muted">
-                      ไม่พบข้อมูลการลงทะเบียนเรียน
-                    </TableCell>
+                    <TableCell colSpan={7} className="h-32 text-center text-content-muted">ไม่พบข้อมูลการลงทะเบียนเรียน</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -152,6 +216,56 @@ export default function RegistrationsApprovalPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={Boolean(reviewAction)} onOpenChange={(open) => { if (!open) setReviewAction(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{reviewAction?.label}</DialogTitle>
+            <DialogDescription>
+              {reviewAction?.registration.courseCode} · {reviewAction?.registration.studentName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label htmlFor="registration-review-reason" className="text-sm font-medium">
+              เหตุผล {reviewAction?.requiresReason ? "(จำเป็น)" : "(ถ้ามี)"}
+            </label>
+            <Textarea
+              id="registration-review-reason"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              placeholder="บันทึกเหตุผลเพื่อเก็บในประวัติคำขอ"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReviewAction(null)}>ยกเลิก</Button>
+            <Button onClick={confirmReview}>ยืนยัน</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(historyRegistration)} onOpenChange={(open) => { if (!open) setHistoryRegistration(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>ประวัติคำขอลงทะเบียน</DialogTitle>
+            <DialogDescription>{historyRegistration?.id}</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-80 space-y-3 overflow-y-auto">
+            {historyRegistration?.history.slice().reverse().map((event) => {
+              const statusInfo = registrationStatusMeta[event.to];
+              return (
+                <div key={event.id} className="rounded-xl border border-border bg-surface-container-low p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                    <span className="text-xs text-content-muted">{new Date(event.at).toLocaleString("th-TH")}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-content-muted">ผู้ดำเนินการ: {event.actor}</p>
+                  {event.reason && <p className="mt-1 text-sm">{event.reason}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }

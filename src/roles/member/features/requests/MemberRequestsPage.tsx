@@ -16,28 +16,32 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { FileUploadField } from "@/roles/shared/components/forms/FileUploadField";
 import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
-import {
-  formatFileSize,
-  toFileMetadata,
-  type FileMetadata,
-} from "@/roles/shared/features/file-metadata";
+import { registrationData, studentDetailData } from "@/roles/shared/data";
+import { formatFileSize } from "@/roles/shared/features/file-metadata";
+import { HandwrittenSignaturePreview } from "@/roles/shared/features/requests/HandwrittenSignature";
 import {
   REQUEST_CATALOG,
+  REQUEST_EVENT_LABELS,
   REQUEST_STATUS_META,
+  canTransitionRequest,
   formatThaiRequestDate,
   getRequestCategory,
   makeRequestId,
+  makeTimelineId,
   progressForStatus,
   type MockRequest,
   type RequestCategoryDefinition,
   type RequestCategoryId,
+  type RequestDocument,
   type RequestFieldDefinition,
   type RequestStatus,
 } from "@/roles/shared/features/requests/request-schema";
 import { useRequestStore } from "@/roles/shared/features/requests/request-store";
 import { currentMemberPassport } from "@/roles/shared/member/domain";
+import { CURRENT_COLLEGE_CODE } from "@/roles/shared/features/roles/role-assignment";
 
 type RequestFilter = RequestStatus | "all";
 type FormValues = Record<string, string>;
@@ -45,11 +49,37 @@ type FormErrors = Record<string, string>;
 
 const FILTERS: readonly { id: RequestFilter; label: string }[] = [
   { id: "all", label: "ทั้งหมด" },
-  { id: "pending", label: "รอตรวจสอบ" },
+  { id: "staff_review", label: "รอเจ้าหน้าที่" },
   { id: "needs_information", label: "ขอข้อมูลเพิ่มเติม" },
-  { id: "approved", label: "อนุมัติแล้ว" },
+  { id: "awaiting_president_signature", label: "รอประธานลงนาม" },
+  { id: "signed", label: "ลงนามแล้ว" },
   { id: "rejected", label: "ไม่อนุมัติ" },
 ];
+
+const CURRENT_TERM = "1/2569";
+
+function makeCategoryDocuments(category: RequestCategoryDefinition): RequestDocument[] {
+  return (category.documents ?? []).map((requirement) => ({
+    id: requirement.id,
+    label: requirement.label,
+    required: requirement.required ?? false,
+    reviewStatus: "not_applicable",
+  }));
+}
+
+function initialFieldValues(category: RequestCategoryDefinition) {
+  return Object.fromEntries(category.fields.flatMap((field) =>
+    field.id === "program" ? [[field.id, studentDetailData.program]] : [],
+  ));
+}
+
+function formatRequestDateTime(value: string) {
+  return new Date(value).toLocaleString("th-TH", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Bangkok",
+  });
+}
 
 function RequestFieldControl({
   field,
@@ -132,6 +162,7 @@ function RequestFieldControl({
 
 function RequestDetail({ request }: { request: MockRequest }) {
   const status = REQUEST_STATUS_META[request.status];
+  const attachedDocuments = request.documents.filter((document) => document.file);
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
@@ -160,30 +191,74 @@ function RequestDetail({ request }: { request: MockRequest }) {
               </dd>
             </div>
           ))}
-          {request.attachment && (
+          {request.applicantNote && (
             <div className="min-w-0 sm:col-span-2">
-              <dt className="text-xs text-muted-foreground">ไฟล์แนบ</dt>
-              <dd className="mt-1 flex items-center gap-2 text-sm font-medium text-foreground">
-                <span className="material-symbols-outlined text-lg text-primary">attach_file</span>
-                <span className="truncate">{request.attachment.name}</span>
-                <span className="shrink-0 text-xs font-normal text-muted-foreground">
-                  ({formatFileSize(request.attachment.size)})
-                </span>
-              </dd>
+              <dt className="text-xs text-muted-foreground">หมายเหตุจากผู้ยื่น</dt>
+              <dd className="mt-1 whitespace-pre-wrap break-words text-sm font-medium text-foreground">{request.applicantNote}</dd>
             </div>
           )}
         </dl>
       </section>
 
-      {request.reviewerNote && (
-        <section className="rounded-2xl border border-info-border bg-info-soft p-4" aria-labelledby="reviewer-note-heading">
-          <h4 id="reviewer-note-heading" className="text-xs font-semibold text-info-on-soft">
-            หมายเหตุจากเจ้าหน้าที่
-          </h4>
-          <p className="mt-1 text-sm text-info-on-soft">{request.reviewerNote}</p>
-          {request.reviewedBy && (
-            <p className="mt-2 text-xs text-info-on-soft/80">โดย {request.reviewedBy}</p>
+      {request.courses.length > 0 && (
+        <section aria-labelledby="request-courses-heading">
+          <h4 id="request-courses-heading" className="mb-2 text-xs font-semibold text-foreground">รายวิชาที่เกี่ยวข้อง</h4>
+          <div className="space-y-2 rounded-2xl border border-border p-3">
+            {request.courses.map((course) => (
+              <div key={course.code} className="flex flex-col gap-0.5 text-xs sm:flex-row sm:items-center sm:justify-between">
+                <span className="font-medium text-foreground">{course.code} {course.title}</span>
+                <span className="text-muted-foreground">{course.credits} หน่วยกิต{course.term ? ` · ${course.term}` : ""}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {attachedDocuments.length > 0 && (
+        <section aria-labelledby="request-documents-heading">
+          <h4 id="request-documents-heading" className="mb-2 text-xs font-semibold text-foreground">เอกสารแนบ</h4>
+          <div className="space-y-2 rounded-2xl border border-border p-3">
+            {attachedDocuments.map((document) => (
+              <div key={document.id} className="flex min-w-0 items-center gap-2 text-xs">
+                <span className="material-symbols-outlined text-lg text-primary">attach_file</span>
+                <span className="min-w-0 flex-1 truncate font-medium text-foreground">{document.label}: {document.file?.name}</span>
+                <span className="shrink-0 text-muted-foreground">{formatFileSize(document.file?.size ?? 0)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {request.comments.length > 0 && (
+        <section className="rounded-2xl border border-info-border bg-info-soft p-4" aria-labelledby="request-comments-heading">
+          <h4 id="request-comments-heading" className="text-xs font-semibold text-info-on-soft">หมายเหตุและการสนทนา</h4>
+          <div className="mt-2 space-y-3">
+            {request.comments.map((comment) => (
+              <div key={comment.id} className="border-t border-info-border/60 pt-2 first:border-t-0 first:pt-0">
+                <p className="whitespace-pre-wrap text-sm text-info-on-soft">{comment.message}</p>
+                <p className="mt-1 text-xs text-info-on-soft/80">{comment.actorName} · {formatRequestDateTime(comment.createdAt)}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {request.mockSignature && (
+        <section className="rounded-2xl border border-success-border bg-success-soft p-4" aria-labelledby="electronic-signature-heading">
+          <div className="flex items-center gap-2 text-success-on-soft">
+            <span className="material-symbols-outlined">draw</span>
+            <h4 id="electronic-signature-heading" className="text-xs font-semibold">ข้อมูลการลงนามอิเล็กทรอนิกส์</h4>
+          </div>
+          {request.mockSignature.handwrittenSignature && (
+            <div className="mt-3 max-w-md rounded-2xl border border-success-border bg-logo-surface px-4 py-2">
+              <HandwrittenSignaturePreview
+                signature={request.mockSignature.handwrittenSignature}
+                ariaLabel={`ลายมือชื่อของ ${request.mockSignature.signerName}`}
+              />
+            </div>
           )}
+          <p className="mt-2 text-sm font-medium text-success-on-soft">{request.mockSignature.signerName}</p>
+          <p className="mt-1 text-xs text-success-on-soft/80">{formatRequestDateTime(request.mockSignature.signedAt)} · {request.mockSignature.documentFingerprint}</p>
         </section>
       )}
 
@@ -192,10 +267,12 @@ function RequestDetail({ request }: { request: MockRequest }) {
           ความคืบหน้า
         </h4>
         <ol className="space-y-3 border-l-2 border-border pl-5">
-          {request.progress.map((progress, index) => (
-            <li key={`${progress}-${index}`} className="relative text-xs text-foreground">
+          {request.events.map((event) => (
+            <li key={event.id} className="relative text-xs text-foreground">
               <span className="absolute -left-[27px] top-0.5 h-3 w-3 rounded-full bg-primary ring-4 ring-card" />
-              {progress}
+              <span className="font-medium">{REQUEST_EVENT_LABELS[event.type]}</span>
+              <span className="ml-1 text-muted-foreground">โดย {event.actorName} · {formatRequestDateTime(event.createdAt)}</span>
+              {event.note && <p className="mt-0.5 whitespace-pre-wrap text-muted-foreground">{event.note}</p>}
             </li>
           ))}
         </ol>
@@ -205,16 +282,16 @@ function RequestDetail({ request }: { request: MockRequest }) {
 }
 
 export default function MemberRequestsPage() {
-  const { requests, storageError, addRequest, updateRequest } = useRequestStore();
+  const { requests, storageError, isReady, addRequest, updateRequest } = useRequestStore();
   const [filter, setFilter] = useState<RequestFilter>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [categoryId, setCategoryId] = useState<RequestCategoryId | null>(null);
   const [values, setValues] = useState<FormValues>({});
   const [errors, setErrors] = useState<FormErrors>({});
-  const [attachment, setAttachment] = useState<File | null>(null);
-  const [existingAttachment, setExistingAttachment] = useState<FileMetadata | undefined>();
-  const [attachmentError, setAttachmentError] = useState("");
+  const [applicantNote, setApplicantNote] = useState("");
+  const [documents, setDocuments] = useState<RequestDocument[]>([]);
+  const [selectedCourseCodes, setSelectedCourseCodes] = useState<string[]>([]);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
 
@@ -233,9 +310,9 @@ export default function MemberRequestsPage() {
     setCategoryId(null);
     setValues({});
     setErrors({});
-    setAttachment(null);
-    setExistingAttachment(undefined);
-    setAttachmentError("");
+    setApplicantNote("");
+    setDocuments([]);
+    setSelectedCourseCodes([]);
     setEditingRequestId(null);
   };
 
@@ -245,12 +322,18 @@ export default function MemberRequestsPage() {
   };
 
   const selectCategory = (nextCategoryId: RequestCategoryId) => {
+    const nextCategory = getRequestCategory(nextCategoryId);
+    if (!nextCategory) return;
     setCategoryId(nextCategoryId);
-    setValues({});
+    setValues(initialFieldValues(nextCategory));
     setErrors({});
-    setAttachment(null);
-    setExistingAttachment(undefined);
-    setAttachmentError("");
+    setApplicantNote("");
+    setDocuments(makeCategoryDocuments(nextCategory));
+    setSelectedCourseCodes(
+      registrationData.courses
+        .filter((course) => course.enrollmentStatus === "registered")
+        .map((course) => course.code),
+    );
   };
 
   const startRevision = (request: MockRequest) => {
@@ -262,9 +345,20 @@ export default function MemberRequestsPage() {
     setCategoryId(request.categoryId);
     setValues(Object.fromEntries(request.fields.map((field) => [field.id, field.value])));
     setErrors({});
-    setAttachment(null);
-    setExistingAttachment(request.attachment);
-    setAttachmentError("");
+    setApplicantNote(request.applicantNote ?? "");
+    const storedDocuments = request.documents;
+    setDocuments((requestCategory.documents ?? []).map((requirement, index) => {
+      const stored = storedDocuments.find((document) => document.id === requirement.id)
+        ?? (index === 0 ? storedDocuments.find((document) => document.file) : undefined);
+      return {
+        id: requirement.id,
+        label: requirement.label,
+        required: requirement.required ?? false,
+        file: stored?.file ? { ...stored.file } : undefined,
+        reviewStatus: stored?.file ? "pending" : "not_applicable",
+      };
+    }));
+    setSelectedCourseCodes(request.courses.map((course) => course.code));
     setStep(2);
     setDetailId(null);
     window.setTimeout(() => setIsCreateOpen(true), 150);
@@ -293,6 +387,16 @@ export default function MemberRequestsPage() {
         }
       }
     });
+    if (
+      selectedCategory.id === "internship_letter" &&
+      values.internshipStartDate &&
+      values.internshipEndDate &&
+      values.internshipStartDate > values.internshipEndDate
+    ) {
+      nextErrors.internshipEndDate = "วันที่สิ้นสุดต้องอยู่หลังวันที่เริ่มฝึกงาน";
+    }
+    const missingDocument = documents.find((document) => document.required && !document.file);
+    if (missingDocument) nextErrors.__documents = `กรุณาแนบ${missingDocument.label}`;
     setErrors(nextErrors);
     const firstInvalidField = selectedCategory.fields.find(
       (field) => nextErrors[field.id],
@@ -302,36 +406,34 @@ export default function MemberRequestsPage() {
         document.getElementById(`request-field-${firstInvalidField.id}`)?.focus();
       });
     }
-    return Object.keys(nextErrors).length === 0 && !attachmentError;
+    return Object.keys(nextErrors).length === 0;
   };
 
-  const handleAttachment = (event: ChangeEvent<HTMLInputElement>) => {
-    const input = event.currentTarget;
-    const file = input.files?.[0];
-    setAttachmentError("");
-    if (!file) {
-      setAttachment(null);
-      return;
-    }
-    if (!category?.attachment) {
-      input.value = "";
-      setAttachment(null);
-      return;
-    }
-    if (!category.attachment.acceptedTypes.includes(file.type)) {
-      input.value = "";
-      setAttachment(null);
-      setAttachmentError("รองรับเฉพาะไฟล์ PDF, JPG หรือ PNG");
-      return;
-    }
-    if (file.size > category.attachment.maxBytes) {
-      input.value = "";
-      setAttachment(null);
-      setAttachmentError("ไฟล์ต้องมีขนาดไม่เกิน 5 MB");
-      return;
-    }
-    setAttachment(file);
-    setExistingAttachment(undefined);
+  const updateDocument = (documentId: string, file?: RequestDocument["file"]) => {
+    setDocuments((current) => current.map((document) =>
+      document.id === documentId
+        ? {
+            ...document,
+            file,
+            reviewStatus: file ? "pending" : "not_applicable",
+            reviewerNote: undefined,
+          }
+        : document,
+    ));
+    setErrors((current) => {
+      if (!current.__documents) return current;
+      const next = { ...current };
+      delete next.__documents;
+      return next;
+    });
+  };
+
+  const toggleCourse = (courseCode: string) => {
+    setSelectedCourseCodes((current) =>
+      current.includes(courseCode)
+        ? current.filter((code) => code !== courseCode)
+        : [...current, courseCode],
+    );
   };
 
   const goNext = () => {
@@ -351,7 +453,9 @@ export default function MemberRequestsPage() {
       return;
     }
     const now = new Date();
+    const nowIso = now.toISOString();
     const identity = currentMemberPassport.identity;
+    const memberName = `${identity.titleTh} ${identity.firstNameTh} ${identity.lastNameTh}`;
     const fieldEntries = category.fields
       .map((field) => ({
         id: field.id,
@@ -360,40 +464,89 @@ export default function MemberRequestsPage() {
       }))
       .filter((field) => field.value);
     const headline = fieldEntries[0]?.value;
-    const attachmentMetadata = attachment
-      ? toFileMetadata(attachment)
-      : existingAttachment;
+    const courseSnapshots = registrationData.courses
+      .filter((course) => selectedCourseCodes.includes(course.code))
+      .map((course) => ({
+        code: course.code,
+        title: course.title,
+        credits: course.credits,
+        term: CURRENT_TERM,
+        schedule: course.schedule,
+      }));
+    const normalizedDocuments = documents.map((document) => ({
+      ...document,
+      file: document.file ? { ...document.file } : undefined,
+      reviewStatus: document.file ? "pending" as const : "not_applicable" as const,
+      reviewerNote: undefined,
+    }));
+    const note = applicantNote.trim();
     const request: MockRequest = {
       id: makeRequestId(category, now),
       categoryId: category.id,
       typeLabel: category.name,
       title: headline ? `${category.name}: ${headline}` : category.name,
       displayDate: formatThaiRequestDate(now),
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-      status: "pending",
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      status: "staff_review",
+      collegeCode: CURRENT_COLLEGE_CODE,
       requester: {
         memberId: currentMemberPassport.memberId,
-        name: `${identity.titleTh} ${identity.firstNameTh} ${identity.lastNameTh}`,
+        name: memberName,
         email: identity.email,
       },
       fields: fieldEntries,
-      attachment: attachmentMetadata,
-      progress: progressForStatus("pending"),
+      applicantNote: note || undefined,
+      courses: courseSnapshots,
+      documents: normalizedDocuments,
+      comments: [],
+      events: [{
+        id: makeTimelineId("event-submitted", now),
+        type: "submitted",
+        actorRole: "member",
+        actorName: memberName,
+        createdAt: nowIso,
+      }],
+      progress: progressForStatus("staff_review"),
     };
     if (editingRequestId) {
+      const editingRequest = requests.find((current) => current.id === editingRequestId);
+      if (!editingRequest || !canTransitionRequest(editingRequest.status, "staff_review", "member")) {
+        toast.error("สถานะคำร้องเปลี่ยนแล้ว กรุณาปิดแบบฟอร์มและลองอีกครั้ง");
+        return;
+      }
+      const noteChanged = Boolean(note) && note !== (editingRequest.applicantNote ?? "").trim();
       updateRequest(editingRequestId, (current) => ({
         ...current,
         typeLabel: request.typeLabel,
         title: request.title,
-        updatedAt: request.updatedAt,
-        status: "pending",
+        updatedAt: nowIso,
+        status: "staff_review",
         fields: request.fields,
-        attachment: request.attachment,
-        progress: progressForStatus("pending"),
-        reviewerNote: undefined,
-        reviewedAt: undefined,
-        reviewedBy: undefined,
+        applicantNote: request.applicantNote,
+        courses: request.courses,
+        documents: request.documents,
+        comments: [
+          ...current.comments,
+          ...(noteChanged ? [{
+            id: makeTimelineId("comment-member", now, current.comments.length),
+            actorRole: "member" as const,
+            actorName: memberName,
+            message: note,
+            createdAt: nowIso,
+          }] : []),
+        ],
+        events: [
+          ...current.events,
+          {
+            id: makeTimelineId("event-resubmitted", now, current.events.length),
+            type: "resubmitted",
+            actorRole: "member",
+            actorName: memberName,
+            createdAt: nowIso,
+          },
+        ],
+        progress: progressForStatus("staff_review"),
       }));
     } else {
       addRequest(request);
@@ -452,10 +605,20 @@ export default function MemberRequestsPage() {
           })}
         </div>
 
-        {filteredRequests.length > 0 ? (
+        {!isReady ? (
+          <Card>
+            <CardContent className="flex min-h-56 items-center justify-center gap-2 text-sm text-muted-foreground">
+              <span className="material-symbols-outlined animate-spin">progress_activity</span>
+              กำลังโหลดคำร้อง
+            </CardContent>
+          </Card>
+        ) : filteredRequests.length > 0 ? (
           <div className="space-y-3">
             {filteredRequests.map((request) => {
               const status = REQUEST_STATUS_META[request.status];
+              const latestStaffComment = request.comments
+                .filter((comment) => comment.actorRole === "staff")
+                .at(-1);
               return (
                 <Card key={request.id} className={`border-l-4 ${status.borderClass}`}>
                   <CardContent className="px-4">
@@ -476,9 +639,9 @@ export default function MemberRequestsPage() {
                           <p className="mt-1 text-xs text-muted-foreground">
                             {request.typeLabel} · {request.displayDate}
                           </p>
-                          {request.status === "needs_information" && request.reviewerNote && (
+                          {request.status === "needs_information" && latestStaffComment && (
                             <p className="mt-2 line-clamp-2 rounded-xl bg-info-soft px-3 py-2 text-xs text-info-on-soft">
-                              เจ้าหน้าที่: {request.reviewerNote}
+                              เจ้าหน้าที่: {latestStaffComment.message}
                             </p>
                           )}
                         </div>
@@ -577,57 +740,65 @@ export default function MemberRequestsPage() {
                     />
                   ))}
                 </div>
-                {category.attachment && (
-                  <div className="space-y-1.5 border-t border-border pt-4">
-                    <label htmlFor="request-attachment" className="text-xs font-medium text-foreground">
-                      {category.attachment.label}
-                    </label>
-                    <Input
-                      key={attachment ? `${attachment.name}-${attachment.lastModified}` : "empty"}
-                      id="request-attachment"
-                      type="file"
-                      accept={category.attachment.acceptedTypes.join(",")}
-                      onChange={handleAttachment}
-                      aria-invalid={Boolean(attachmentError)}
-                      aria-describedby={attachmentError ? "request-attachment-error" : attachment || existingAttachment ? "request-attachment-selected" : "request-attachment-help"}
-                      className="h-auto py-1"
-                    />
-                    {attachmentError ? (
-                      <p id="request-attachment-error" role="alert" className="text-xs text-destructive">
-                        {attachmentError}
-                      </p>
-                    ) : attachment ? (
-                      <div id="request-attachment-selected" className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <span className="min-w-0 truncate text-foreground">
-                          เลือกแล้ว: {attachment.name} ({formatFileSize(attachment.size)})
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setAttachment(null)}
-                          className="font-medium text-destructive hover:underline"
-                        >
-                          นำไฟล์ออก
-                        </button>
-                      </div>
-                    ) : existingAttachment ? (
-                      <div id="request-attachment-selected" className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <span className="min-w-0 truncate text-foreground">
-                          ไฟล์เดิม: {existingAttachment.name} ({formatFileSize(existingAttachment.size)})
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setExistingAttachment(undefined)}
-                          className="font-medium text-destructive hover:underline"
-                        >
-                          นำไฟล์ออก
-                        </button>
-                      </div>
-                    ) : (
-                      <p id="request-attachment-help" className="text-xs text-muted-foreground">
-                        {category.attachment.helpText}
-                      </p>
-                    )}
+                <section className="space-y-3 border-t border-border pt-4" aria-labelledby="request-course-picker-heading">
+                  <div>
+                    <h3 id="request-course-picker-heading" className="text-xs font-semibold text-foreground">รายวิชาที่เกี่ยวข้อง</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">ระบบดึงรายวิชาที่ลงทะเบียนไว้ให้อัตโนมัติ เลือกเฉพาะวิชาที่เกี่ยวข้องกับคำร้อง</p>
                   </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {registrationData.courses.map((course) => (
+                      <label key={course.code} className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border p-3 hover:bg-muted/50">
+                        <input
+                          type="checkbox"
+                          checked={selectedCourseCodes.includes(course.code)}
+                          onChange={() => toggleCourse(course.code)}
+                          className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold text-foreground">{course.code} {course.title}</span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">{course.credits} หน่วยกิต · {course.schedule}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
+
+                <div className="space-y-1.5 border-t border-border pt-4">
+                  <label htmlFor="request-applicant-note" className="text-xs font-medium text-foreground">หมายเหตุจากผู้ยื่น</label>
+                  <Textarea
+                    id="request-applicant-note"
+                    value={applicantNote}
+                    onChange={(event) => setApplicantNote(event.target.value)}
+                    rows={4}
+                    placeholder="ระบุข้อมูลเพิ่มเติมที่ต้องการแจ้งเจ้าหน้าที่ (ถ้ามี)"
+                  />
+                  <p className="text-xs text-muted-foreground">หมายเหตุใหม่จะถูกเพิ่มในประวัติ ไม่เขียนทับข้อความเดิม</p>
+                </div>
+
+                {(category.documents?.length ?? 0) > 0 && (
+                  <section className="space-y-4 border-t border-border pt-4" aria-labelledby="request-documents-form-heading">
+                    <div>
+                      <h3 id="request-documents-form-heading" className="text-xs font-semibold text-foreground">เอกสารประกอบ</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">แนบเอกสารได้หลายรายการตามประเภทคำร้อง</p>
+                    </div>
+                    {category.documents?.map((requirement) => {
+                      const documentValue = documents.find((document) => document.id === requirement.id);
+                      return (
+                        <FileUploadField
+                          key={requirement.id}
+                          label={requirement.label}
+                          description={requirement.helpText}
+                          value={documentValue?.file}
+                          onChange={(file) => updateDocument(requirement.id, file)}
+                          required={requirement.required}
+                          maxBytes={requirement.maxBytes}
+                          acceptedTypes={requirement.acceptedTypes}
+                          error={errors.__documents && requirement.required && !documentValue?.file ? errors.__documents : undefined}
+                          compact
+                        />
+                      );
+                    })}
+                  </section>
                 )}
               </div>
             )}
@@ -656,11 +827,29 @@ export default function MemberRequestsPage() {
                       </div>
                     );
                   })}
-                  {(attachment || existingAttachment) && (
+                  {selectedCourseCodes.length > 0 && (
                     <div className="sm:col-span-2">
-                      <dt className="text-xs text-muted-foreground">ไฟล์แนบ</dt>
-                      <dd className="mt-1 text-sm font-medium text-foreground">
-                        {(attachment ?? existingAttachment)?.name} ({formatFileSize((attachment ?? existingAttachment)?.size ?? 0)})
+                      <dt className="text-xs text-muted-foreground">รายวิชาที่เกี่ยวข้อง</dt>
+                      <dd className="mt-1 space-y-1 text-sm font-medium text-foreground">
+                        {registrationData.courses
+                          .filter((course) => selectedCourseCodes.includes(course.code))
+                          .map((course) => <span key={course.code} className="block">{course.code} {course.title}</span>)}
+                      </dd>
+                    </div>
+                  )}
+                  {applicantNote.trim() && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs text-muted-foreground">หมายเหตุจากผู้ยื่น</dt>
+                      <dd className="mt-1 whitespace-pre-wrap text-sm font-medium text-foreground">{applicantNote.trim()}</dd>
+                    </div>
+                  )}
+                  {documents.some((document) => document.file) && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs text-muted-foreground">เอกสารแนบ</dt>
+                      <dd className="mt-1 space-y-1 text-sm font-medium text-foreground">
+                        {documents.filter((document) => document.file).map((document) => (
+                          <span key={document.id} className="block">{document.label}: {document.file?.name} ({formatFileSize(document.file?.size ?? 0)})</span>
+                        ))}
                       </dd>
                     </div>
                   )}

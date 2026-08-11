@@ -125,7 +125,7 @@ export default function PassportPage() {
         <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-6 py-4">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-border bg-surface-raised p-1.5">
-              <img src={p.issuingAuthority.logoUrl} alt="ตราสัญลักษณ์" className="h-full w-full object-contain" />
+              <img src={p.issuingAuthority.logoUrl} alt={`ตราสัญลักษณ์${p.issuingAuthority.nameTh}`} className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0 flex-1">
               <h1 className="text-base font-bold leading-tight text-foreground md:text-lg">{p.issuingAuthority.nameTh}</h1>

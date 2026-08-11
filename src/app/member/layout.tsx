@@ -1,6 +1,7 @@
 import Sidebar from "@/roles/member/components/layout/Sidebar";
 import TopNav from "@/roles/shared/components/layout/TopNav";
 import PageTransition from "@/roles/shared/components/layout/PageTransition";
+import { PortalAccessGate } from "@/roles/shared/components/auth/PortalAccessGate";
 
 export default function DashboardLayout({
   children,
@@ -8,6 +9,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
+    <PortalAccessGate area="member">
     <div className="flex min-h-screen">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col md:pl-sidebar">
@@ -19,5 +21,6 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
+    </PortalAccessGate>
   );
 }

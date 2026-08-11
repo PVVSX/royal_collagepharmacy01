@@ -10,6 +10,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import type { ProfessionalPassport, IssuingAuthority, Verification } from "./passport";
+import { organizationBrand } from "@/roles/shared/brand/organization";
 
 /** helper สร้าง verification สั้นๆ */
 const verified = (by: string, at: string): Verification => ({ status: "verified", verifiedBy: by, verifiedAt: at });
@@ -22,7 +23,7 @@ export const pharmacyAuthority: IssuingAuthority = {
   nameEn: "Royal College of Pharmacists of Thailand",
   regulatorTh: "สภาเภสัชกรรม",
   regulatorEn: "The Pharmacy Council of Thailand",
-  logoUrl: "/logo_pharmacy.jpg",
+  logoUrl: organizationBrand.royalCollege.assets.ui,
   website: "https://www.pharmacycouncil.org",
 };
 

@@ -47,7 +47,7 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
         {/* Header */}
         <div className="border-b-2 border-primary bg-brand-soft px-6 py-5 text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-md border border-border bg-surface-raised p-1.5">
-            <img src={p.issuingAuthority.logoUrl} alt="ตรา" className="h-full w-full object-contain" />
+            <img src={p.issuingAuthority.logoUrl} alt={`ตราสัญลักษณ์${p.issuingAuthority.nameTh}`} className="h-full w-full object-contain" />
           </div>
           <div className="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-xs font-semibold text-success-on-soft">
             <span className="material-symbols-outlined text-15">verified</span>

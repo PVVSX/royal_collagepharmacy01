@@ -82,6 +82,7 @@ const breadcrumbMap: Record<string, { trail: { label: string; href: string }[]; 
   "/admin/students": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "รายชื่อผู้เข้าศึกษา" },
   "/admin/exams": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "บันทึกผลสอบ" },
   "/admin/certificates": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "ออกวุฒิบัตร" },
+  "/admin/terms": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "จัดการวาระประธาน" },
   "/admin/settings": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "ตั้งค่าระบบ" },
 };
 

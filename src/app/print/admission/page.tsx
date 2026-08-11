@@ -3,6 +3,7 @@
 import { use, useEffect } from "react";
 import { profileData } from "@/roles/shared/data";
 import { PrintProvenance } from "@/roles/shared/components/print/PrintProvenance";
+import { OrganizationLogo } from "@/roles/shared/components/brand/OrganizationLogo";
 import { useMockDb } from "@/providers/mock-db-provider";
 
 interface PrintAdmissionPageProps {
@@ -45,6 +46,7 @@ export default function PrintAdmissionPage({ searchParams }: PrintAdmissionPageP
         
         {/* Header */}
         <div className="text-center mb-8 border-b-2 border-black pb-6 relative">
+          <OrganizationLogo variant="full" className="absolute left-0 top-0 h-[32mm] w-[24mm] object-contain" />
           {hasProfileDetails ? (
             <img src="/somchai_profile.png" alt={`รูปผู้สมัคร ${applicantName}`} className="absolute right-0 top-0 w-[30mm] h-[40mm] object-cover border border-gray-300" />
           ) : (

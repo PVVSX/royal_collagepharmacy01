@@ -1,6 +1,7 @@
 import AdminSidebar from "@/roles/admin/components/layout/AdminSidebar";
 import TopNav from "@/roles/shared/components/layout/TopNav";
 import PageTransition from "@/roles/shared/components/layout/PageTransition";
+import { PortalAccessGate } from "@/roles/shared/components/auth/PortalAccessGate";
 
 export default function AdminLayout({
   children,
@@ -8,6 +9,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
+    <PortalAccessGate area="admin">
     <div className="flex min-h-screen bg-admin-surface-soft">
       <AdminSidebar />
       <div className="flex min-w-0 flex-1 flex-col md:pl-sidebar">
@@ -19,5 +21,6 @@ export default function AdminLayout({
         </main>
       </div>
     </div>
+    </PortalAccessGate>
   );
 }

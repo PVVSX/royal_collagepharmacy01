@@ -1,18 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { OrganizationLogo } from "@/roles/shared/components/brand/OrganizationLogo";
+import {
+  resolvePortalLogin,
+  savePortalSession,
+} from "@/roles/shared/features/roles/mock-login";
+import { useRoleAssignmentStore } from "@/roles/shared/features/roles/role-assignment-store";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { assignments } = useRoleAssignmentStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const loginTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (loginTimerRef.current) clearTimeout(loginTimerRef.current);
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,13 +32,13 @@ export default function LoginPage() {
     setIsSubmitting(true);
     toast.loading("กำลังตรวจสอบข้อมูล...", { id: "login" });
     
-    setTimeout(() => {
+    loginTimerRef.current = setTimeout(() => {
+      loginTimerRef.current = null;
+      const requestedPath = new URLSearchParams(window.location.search).get("next");
+      const result = resolvePortalLogin(email, password, requestedPath, assignments);
+      savePortalSession(result.session);
       toast.success("เข้าสู่ระบบสำเร็จ", { id: "login" });
-      if (email.toLowerCase() === "admin" && password === "2323") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/member/dashboard");
-      }
+      router.push(result.destination);
     }, 1500);
   };
 
@@ -46,7 +58,7 @@ export default function LoginPage() {
             transition={{ duration: 0.7, delay: 0.2 }}
           >
             <div className="w-20 h-20 rounded-xl bg-content-on-image/10 backdrop-blur-md p-3 mb-6 border border-content-on-image/20 shadow-lg">
-              <img src="/logo_pharmacy.jpg" alt="ตราสัญลักษณ์ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย" className="w-full h-full object-contain" />
+              <OrganizationLogo className="w-full h-full object-contain" />
             </div>
             <h1 className="text-4xl font-bold mb-4 leading-tight">
               ราชวิทยาลัยเภสัชกรรม<br />แห่งประเทศไทย
@@ -69,13 +81,13 @@ export default function LoginPage() {
         >
           <div className="md:hidden flex flex-col items-center mb-8">
             <div className="w-20 h-20 bg-surface-raised rounded-full shadow-sm border border-border p-3 mb-4">
-              <img src="/logo_pharmacy.jpg" alt="ตราสัญลักษณ์ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย" className="w-full h-full object-contain" />
+              <OrganizationLogo className="w-full h-full object-contain" />
             </div>
             <h1 className="text-xl font-bold text-center text-primary">ราชวิทยาลัยเภสัชกรรม<br/>แห่งประเทศไทย</h1>
           </div>
 
           <div className="mb-8">
-            <p className="text-2xs font-semibold uppercase tracking-wider text-primary mb-1">ระบบสารสนเทศสมาชิก · Member Portal</p>
+            <p className="text-2xs font-semibold uppercase tracking-wider text-primary mb-1">ระบบสารสนเทศราชวิทยาลัย · College Portal</p>
             <h2 className="text-2xl font-bold text-foreground mb-2">เข้าสู่ระบบ</h2>
             <p className="text-sm text-muted-foreground">กรุณาเข้าสู่ระบบเพื่อเข้าใช้งานหนังสือเดินทางวิชาชีพและบริการต่างๆ</p>
           </div>
@@ -164,7 +176,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-12 pt-6 border-t border-border flex items-center justify-center gap-4 text-xs text-muted-foreground/60">
-            <span>© 2026 Pharmacy Council</span>
+            <span>© 2026 ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย</span>
             <span>•</span>
             <a href="#" className="hover:text-primary transition-colors">นโยบายความเป็นส่วนตัว</a>
             <span>•</span>

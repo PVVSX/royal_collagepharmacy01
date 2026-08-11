@@ -2,7 +2,13 @@
 // Selectors — ค่าที่ derive จาก passport (คำนวณครั้งเดียว ใช้ซ้ำทุกหน้า)
 // ════════════════════════════════════════════════════════════════════════════
 
-import type { ProfessionalPassport, CompetencyRating, ProficiencyLevel } from "./passport";
+import type {
+  ContinuingEducationStatus,
+  CpdSummary,
+  ProfessionalPassport,
+  CompetencyRating,
+  ProficiencyLevel,
+} from "./passport";
 import { fipFramework, type CompetencyArea, type CompetencyCluster } from "./competency-framework";
 
 const thMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -42,6 +48,34 @@ export function cpdProgressPct(p: ProfessionalPassport): number {
 
 export function cpdRemaining(p: ProfessionalPassport): number {
   return Math.max(0, p.cpd.targetCredits - p.cpd.currentCredits);
+}
+
+export const continuingEducationStatusMeta = {
+  active: { label: "สถานะปกติ", variant: "success" },
+  warning: { label: "ควรเร่งสะสมหน่วยกิต", variant: "warning" },
+  completed: { label: "ครบเกณฑ์การศึกษาต่อเนื่อง", variant: "info" },
+  non_compliant: { label: "ไม่ครบเกณฑ์", variant: "danger" },
+} as const satisfies Record<
+  ContinuingEducationStatus,
+  { label: string; variant: "success" | "warning" | "info" | "danger" }
+>;
+
+export function getContinuingEducationStatus(
+  cpd: CpdSummary,
+  now: Date | string = new Date(),
+): ContinuingEducationStatus {
+  if (cpd.currentCredits >= cpd.targetCredits) return "completed";
+  const nowMs = typeof now === "string" ? new Date(now).getTime() : now.getTime();
+  const expiresAt = new Date(cpd.cycleExpiresAt).getTime();
+  if (!Number.isNaN(nowMs) && !Number.isNaN(expiresAt) && nowMs > expiresAt) {
+    return "non_compliant";
+  }
+  const daysRemaining = Number.isNaN(nowMs) || Number.isNaN(expiresAt)
+    ? Number.POSITIVE_INFINITY
+    : Math.ceil((expiresAt - nowMs) / (24 * 3600 * 1000));
+  return daysRemaining <= 365 || cpd.currentCredits < cpd.perYearMinimum
+    ? "warning"
+    : "active";
 }
 
 export interface ClusterCompetency {

@@ -14,12 +14,22 @@ import { AddressCard } from "@/roles/shared/member/components/AddressCard";
 import { WorkplaceCard } from "@/roles/shared/member/components/WorkplaceCard";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { ResearchSubmissionDialog } from "@/roles/member/features/research/components/ResearchSubmissionDialog";
+import { OrganizationLogo } from "@/roles/shared/components/brand/OrganizationLogo";
 import {
   EducationTimeline,
   MockFeeRuleNote,
   StudentRecordBadge,
   studentDocuments,
 } from "@/roles/shared/features/student-records";
+import {
+  findLicenseRegistryRecord,
+  getLicenseEligibility,
+  StudentStandingBadge,
+} from "@/roles/shared/features/license-eligibility";
+import {
+  continuingEducationStatusMeta,
+  getContinuingEducationStatus,
+} from "@/roles/shared/member/domain/selectors";
 
 const icon20 = "material-symbols-outlined text-xl";
 const icon18 = "material-symbols-outlined text-lg";
@@ -37,6 +47,11 @@ export default function StudentsPage() {
   const s = studentDetailData;
   const [activeTab, setActiveTab] = useState("personal");
   const [researchSubmissionOpen, setResearchSubmissionOpen] = useState(false);
+  const licenseRegistryRecord = findLicenseRegistryRecord(s.licenseNumber);
+  const licenseEligibility = getLicenseEligibility(licenseRegistryRecord?.status ?? "unverified");
+  const continuingEducationStatus = continuingEducationStatusMeta[
+    getContinuingEducationStatus(currentMemberPassport.cpd)
+  ];
 
   const icon16 = "material-symbols-outlined text-base";
 
@@ -58,7 +73,7 @@ export default function StudentsPage() {
           <div className="profile-hero-pattern absolute inset-0" />
           {/* Logo Watermark */}
           <div className="profile-watermark absolute -right-10 top-1/2 -translate-y-1/2 mix-blend-screen pointer-events-none md:-right-20">
-            <img src="/watermark_council.png" alt="Watermark" className="w-[300px] h-[300px] md:w-[450px] md:h-[450px] object-contain" />
+            <OrganizationLogo variant="watermark" decorative className="w-[300px] h-[300px] md:w-[450px] md:h-[450px] object-contain" />
           </div>
           {/* Decorative gradients */}
           <div className="absolute -left-20 -top-20 w-64 h-64 bg-content-inverse/10 rounded-full blur-3xl pointer-events-none" />
@@ -92,6 +107,14 @@ export default function StudentsPage() {
                     status={s.trainingStatus}
                     className="mb-1 shrink-0"
                   />
+                  <span className="mb-1 inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    สถานภาพผู้เข้าศึกษา
+                    <StudentStandingBadge standing={licenseEligibility.studentStanding} />
+                  </span>
+                  <span className="mb-1 inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    สถานะการศึกษาต่อเนื่อง
+                    <Badge variant={continuingEducationStatus.variant}>{continuingEducationStatus.label}</Badge>
+                  </span>
                 </div>
                 
                 {/* Workplace & Context */}
@@ -144,7 +167,7 @@ export default function StudentsPage() {
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,var(--content-inverse)_1px,transparent_0)] bg-[length:16px_16px] opacity-10" />
                       <div className="relative z-10 flex items-center gap-3 w-full pb-4 mb-5 mt-2">
                         <div className="bg-card p-1 rounded-md shrink-0">
-                          <img src="/logo_pharmacy.jpg" alt="Logo" className="w-8 h-8 object-contain" />
+                          <OrganizationLogo decorative className="w-8 h-8 object-contain" />
                         </div>
                         <div className="text-left">
                           <div className="font-bold text-sm tracking-tight leading-tight drop-shadow-sm">ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย</div>
@@ -168,7 +191,7 @@ export default function StudentsPage() {
                         </div>
                         <div className="flex justify-between items-center px-1">
                           <span className="opacity-70 text-xs">สถานะ</span>
-                          <span className="font-medium text-status-active-on-dark">ปกติ (Active)</span>
+                          <span className="font-medium text-status-active-on-dark">{licenseEligibility.label}</span>
                         </div>
                       </div>
                       <div className="relative z-10 mt-auto flex flex-col items-center bg-logo-surface text-membership-card-content p-3 rounded-xl shadow-xl w-full max-w-[200px] mb-2">

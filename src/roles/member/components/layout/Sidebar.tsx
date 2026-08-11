@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
+import { OrganizationLogo } from "@/roles/shared/components/brand/OrganizationLogo";
+import { clearPortalSession } from "@/roles/shared/features/roles/mock-login";
 
 
 // กลุ่ม nav แบบมี section label
@@ -58,7 +60,7 @@ function SidebarNav({ pathname }: { pathname: string }) {
       <Link href="/member/dashboard" className="block px-5 pt-5 pb-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-logo-surface p-1 overflow-hidden flex-shrink-0">
-            <img src="/logo_pharmacy.jpg" alt="รภวท" className="h-full w-full object-contain" />
+            <OrganizationLogo className="h-full w-full object-contain" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-bold leading-tight text-sidebar-foreground">
@@ -131,7 +133,7 @@ function SidebarNav({ pathname }: { pathname: string }) {
             <p className="text-xs opacity-90 text-sidebar-foreground/70">ผู้เข้ารับการฝึกอบรม</p>
           </div>
           <button
-            onClick={() => router.push("/")}
+            onClick={() => { clearPortalSession(); router.push("/"); }}
             className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground transition-colors"
             title="ออกจากระบบ"
           >

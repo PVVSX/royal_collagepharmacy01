@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { profileData, studentDetailData } from "@/roles/shared/data";
 import { PrintProvenance } from "@/roles/shared/components/print/PrintProvenance";
+import { OrganizationLogo } from "@/roles/shared/components/brand/OrganizationLogo";
 
 export default function PrintProfilePage() {
   const p = profileData;
@@ -24,6 +25,7 @@ export default function PrintProfilePage() {
         
         {/* Header */}
         <div className="text-center mb-8 border-b-2 border-black pb-6 relative">
+          <OrganizationLogo variant="full" className="absolute left-0 top-0 h-[32mm] w-[24mm] object-contain" />
           <img src="/somchai_profile.png" alt="Profile" className="absolute right-0 top-0 w-[30mm] h-[40mm] object-cover border border-gray-300" />
           <h1 className="text-2xl font-bold mb-2 tracking-wide">ประวัติส่วนบุคคล</h1>
           <h2 className="text-lg font-semibold text-gray-700">Curriculum Vitae</h2>

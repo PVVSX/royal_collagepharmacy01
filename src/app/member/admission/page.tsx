@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { profileData, financeData } from "@/roles/shared/data";
+import { profileData } from "@/roles/shared/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ import { PersonalInfoCard } from "@/roles/shared/member/components/PersonalInfoC
 import { AddressCard } from "@/roles/shared/member/components/AddressCard";
 import { WorkplaceCard } from "@/roles/shared/member/components/WorkplaceCard";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
-import { useMockDb } from "@/providers/mock-db-provider";
+import { useMockDb, type Payment } from "@/providers/mock-db-provider";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileUploadField } from "@/roles/shared/components/forms/FileUploadField";
@@ -28,6 +28,13 @@ import {
   getAdmissionDocumentProgress,
   type AdmissionDocument,
 } from "@/roles/shared/features/admissions/documents";
+import {
+  findLicenseRegistryRecord,
+  getLicenseEligibility,
+  LicenseEligibilityNotice,
+} from "@/roles/shared/features/license-eligibility";
+import { currentMemberPassport } from "@/roles/shared/member/domain/member";
+import type { PaymentMethod } from "@/roles/shared/features/finance";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -76,7 +83,14 @@ const colleges = [
 
 export default function ExamApplicationPage() {
   const router = useRouter();
-  const { settings, admissions, setAdmissions, updateAdmissionDocuments } = useMockDb();
+  const {
+    settings,
+    admissions,
+    payments,
+    setAdmissions,
+    updateAdmissionDocuments,
+    addPayment,
+  } = useMockDb();
 
   const [started, setStarted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -86,15 +100,27 @@ export default function ExamApplicationPage() {
   const [payingApp, setPayingApp] = useState<typeof admissions[0] | null>(null);
   const [documents, setDocuments] = useState<AdmissionDocument[]>(createAdmissionDocuments);
   const [editingAdmissionId, setEditingAdmissionId] = useState<string>();
+  const licenseRegistryRecord = findLicenseRegistryRecord(currentMemberPassport.license.licenseNumber);
+  const licenseStatus = licenseRegistryRecord?.status ?? "unverified";
+  const licenseEligibility = getLicenseEligibility(licenseStatus);
 
   // Payment dialog state
   const [payRef, setPayRef] = useState("");
   const [payAmount, setPayAmount] = useState("");
   const [payFile, setPayFile] = useState<File | null>(null);
   const [payError, setPayError] = useState("");
-  const [payCopied, setPayCopied] = useState("");
   const [payDone, setPayDone] = useState(false);
+  const [payMethod, setPayMethod] = useState<PaymentMethod>("promptpay");
+  const [cardName, setCardName] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
   const payFileRef = useRef<HTMLInputElement>(null);
+  const submitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
+  }, []);
 
   const openPayment = (app: typeof admissions[0]) => {
     setPayingApp(app);
@@ -102,8 +128,12 @@ export default function ExamApplicationPage() {
     setPayAmount("2500");
     setPayFile(null);
     setPayError("");
-    setPayCopied("");
     setPayDone(false);
+    setPayMethod("promptpay");
+    setCardName("");
+    setCardNumber("");
+    setCardExpiry("");
+    setCardCvv("");
   };
 
   const handlePayFile = (f?: File) => {
@@ -118,12 +148,54 @@ export default function ExamApplicationPage() {
     e.preventDefault();
     if (!payRef.trim()) { setPayError("กรุณากรอกเลขที่อ้างอิง"); return; }
     if (!payAmount || Number(payAmount) <= 0) { setPayError("กรุณาระบุจำนวนเงิน"); return; }
-    if (!payFile) { setPayError("กรุณาแนบสลิปการโอนเงิน"); return; }
-    toast.success("ส่งหลักฐานการชำระเงินเรียบร้อย", { description: "เจ้าหน้าที่จะตรวจสอบภายใน 1-2 วันทำการ" });
+    if (payMethod === "promptpay" && !payFile) {
+      setPayError("กรุณาแนบหลักฐานการชำระเงิน");
+      return;
+    }
+    if (payMethod !== "promptpay") {
+      const normalizedNumber = cardNumber.replace(/\s/g, "");
+      if (!cardName.trim()) { setPayError("กรุณาระบุชื่อบนบัตร"); return; }
+      if (!/^\d{16}$/.test(normalizedNumber)) { setPayError("กรุณาระบุหมายเลขบัตร 16 หลัก"); return; }
+      if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) { setPayError("กรุณาระบุวันหมดอายุรูปแบบ MM/YY"); return; }
+      if (!/^\d{3,4}$/.test(cardCvv)) { setPayError("กรุณาระบุรหัสความปลอดภัย 3 หรือ 4 หลัก"); return; }
+    }
+    if (!payingApp) return;
+    const invoiceId = `admission-${payingApp.id}`;
+    if (payments.some((payment) => payment.invoiceId === invoiceId && payment.status !== "rejected")) {
+      setPayError("รายการนี้ถูกส่งชำระแล้ว กรุณารอเจ้าหน้าที่ตรวจสอบ");
+      return;
+    }
+    const submittedAt = new Date().toISOString();
+    const payment: Payment = {
+      id: `PAY-${globalThis.crypto?.randomUUID?.() ?? Date.now()}`,
+      invoiceId,
+      studentId: currentMemberPassport.memberId,
+      name: payingApp.name,
+      program: payingApp.program,
+      amount: 2500,
+      date: new Date(submittedAt).toLocaleDateString("th-TH"),
+      status: payMethod === "promptpay" ? "pending" : "approved",
+      type: "ค่าสมัครสอบ",
+      method: payMethod,
+      referenceNo: payMethod === "promptpay" ? payRef : `${payMethod === "credit_card" ? "CARD" : "DEBIT"}-${Date.now()}`,
+      submittedAt,
+    };
+    addPayment(payment);
+    setCardNumber("");
+    setCardCvv("");
+    toast.success(payMethod === "promptpay" ? "ส่งรายการชำระเงินเรียบร้อย" : "ชำระเงินเรียบร้อย", {
+      description: payMethod === "promptpay" ? "เจ้าหน้าที่จะตรวจสอบภายใน 1-2 วันทำการ" : "ระบบบันทึกผลการชำระเงินแล้ว",
+    });
     setPayDone(true);
   };
 
   const handleNext = () => {
+    if (!licenseEligibility.canApplyForExam) {
+      toast.error("ไม่สามารถดำเนินการสมัครสอบได้", {
+        description: licenseEligibility.description,
+      });
+      return;
+    }
     if (currentStep === 3) submitApplication();
     else setCurrentStep((p) => Math.min(p + 1, 3));
   };
@@ -164,8 +236,15 @@ export default function ExamApplicationPage() {
   };
 
   const submitApplication = () => {
+    if (!licenseEligibility.canApplyForExam) {
+      toast.error("ไม่สามารถส่งใบสมัครสอบได้", {
+        description: licenseEligibility.description,
+      });
+      return;
+    }
     setIsSubmitting(true);
-    setTimeout(() => {
+    submitTimerRef.current = setTimeout(() => {
+      submitTimerRef.current = null;
       setIsSubmitting(false);
       const hasDocumentsToReview = documents.some((document) => (
         Boolean(document.file) || document.reviewStatus === "missing"
@@ -197,6 +276,8 @@ export default function ExamApplicationPage() {
           status: "pending",
           documents,
           documentStatus,
+          licenseStatus,
+          licenseCheckedAt: licenseRegistryRecord?.checkedAt ?? new Date().toISOString(),
         },
         ...prev,
       ]);
@@ -287,10 +368,22 @@ export default function ExamApplicationPage() {
                 <span className="material-symbols-outlined text-base">info</span>
                 ระบบจะดึงประวัติวิชาชีพที่ลงทะเบียนไว้มาใช้โดยอัตโนมัติ
               </p>
-              <Button className="gap-1.5 shrink-0" onClick={() => setStarted(true)}>
+              <Button
+                className="gap-1.5 shrink-0"
+                onClick={() => setStarted(true)}
+                disabled={!licenseEligibility.canApplyForExam}
+              >
                 <span className="material-symbols-outlined text-lg">edit_document</span>
                 เริ่มสมัครสอบ
               </Button>
+            </div>
+            <div className="border-t border-border px-6 py-4">
+              <LicenseEligibilityNotice
+                status={licenseStatus}
+                licenseNumber={currentMemberPassport.license.licenseNumber}
+                checkedAt={licenseRegistryRecord?.checkedAt}
+                compact
+              />
             </div>
           </div>
 
@@ -381,9 +474,11 @@ export default function ExamApplicationPage() {
                     <div className="w-16 h-16 bg-success-soft rounded-full flex items-center justify-center mb-5">
                       <span className="material-symbols-outlined text-success text-4xl">check_circle</span>
                     </div>
-                    <DialogTitle className="text-xl mb-2">ส่งหลักฐานการชำระเงินแล้ว</DialogTitle>
+                    <DialogTitle className="text-xl mb-2">{payMethod === "promptpay" ? "ส่งหลักฐานการชำระเงินแล้ว" : "ชำระเงินเรียบร้อยแล้ว"}</DialogTitle>
                     <DialogDescription className="max-w-sm">
-                      เจ้าหน้าที่จะตรวจสอบหลักฐานและยืนยันสิทธิ์การสอบภายใน 1-2 วันทำการ
+                      {payMethod === "promptpay"
+                        ? "เจ้าหน้าที่จะตรวจสอบหลักฐานและยืนยันสิทธิ์การสอบภายใน 1-2 วันทำการ"
+                        : "ระบบบันทึกผลการชำระเงินและยืนยันรายการเรียบร้อยแล้ว"}
                     </DialogDescription>
                     <Button className="mt-6 min-w-32" onClick={() => setPayingApp(null)}>ปิด</Button>
                   </div>
@@ -434,68 +529,128 @@ export default function ExamApplicationPage() {
                         </div>
 
                         <div>
-                          <h3 className="text-sm font-semibold mb-3 pb-2 border-b border-border">ช่องทางโอนเงิน</h3>
-                          <div className="space-y-3">
-                            {financeData.bankAccounts.map((acc, i) => (
-                              <div key={i} className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
-                                <div>
-                                  <p className="text-xs text-muted-foreground">{acc.bank} · {acc.branch}</p>
-                                  <p className="text-xs text-muted-foreground">{acc.accountName}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono text-sm font-bold text-primary">{acc.accountNumber}</span>
-                                  <button
-                                    type="button"
-                                    onClick={async () => {
-                                      await navigator.clipboard.writeText(acc.accountNumber);
-                                      setPayCopied(acc.accountNumber);
-                                      setTimeout(() => setPayCopied(""), 1800);
-                                    }}
-                                    className="text-muted-foreground hover:text-foreground transition-colors"
-                                  >
-                                    <span className="material-symbols-outlined text-base">
-                                      {payCopied === acc.accountNumber ? "check" : "content_copy"}
-                                    </span>
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
+                          <h3 className="mb-3 border-b border-border pb-2 text-sm font-semibold">ช่องทางการชำระเงิน</h3>
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            <button
+                              type="button"
+                              aria-pressed={payMethod === "promptpay"}
+                              onClick={() => { setPayMethod("promptpay"); setPayError(""); }}
+                              className={`rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                                payMethod === "promptpay"
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border bg-card hover:bg-muted/30"
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-2xl text-primary" aria-hidden="true">qr_code_2</span>
+                              <span className="mt-2 block text-sm font-semibold">พร้อมเพย์</span>
+                              <span className="mt-1 block text-xs text-muted-foreground">สแกน QR และแนบหลักฐาน</span>
+                            </button>
+                            <button
+                              type="button"
+                              aria-pressed={payMethod === "credit_card"}
+                              onClick={() => { setPayMethod("credit_card"); setPayError(""); }}
+                              className={`rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                                payMethod === "credit_card"
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border bg-card hover:bg-muted/30"
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-2xl text-primary" aria-hidden="true">credit_card</span>
+                              <span className="mt-2 block text-sm font-semibold">บัตรเครดิต</span>
+                              <span className="mt-1 block text-xs text-muted-foreground">ยืนยันรายการผ่านหน้าบัตร</span>
+                            </button>
+                            <button
+                              type="button"
+                              aria-pressed={payMethod === "debit_card"}
+                              onClick={() => { setPayMethod("debit_card"); setPayError(""); }}
+                              className={`rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                                payMethod === "debit_card"
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border bg-card hover:bg-muted/30"
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-2xl text-primary" aria-hidden="true">credit_card</span>
+                              <span className="mt-2 block text-sm font-semibold">บัตรเดบิต</span>
+                              <span className="mt-1 block text-xs text-muted-foreground">ยืนยันรายการผ่านหน้าบัตร</span>
+                            </button>
                           </div>
                         </div>
                       </div>
 
                       {/* Right — Upload slip */}
                       <form className="lg:col-span-5 p-6 space-y-4" onSubmit={handlePaySubmit}>
-                        <h3 className="text-sm font-semibold pb-2 border-b border-border">แจ้งหลักฐานการชำระเงิน</h3>
+                        <h3 className="border-b border-border pb-2 text-sm font-semibold">
+                          {payMethod === "promptpay" ? "ชำระด้วยพร้อมเพย์" : payMethod === "credit_card" ? "ชำระด้วยบัตรเครดิต" : "ชำระด้วยบัตรเดบิต"}
+                        </h3>
 
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium">เลขที่อ้างอิง / Reference No.</label>
-                          <Input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="EXM-2569-001" />
+                          <label htmlFor="admission-payment-reference" className="text-xs font-medium">เลขที่อ้างอิง / Reference No.</label>
+                          <Input id="admission-payment-reference" value={payRef} readOnly aria-readonly="true" />
                         </div>
 
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium">จำนวนเงินที่โอน</label>
+                          <label htmlFor="admission-payment-amount" className="text-xs font-medium">จำนวนเงินที่ชำระ</label>
                           <div className="relative">
-                            <Input type="number" min="0.01" step="0.01" className="pr-12" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} />
+                            <Input id="admission-payment-amount" type="number" className="pr-12" value={payAmount} readOnly aria-readonly="true" />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">บาท</span>
                           </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                          <span className="text-xs font-medium">สลิป / หลักฐานการโอน</span>
-                          <input ref={payFileRef} type="file" className="hidden" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => handlePayFile(e.target.files?.[0])} />
-                          <button
-                            type="button"
-                            onClick={() => payFileRef.current?.click()}
-                            className="flex min-h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 p-4 text-center hover:border-primary transition-colors"
-                          >
-                            <span className={`material-symbols-outlined mb-1 text-4xl ${payFile ? "text-primary" : "text-muted-foreground"}`}>
-                              {payFile ? "check_circle" : "cloud_upload"}
-                            </span>
-                            <span className="text-xs font-medium break-all">{payFile ? payFile.name : "คลิกเพื่อเลือกไฟล์"}</span>
-                            <span className="text-xs text-muted-foreground mt-1">JPG, PNG หรือ PDF · ไม่เกิน 5MB</span>
-                          </button>
-                        </div>
+                        {payMethod === "promptpay" ? (
+                          <>
+                            <div className="rounded-xl border border-border bg-muted/20 p-4 text-center">
+                              <span className="material-symbols-outlined text-5xl text-primary" aria-hidden="true">qr_code_2</span>
+                              <p className="mt-2 text-xs text-muted-foreground">สแกน QR เพื่อชำระ 2,500 บาท</p>
+                            </div>
+                            <div className="space-y-1.5">
+                              <span className="text-xs font-medium">หลักฐานการชำระเงิน</span>
+                              <input ref={payFileRef} type="file" className="hidden" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => handlePayFile(e.target.files?.[0])} />
+                              <button
+                                type="button"
+                                onClick={() => payFileRef.current?.click()}
+                                className="flex min-h-32 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 p-4 text-center transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              >
+                                <span className={`material-symbols-outlined mb-1 text-4xl ${payFile ? "text-primary" : "text-muted-foreground"}`}>
+                                  {payFile ? "check_circle" : "cloud_upload"}
+                                </span>
+                                <span className="break-all text-xs font-medium">{payFile ? payFile.name : "คลิกเพื่อเลือกไฟล์"}</span>
+                                <span className="mt-1 text-xs text-muted-foreground">JPG, PNG หรือ PDF · ไม่เกิน 5MB</span>
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="space-y-1.5">
+                              <label htmlFor="admission-card-name" className="text-xs font-medium">ชื่อบนบัตร</label>
+                              <Input id="admission-card-name" value={cardName} onChange={(event) => setCardName(event.target.value)} autoComplete="cc-name" />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label htmlFor="admission-card-number" className="text-xs font-medium">หมายเลขบัตร</label>
+                              <Input
+                                id="admission-card-number"
+                                inputMode="numeric"
+                                autoComplete="cc-number"
+                                maxLength={19}
+                                value={cardNumber}
+                                onChange={(event) => setCardNumber(event.target.value.replace(/[^\d ]/g, ""))}
+                                placeholder="0000 0000 0000 0000"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1.5">
+                                <label htmlFor="admission-card-expiry" className="text-xs font-medium">วันหมดอายุ</label>
+                                <Input id="admission-card-expiry" value={cardExpiry} onChange={(event) => setCardExpiry(event.target.value)} autoComplete="cc-exp" placeholder="MM/YY" maxLength={5} />
+                              </div>
+                              <div className="space-y-1.5">
+                                <label htmlFor="admission-card-cvv" className="text-xs font-medium">รหัสความปลอดภัย</label>
+                                <Input id="admission-card-cvv" value={cardCvv} onChange={(event) => setCardCvv(event.target.value.replace(/\D/g, ""))} autoComplete="cc-csc" inputMode="numeric" type="password" maxLength={4} />
+                              </div>
+                            </div>
+                            <p className="rounded-lg border border-info-border bg-info-soft px-3 py-2 text-xs text-info-on-soft">
+                              ข้อมูลบัตรใช้ยืนยันรายการนี้เท่านั้น และจะไม่ถูกบันทึกในระบบ
+                            </p>
+                          </div>
+                        )}
 
                         {payError && (
                           <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{payError}</p>
@@ -503,7 +658,7 @@ export default function ExamApplicationPage() {
 
                         <Button type="submit" className="w-full gap-2">
                           <span className="material-symbols-outlined text-lg">send</span>
-                          ส่งหลักฐานการชำระเงิน
+                          ยืนยันการชำระเงิน
                         </Button>
                       </form>
                     </div>
@@ -622,6 +777,11 @@ export default function ExamApplicationPage() {
                     </p>
                   </div>
                 </div>
+                <LicenseEligibilityNotice
+                  status={licenseStatus}
+                  licenseNumber={currentMemberPassport.license.licenseNumber}
+                  checkedAt={licenseRegistryRecord?.checkedAt}
+                />
                 <PersonalInfoCard data={profileData.personalInfo} isReadOnly={true} />
                 <AddressCard title="ที่อยู่ตามบัตรประชาชน" icon="home" data={profileData.personalInfo} isReadOnly={true} showContactInfo={false} />
                 <AddressCard title="ที่อยู่ปัจจุบัน/ที่ติดต่อได้" icon="contact_mail" data={profileData.personalInfo} isReadOnly={true} showContactInfo={true} />
@@ -745,7 +905,7 @@ export default function ExamApplicationPage() {
           </Button>
           <Button
             onClick={handleNext}
-            disabled={(currentStep === 1 && !selectedCollege) || isSubmitting}
+            disabled={(currentStep === 1 && !selectedCollege) || isSubmitting || !licenseEligibility.canApplyForExam}
             className="w-40 gap-1 shadow-sm"
           >
             {isSubmitting ? (

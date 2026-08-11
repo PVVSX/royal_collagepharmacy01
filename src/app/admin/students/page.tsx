@@ -4,32 +4,27 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   StudentRecordBadge,
-  type TrainingStatus,
 } from "@/roles/shared/features/student-records";
-
-const mockStudents = [
-  { id: "RPC-2569-001", name: "ภญ. คาริน่า ยู", program: "เภสัชบำบัด", year: "2569", trainingStatus: "normal", email: "karina@example.com" },
-  { id: "RPC-2569-002", name: "ภก. สมชาย ใจดี", program: "เภสัชบำบัด", year: "2569", trainingStatus: "normal", email: "somchai@example.com" },
-  { id: "RPC-2568-124", name: "ภญ. สมหญิง รักชาติ", program: "เภสัชกรรมชุมชน", year: "2568", trainingStatus: "maintaining", email: "somying@example.com" },
-  { id: "RPC-2567-089", name: "ภก. มานะ อดทน", program: "การคุ้มครองผู้บริโภค", year: "2567", trainingStatus: "completed", email: "mana@example.com" },
-  { id: "RPC-2568-201", name: "ภญ. กานดา ศรีสุข", program: "เภสัชอุตสาหการ", year: "2568", trainingStatus: "resigned", email: "kanda@example.com" },
-] satisfies readonly {
-  id: string;
-  name: string;
-  program: string;
-  year: string;
-  trainingStatus: TrainingStatus;
-  email: string;
-}[];
+import { continuingEducationStatusMeta } from "@/roles/shared/member/domain/selectors";
+import {
+  findLicenseRegistryRecord,
+  getLicenseEligibility,
+  StudentStandingBadge,
+} from "@/roles/shared/features/license-eligibility";
+import {
+  adminStudentDirectory,
+  getAdminStudentName,
+} from "@/roles/admin/features/students/student-directory";
 
 export default function AdminStudentsPage() {
-  const [students] = useState(mockStudents);
+  const [students] = useState(adminStudentDirectory);
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredStudents = students.filter(s => 
-    s.name.includes(searchTerm) || s.id.includes(searchTerm) || s.program.includes(searchTerm)
+    getAdminStudentName(s).includes(searchTerm) || s.id.includes(searchTerm) || s.program.includes(searchTerm)
   );
 
   return (
@@ -78,6 +73,8 @@ export default function AdminStudentsPage() {
                   <th className="px-4 py-3 font-medium">ปีการศึกษา</th>
                   <th className="px-4 py-3 font-medium">อีเมล</th>
                   <th className="px-4 py-3 font-medium">สถานะการฝึกอบรม</th>
+                  <th className="px-4 py-3 font-medium">สถานภาพผู้เข้าศึกษา</th>
+                  <th className="px-4 py-3 font-medium">สถานะการศึกษาต่อเนื่อง</th>
                   <th className="px-4 py-3 font-medium text-right">จัดการ</th>
                 </tr>
               </thead>
@@ -88,9 +85,9 @@ export default function AdminStudentsPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-neutral-soft flex items-center justify-center text-neutral-on-soft font-bold text-xs">
-                          {item.name.charAt(4)}
+                          {item.firstName.charAt(0)}
                         </div>
-                        <span className="font-medium text-content">{item.name}</span>
+                        <span className="font-medium text-content">{getAdminStudentName(item)}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-content-muted">{item.program}</td>
@@ -101,6 +98,16 @@ export default function AdminStudentsPage() {
                         kind="training"
                         status={item.trainingStatus}
                       />
+                    </td>
+                    <td className="px-4 py-3">
+                      <StudentStandingBadge
+                        standing={getLicenseEligibility(findLicenseRegistryRecord(item.licenseNumber)?.status ?? "unverified").studentStanding}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={continuingEducationStatusMeta[item.continuingEducationStatus].variant}>
+                        {continuingEducationStatusMeta[item.continuingEducationStatus].label}
+                      </Badge>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <a href={`/admin/students/${item.id}`}>
@@ -116,7 +123,7 @@ export default function AdminStudentsPage() {
                 ))}
                 {filteredStudents.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-content-muted">
+                    <td colSpan={9} className="px-4 py-8 text-center text-content-muted">
                       ไม่พบข้อมูลผู้เข้าศึกษาที่ค้นหา
                     </td>
                   </tr>

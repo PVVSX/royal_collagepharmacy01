@@ -27,6 +27,17 @@ import {
   mergeStudentRecordPaymentStatuses,
 } from "@/roles/shared/features/student-records";
 import { useMockDb } from "@/providers/mock-db-provider";
+import {
+  findLicenseRegistryRecord,
+  getLicenseEligibility,
+  StudentStandingBadge,
+} from "@/roles/shared/features/license-eligibility";
+import { continuingEducationStatusMeta } from "@/roles/shared/member/domain/selectors";
+import {
+  adminStudentDirectory,
+  findAdminStudent,
+  getAdminStudentName,
+} from "@/roles/admin/features/students/student-directory";
 
 const icon18 = "material-symbols-outlined text-lg";
 
@@ -42,7 +53,31 @@ const tabs = [
 export default function AdminStudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const studentId = resolvedParams.id;
-  const s = studentDetailData; // In real app, fetch based on studentId
+  const directoryStudent = findAdminStudent(studentId) ?? adminStudentDirectory[1];
+  const s = {
+    ...studentDetailData,
+    id: directoryStudent.id,
+    name: getAdminStudentName(directoryStudent),
+    licenseNumber: directoryStudent.licenseNumber,
+    college: directoryStudent.collegeShort,
+    collegeShort: directoryStudent.collegeShort,
+    program: directoryStudent.program,
+    trainingYear: directoryStudent.year,
+    trainingStatus: directoryStudent.trainingStatus,
+    cpdCredits: directoryStudent.cpdCredits,
+    cpdTarget: directoryStudent.cpdTarget,
+  };
+  const selectedPersonalInfo = {
+    ...profileData.personalInfo,
+    title: directoryStudent.title,
+    firstName: directoryStudent.firstName,
+    lastName: directoryStudent.lastName,
+    firstNameEn: directoryStudent.firstNameEn,
+    lastNameEn: directoryStudent.lastNameEn,
+    licenseNumber: directoryStudent.licenseNumber,
+    email: directoryStudent.email,
+    phone: directoryStudent.phone,
+  };
   const [activeTab, setActiveTab] = useState("personal");
   const { payments } = useMockDb();
   const financeItems = useMemo(
@@ -55,6 +90,9 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
   );
   const outstandingBaseAmount = getOutstandingBaseAmount(financeItems);
   const estimatedOutstandingAmount = getEstimatedOutstandingAmount(financeItems);
+  const licenseRegistryRecord = findLicenseRegistryRecord(s.licenseNumber);
+  const licenseEligibility = getLicenseEligibility(licenseRegistryRecord?.status ?? "unverified");
+  const continuingEducationStatus = continuingEducationStatusMeta[directoryStudent.continuingEducationStatus];
 
   return (
     <PageShell bottom="none" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 p-0 md:p-0">
@@ -93,8 +131,8 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
               <div className="flex flex-wrap items-center gap-3 text-sm text-content-muted">
                 <span className="flex items-center gap-1"><span className={icon18}>badge</span> รหัส: {s.id}</span>
                 <span className="flex items-center gap-1"><span className={icon18}>assignment_ind</span> ใบประกอบ: {s.licenseNumber}</span>
-                <span className="flex items-center gap-1"><span className={icon18}>mail</span> {profileData.personalInfo.email}</span>
-                <span className="flex items-center gap-1"><span className={icon18}>call</span> {profileData.personalInfo.phone}</span>
+                <span className="flex items-center gap-1"><span className={icon18}>mail</span> {selectedPersonalInfo.email}</span>
+                <span className="flex items-center gap-1"><span className={icon18}>call</span> {selectedPersonalInfo.phone}</span>
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
@@ -103,6 +141,14 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
                 status={s.trainingStatus}
                 className="px-3 py-1 text-sm"
               />
+              <div className="flex items-center gap-2 text-xs font-medium text-content-muted">
+                <span>สถานภาพผู้เข้าศึกษา</span>
+                <StudentStandingBadge standing={licenseEligibility.studentStanding} />
+              </div>
+              <div className="flex items-center gap-2 text-xs font-medium text-content-muted">
+                <span>สถานะการศึกษาต่อเนื่อง</span>
+                <Badge variant={continuingEducationStatus.variant}>{continuingEducationStatus.label}</Badge>
+              </div>
               <div className="text-sm font-medium text-content-muted">
                 {s.college} (ปีการศึกษา {s.trainingYear})
               </div>
@@ -159,9 +205,9 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
           {/* ---- Personal Info ---- */}
           {activeTab === "personal" && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-              <PersonalInfoCard data={profileData.personalInfo} isReadOnly={true} />
-              <AddressCard title="ที่อยู่ตามบัตรประชาชน" icon="home" data={profileData.personalInfo} isReadOnly={true} showContactInfo={false} />
-              <AddressCard title="ที่อยู่ปัจจุบัน/ที่ติดต่อได้" icon="contact_mail" data={profileData.personalInfo} isReadOnly={true} showContactInfo={true} />
+              <PersonalInfoCard data={selectedPersonalInfo} isReadOnly={true} />
+              <AddressCard title="ที่อยู่ตามบัตรประชาชน" icon="home" data={selectedPersonalInfo} isReadOnly={true} showContactInfo={false} />
+              <AddressCard title="ที่อยู่ปัจจุบัน/ที่ติดต่อได้" icon="contact_mail" data={selectedPersonalInfo} isReadOnly={true} showContactInfo={true} />
               <WorkplaceCard data={profileData.workHistory} isReadOnly={true} />
             </div>
           )}
@@ -269,8 +315,8 @@ export default function AdminStudentDetailPage({ params }: { params: Promise<{ i
                           <div className="mt-2 text-xs text-muted-foreground">
                             ประมาณการยอดชำระ ฿{breakdown.total.toLocaleString()}
                             {breakdown.lateFee > 0
-                              ? ` (ค่าปรับ ฿${breakdown.lateFee.toLocaleString()} และค่าธรรมเนียม ฿${breakdown.transactionFee.toLocaleString()})`
-                              : ` (ค่าธรรมเนียม ฿${breakdown.transactionFee.toLocaleString()})`}
+                              ? ` (ค่าปรับ ฿${breakdown.lateFee.toLocaleString()})`
+                              : ""}
                           </div>
                         )}
                       </div>

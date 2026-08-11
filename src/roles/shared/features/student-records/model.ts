@@ -37,8 +37,8 @@ export const studentRecordStatusMeta = {
   },
   billing: {
     paid: { label: "ชำระแล้ว", variant: "success" },
-    awaiting_payment: { label: "รอชำระ", variant: "warning" },
-    overdue: { label: "เกินกำหนด", variant: "danger" },
+    awaiting_payment: { label: "รอชำระเงิน", variant: "warning" },
+    overdue: { label: "ค้างชำระ", variant: "danger" },
   },
   slipReview: {
     not_submitted: { label: "ยังไม่ส่งสลิป", variant: "neutral" },
@@ -127,14 +127,12 @@ export interface FinanceItemRecord {
 
 export const mockPaymentFeeRule = {
   lateFee: 500,
-  transactionFee: 50,
-  note: "กำหนดค่าปรับล่าช้า 500 บาทและค่าธรรมเนียมต่อรายการ 50 บาท",
+  note: "เมื่อพ้นกำหนดชำระ ระบบเปลี่ยนเป็นค้างชำระและคิดค่าปรับ 500 บาทต่อรายการ",
 } as const;
 
 export interface MockPaymentBreakdown {
   baseAmount: number;
   lateFee: number;
-  transactionFee: number;
   total: number;
 }
 
@@ -142,15 +140,12 @@ export function getMockPaymentBreakdown(
   baseAmount: number,
   billingStatus: BillingStatus,
 ): MockPaymentBreakdown {
-  const isSettled = billingStatus === "paid";
   const lateFee = billingStatus === "overdue" ? mockPaymentFeeRule.lateFee : 0;
-  const transactionFee = isSettled ? 0 : mockPaymentFeeRule.transactionFee;
 
   return {
     baseAmount,
     lateFee,
-    transactionFee,
-    total: baseAmount + lateFee + transactionFee,
+    total: baseAmount + lateFee,
   };
 }
 

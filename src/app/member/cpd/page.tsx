@@ -8,9 +8,16 @@ import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { currentMemberPassport } from "@/roles/shared/member/domain/member";
+import {
+  continuingEducationStatusMeta,
+  getContinuingEducationStatus,
+} from "@/roles/shared/member/domain/selectors";
 
 export default function CPDPage() {
   const percentage = (cpdData.currentCredits / cpdData.targetCredits) * 100;
+  const continuingEducationStatus = getContinuingEducationStatus(currentMemberPassport.cpd);
+  const continuingEducationStatusInfo = continuingEducationStatusMeta[continuingEducationStatus];
   
   return (
     <>
@@ -38,8 +45,8 @@ export default function CPDPage() {
                 <span className="material-symbols-outlined text-9xl">stars</span>
               </div>
               <CardContent className="p-6 flex flex-col items-center justify-center text-center relative z-10">
-                <Badge variant={cpdData.status === 'active' ? 'success' : 'danger'} className="mb-6 px-3 py-1 shadow-sm">
-                  {cpdData.status === 'active' ? 'สถานะปกติ' : 'ใกล้หมดอายุ'}
+                <Badge variant={continuingEducationStatusInfo.variant} className="mb-6 px-3 py-1 shadow-sm">
+                  {continuingEducationStatusInfo.label}
                 </Badge>
                 
                 {/* Radial Custom CSS Gauge */}

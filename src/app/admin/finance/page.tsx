@@ -32,7 +32,7 @@ export default function AdminFinancePage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-admin-content">ตรวจสอบการเงิน</h1>
-          <p className="text-muted-foreground mt-1">ตรวจสอบสลิปโอนเงิน อนุมัติการชำระเงิน และออกใบเสร็จรับเงิน</p>
+          <p className="text-muted-foreground mt-1">ตรวจสอบหลักฐานพร้อมเพย์ ติดตามการชำระด้วยบัตร และออกใบเสร็จรับเงิน</p>
         </div>
       </div>
 
@@ -117,7 +117,7 @@ export default function AdminFinancePage() {
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-lg">
                             <DialogHeader>
-                              <DialogTitle>ตรวจสอบหลักฐานการโอนเงิน</DialogTitle>
+                              <DialogTitle>ตรวจสอบหลักฐานการชำระเงิน</DialogTitle>
                             </DialogHeader>
                             <div className="py-4 space-y-4">
                               <div className="bg-surface-container rounded-lg h-64 flex flex-col items-center justify-center gap-2 text-content-muted font-medium">
@@ -125,10 +125,10 @@ export default function AdminFinancePage() {
                                 <span>หลักฐานการชำระเงิน</span>
                               </div>
                               <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div><span className="text-content-muted">ชื่อผู้โอน:</span> <span className="font-medium">{item.name}</span></div>
+                                <div><span className="text-content-muted">ผู้ชำระ:</span> <span className="font-medium">{item.name}</span></div>
                                 <div><span className="text-content-muted">ยอดที่ต้องชำระ:</span> <span className="font-bold text-primary">฿{item.amount.toLocaleString()}</span></div>
-                                <div><span className="text-content-muted">วันเวลาที่โอน:</span> <span className="font-medium">{item.date} 14:30</span></div>
-                                <div><span className="text-content-muted">ธนาคาร:</span> <span className="font-medium">ธ.กสิกรไทย</span></div>
+                                <div><span className="text-content-muted">วันเวลาที่แจ้ง:</span> <span className="font-medium">{item.date} 14:30</span></div>
+                                <div><span className="text-content-muted">ช่องทาง:</span> <span className="font-medium">{item.method === "credit_card" ? "บัตรเครดิต" : item.method === "debit_card" ? "บัตรเดบิต" : "พร้อมเพย์"}</span></div>
                               </div>
                               <div className="flex gap-2 pt-4 border-t">
                                 <Button className="flex-1 bg-success text-success-foreground hover:bg-success/90" onClick={() => handleApprove(item.id)}>

@@ -17,6 +17,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useMockDb, type Admission } from "@/providers/mock-db-provider";
 import { formatFileSize } from "@/roles/shared/features/file-metadata";
+import {
+  findLicenseRegistryRecord,
+  getLicenseEligibility,
+  LicenseEligibilityNotice,
+} from "@/roles/shared/features/license-eligibility";
+
+function currentLicenseStatus(admission: Pick<Admission, "license">) {
+  return findLicenseRegistryRecord(admission.license)?.status ?? "unverified";
+}
 
 export default function AdminAdmissionsPage() {
   const { admissions, updateAdmissionStatus, updateAdmissionDocuments } = useMockDb();
@@ -105,6 +114,16 @@ export default function AdminAdmissionsPage() {
   };
 
   const handleApprove = (id: string) => {
+    const admission = admissions.find((item) => item.id === id);
+    if (!admission) return;
+    const currentRegistryRecord = findLicenseRegistryRecord(admission.license);
+    const eligibility = getLicenseEligibility(currentRegistryRecord?.status ?? "unverified");
+    if (!eligibility.canApplyForExam) {
+      toast.error("ไม่สามารถอนุมัติคำร้องนี้ได้", {
+        description: eligibility.description,
+      });
+      return;
+    }
     toast.success(`อนุมัติคำร้อง ${id} เรียบร้อยแล้ว`);
     updateAdmissionStatus(id, "approved");
   };
@@ -160,6 +179,7 @@ export default function AdminAdmissionsPage() {
                   <th className="px-4 py-3 font-medium">รหัสคำร้อง</th>
                   <th className="px-4 py-3 font-medium">ชื่อผู้สมัคร</th>
                   <th className="px-4 py-3 font-medium">เลขที่ใบประกอบ</th>
+                  <th className="px-4 py-3 font-medium">สถานะใบอนุญาต</th>
                   <th className="px-4 py-3 font-medium">หลักสูตรที่สมัคร</th>
                   <th className="px-4 py-3 font-medium">วันที่ส่งคำร้อง</th>
                   <th className="px-4 py-3 font-medium">เอกสาร</th>
@@ -180,6 +200,11 @@ export default function AdminAdmissionsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-content-muted">{item.license}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={currentLicenseStatus(item) === "active" ? "success" : currentLicenseStatus(item) === "revoked" ? "danger" : "warning"}>
+                        {getLicenseEligibility(currentLicenseStatus(item)).label}
+                      </Badge>
+                    </td>
                     <td className="px-4 py-3 text-content-muted">{item.program}</td>
                     <td className="px-4 py-3 text-content-muted">{item.date}</td>
                     <td className="px-4 py-3">
@@ -226,7 +251,7 @@ export default function AdminAdmissionsPage() {
                 ))}
                 {filteredAdmissions.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-content-muted">
+                    <td colSpan={9} className="px-4 py-8 text-center text-content-muted">
                       ไม่พบข้อมูลคำร้องที่ค้นหา
                     </td>
                   </tr>
@@ -261,6 +286,12 @@ export default function AdminAdmissionsPage() {
               <div className="rounded-lg border border-info-border bg-info-soft px-4 py-3 text-sm text-info-on-soft">
                 เอกสารแนบเป็นทางเลือก ใช้ส่วนนี้เพื่อตรวจไฟล์ที่สมาชิกส่งมาและให้คำแนะนำเพิ่มเติม
               </div>
+
+              <LicenseEligibilityNotice
+                status={currentLicenseStatus(selectedAdmission)}
+                licenseNumber={selectedAdmission.license}
+                checkedAt={findLicenseRegistryRecord(selectedAdmission.license)?.checkedAt}
+              />
 
               <div className="space-y-2">
                 {selectedAdmission.documents.map((document) => {

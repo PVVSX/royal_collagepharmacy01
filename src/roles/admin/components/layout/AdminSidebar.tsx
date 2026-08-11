@@ -1,11 +1,18 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
+import { OrganizationLogo } from "@/roles/shared/components/brand/OrganizationLogo";
+import {
+  clearPortalSession,
+  readPortalSession,
+} from "@/roles/shared/features/roles/mock-login";
+import type { SystemRole } from "@/roles/shared/features/roles/role-assignment";
 
 const navItems = [
   { href: "/admin/dashboard", icon: "dashboard", label: "ภาพรวมแอดมิน" },
@@ -19,11 +26,47 @@ const navItems = [
   { href: "/admin/students", icon: "group", label: "รายชื่อผู้เข้าศึกษา" },
   { href: "/admin/exams", icon: "assignment_turned_in", label: "บันทึกผลสอบ" },
   { href: "/admin/certificates", icon: "workspace_premium", label: "ออกวุฒิบัตร" },
+  { href: "/admin/terms", icon: "manage_accounts", label: "จัดการวาระประธาน" },
   { href: "/admin/settings", icon: "settings", label: "ตั้งค่าระบบ" },
 ] as const;
 
-function SidebarNav({ pathname }: { pathname: string }) {
+const visibleItemsByRole: Record<"staff" | "finance_officer" | "super_admin", readonly (typeof navItems)[number]["href"][]> = {
+  staff: navItems
+    .filter((item) => item.href !== "/admin/settings" && item.href !== "/admin/terms")
+    .map((item) => item.href),
+  finance_officer: ["/admin/finance"],
+  super_admin: navItems.map((item) => item.href),
+};
+
+const rolePresentation = {
+  staff: { portal: "Officer Portal", name: "เจ้าหน้าที่วิทยาลัย", subtitle: "College Officer" },
+  finance_officer: { portal: "Finance Portal", name: "ฝ่ายการเงิน", subtitle: "Finance Officer" },
+  super_admin: { portal: "Admin Portal", name: "System Admin", subtitle: "Administrator" },
+} as const;
+
+function normalizeAdminRole(role?: SystemRole): keyof typeof rolePresentation {
+  if (role === "staff" || role === "finance_officer") return role;
+  if (role === "super_admin") return role;
+  return "staff";
+}
+
+function subscribeToPortalSession(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
+}
+
+function getAdminRoleSnapshot() {
+  return normalizeAdminRole(readPortalSession()?.role);
+}
+
+function getAdminRoleServerSnapshot() {
+  return "staff" as const;
+}
+
+function SidebarNav({ pathname, role }: { pathname: string; role: keyof typeof rolePresentation }) {
   const router = useRouter();
+  const visibleHrefs = visibleItemsByRole[role];
+  const presentation = rolePresentation[role];
   const isActive = (href: string) => {
     if (href === "/admin/dashboard") return pathname === "/admin/dashboard";
     return pathname.startsWith(href);
@@ -35,11 +78,11 @@ function SidebarNav({ pathname }: { pathname: string }) {
       <Link href="/admin/dashboard" className="block px-5 pt-5 pb-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-logo-surface p-1 overflow-hidden flex-shrink-0">
-            <img src="/logo_pharmacy.jpg" alt="รภวท" className="h-full w-full object-contain" />
+            <OrganizationLogo className="h-full w-full object-contain" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold leading-tight text-sidebar-foreground">
-              Admin Portal
+              {presentation.portal}
             </p>
             <p className="text-xs opacity-90 text-sidebar-foreground/70 mt-0.5">
               Royal Pharmacy College
@@ -52,7 +95,7 @@ function SidebarNav({ pathname }: { pathname: string }) {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-3 custom-scrollbar">
-        {navItems.map((item) => {
+        {navItems.filter((item) => visibleHrefs.includes(item.href)).map((item) => {
           const active = isActive(item.href);
           return (
             <Link
@@ -93,11 +136,11 @@ function SidebarNav({ pathname }: { pathname: string }) {
             <span className="material-symbols-outlined text-sidebar-foreground text-sm">admin_panel_settings</span>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate text-sidebar-foreground">System Admin</p>
-            <p className="text-xs opacity-90 text-sidebar-foreground/70">Administrator</p>
+            <p className="text-sm font-medium truncate text-sidebar-foreground">{presentation.name}</p>
+            <p className="text-xs opacity-90 text-sidebar-foreground/70">{presentation.subtitle}</p>
           </div>
           <button
-            onClick={() => router.push("/")}
+            onClick={() => { clearPortalSession(); router.push("/"); }}
             className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground transition-colors"
             title="ออกจากระบบ"
           >
@@ -111,12 +154,17 @@ function SidebarNav({ pathname }: { pathname: string }) {
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const role = useSyncExternalStore(
+    subscribeToPortalSession,
+    getAdminRoleSnapshot,
+    getAdminRoleServerSnapshot,
+  );
 
   return (
     <>
       {/* Desktop */}
       <aside className="fixed left-4 top-4 bottom-4 z-40 hidden w-60 flex-col overflow-hidden rounded-2xl glass-panel-primary md:flex">
-        <SidebarNav pathname={pathname} />
+        <SidebarNav pathname={pathname} role={role} />
       </aside>
 
       {/* Mobile trigger */}
@@ -128,7 +176,7 @@ export default function AdminSidebar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-56 p-0 [&>button]:hidden">
-            <SidebarNav pathname={pathname} />
+            <SidebarNav pathname={pathname} role={role} />
           </SheetContent>
         </Sheet>
       </div>
