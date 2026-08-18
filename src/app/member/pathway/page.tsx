@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { pathwayData, type PathwayStep, profileData } from "@/roles/shared/data";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { motion, AnimatePresence } from "framer-motion";
@@ -206,15 +207,12 @@ function CardContent({
                           {sub.status === "done" ? "check_circle" : sub.status === "in_progress" ? "pending" : "radio_button_unchecked"}
                         </span>
                         <span className="text-xs flex-1 text-foreground/80 truncate">{sub.name}</span>
-                        <div className="w-10 h-1.5 bg-muted/50 rounded-full overflow-hidden">
-                          <div
-                            className={cn(
-                              "h-full rounded-full",
-                              sub.status === "done" ? "bg-success" : sub.status === "in_progress" ? "bg-info" : "bg-muted-foreground/20"
-                            )}
-                            style={{ width: `${sub.progress}%` }}
-                          />
-                        </div>
+                        <Progress
+                          aria-label={`ความคืบหน้า ${sub.name}`}
+                          value={sub.progress}
+                          tone={sub.status === "done" ? "success" : sub.status === "in_progress" ? "info" : "neutral"}
+                          className="h-1.5 w-10 bg-muted/50 [&::-webkit-progress-bar]:bg-muted/50"
+                        />
                         <span className="text-2xs text-muted-foreground tabular-nums w-6 text-right">{sub.progress}%</span>
                       </div>
                     ))}

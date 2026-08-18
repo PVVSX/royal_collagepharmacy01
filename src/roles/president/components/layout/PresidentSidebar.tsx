@@ -13,9 +13,9 @@ import { clearPortalSession } from "@/roles/shared/features/roles/mock-login";
 
 const navItems = [
   { href: "/president/dashboard", icon: "dashboard", label: "ภาพรวม" },
-  { href: "/president/signatures", icon: "draw", label: "คำร้องรอลงนาม" },
+  { href: "/president/signatures", icon: "draw", label: "เอกสารรอลงนาม" },
   { href: "/president/history", icon: "history", label: "ประวัติการพิจารณา" },
-  { href: "/president/profile", icon: "badge", label: "ข้อมูลวาระและโปรไฟล์" },
+  { href: "/president/profile", icon: "badge", label: "ตำแหน่งและ Scope" },
 ] as const;
 
 function SidebarContent() {
@@ -31,16 +31,16 @@ function SidebarContent() {
       <Link href="/president/dashboard" className="block px-5 pb-4 pt-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-logo-surface p-1"><OrganizationLogo className="h-full w-full object-contain" /></div>
-          <div className="min-w-0"><p className="text-sm font-semibold leading-tight text-sidebar-foreground">President Portal</p><p className="mt-0.5 truncate text-xs text-sidebar-foreground/70">{assignment?.collegeCode}</p></div>
+          <div className="min-w-0"><p className="text-sm font-semibold leading-tight text-sidebar-foreground">President Portal</p><p className="mt-0.5 truncate text-xs text-sidebar-foreground/70">{assignment?.organisationScope.code}</p></div>
         </div>
       </Link>
       <div className="mx-4 h-px bg-sidebar-border" />
-      <nav className="custom-scrollbar flex-1 space-y-0.5 overflow-y-auto px-3 py-3">
+      <nav aria-label="เมนูประธานและผู้ลงนาม" className="custom-scrollbar flex-1 space-y-0.5 overflow-y-auto px-3 py-3">
         {navItems.map((item) => {
           const active = isActive(item.href);
           return (
             <Link key={item.href} href={item.href} className={cn("group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors", active ? "bg-sidebar-primary/10 text-sidebar-primary" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground")}>
-              <span className={cn("material-symbols-outlined text-xl", active && "fill")}>{item.icon}</span>
+              <span aria-hidden="true" className={cn("material-symbols-outlined text-xl", active && "fill")}>{item.icon}</span>
               <span className="truncate">{item.label}</span>
               {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary" />}
             </Link>
@@ -51,7 +51,7 @@ function SidebarContent() {
       <div className="p-4">
         <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent">
           <Avatar className="h-8 w-8"><span className="material-symbols-outlined text-sm text-sidebar-foreground">account_balance</span></Avatar>
-          <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-sidebar-foreground">{assignment?.userName}</p><p className="truncate text-xs text-sidebar-foreground/70">ประธานวิทยาลัย</p></div>
+          <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-sidebar-foreground">{assignment?.userName}</p><p className="truncate text-xs text-sidebar-foreground/70">ประธาน / ผู้ลงนาม</p></div>
           <button type="button" onClick={() => { clearPortalSession(); router.push("/"); }} className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground" title="ออกจากระบบ" aria-label="ออกจากระบบ"><span className="material-symbols-outlined text-lg">logout</span></button>
         </div>
       </div>

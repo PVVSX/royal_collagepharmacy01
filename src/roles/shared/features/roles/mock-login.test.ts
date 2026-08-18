@@ -1,31 +1,93 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ORGANISATIONS } from "./access-model";
 import {
+  DEFAULT_GOVERNANCE_CONFIGURATION,
+  persistGovernanceConfiguration,
+  updateUserAccessAssignment,
+} from "./governance-configuration";
+import {
+  PORTAL_SESSION_EVENT,
   PORTAL_SESSION_KEY,
   readPortalSession,
   resolvePortalLogin,
   savePortalSession,
 } from "./mock-login";
 
-describe("resolvePortalLogin", () => {
-  it.each([
-    ["admin", "super_admin", "/admin/dashboard"],
-    ["officer", "staff", "/admin/dashboard"],
-    ["finance", "finance_officer", "/admin/finance"],
-    ["president", "college_president", "/president/dashboard"],
-  ] as const)("routes %s to its role home", (identifier, role, destination) => {
-    const result = resolvePortalLogin(identifier, "2323");
-    expect(result.session.role).toBe(role);
-    expect(result.destination).toBe(destination);
+const LEGACY_SESSION_KEY = "royal-college.portal-session.v1";
+
+describe("portal login and session migration", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
   });
 
-  it("returns a member to the requested member page", () => {
-    expect(resolvePortalLogin("member@example.com", "anything", "/member/admission")).toMatchObject({
-      destination: "/member/admission",
-      session: { role: "member" },
+  it.each([
+    ["student@example.com", "anything", "student", "/member/dashboard"],
+    ["teacher", "2323", "teacher", "/teacher/dashboard"],
+    ["institution", "2323", "institution_admin", "/institution/dashboard"],
+    ["officer", "2323", "royal_college_staff", "/staff/dashboard"],
+    ["president", "2323", "president", "/president/dashboard"],
+    ["admin", "2323", "super_admin", "/admin/dashboard"],
+  ] as const)("routes %s to its canonical role home", (identifier, password, role, destination) => {
+    const result = resolvePortalLogin(identifier, password);
+    expect(result.session.role).toBe(role);
+    expect(result.destination).toBe(destination);
+    expect(result.session.userId).toBeTruthy();
+    expect(result.session.organisation.id).toBeTruthy();
+    expect(Array.isArray(result.session.resourceScopes)).toBe(true);
+  });
+
+  it("binds every Student entry path to the current Student resource owner", () => {
+    expect(resolvePortalLogin("student@example.com", "anything").session).toMatchObject({
+      role: "student",
+      userId: "วภท-2568-001",
+      displayName: "ภก. สมชาย ใจดี",
+      resourceScopes: ["student:self"],
     });
   });
 
-  it("lets the active assigned president sign in with the assigned email", () => {
+  it("maps the old finance demo account into Royal College Staff", () => {
+    expect(resolvePortalLogin("finance", "2323")).toMatchObject({
+      destination: "/staff/dashboard",
+      session: { role: "royal_college_staff", userId: "staff-001" },
+    });
+  });
+
+  it("preserves a same-workspace return path and rejects another role path", () => {
+    expect(resolvePortalLogin("teacher", "2323", "/teacher/registrations").destination)
+      .toBe("/teacher/registrations");
+    expect(resolvePortalLogin("teacher", "2323", "/admin/settings").destination)
+      .toBe("/teacher/dashboard");
+  });
+
+  it("grants the Teacher demo account the explicit course proposal resource", () => {
+    expect(resolvePortalLogin("teacher", "2323").session.resourceScopes)
+      .toContain("course:proposal");
+  });
+
+  it("applies the audited Super Admin Role and Scope assignment on the next login", () => {
+    persistGovernanceConfiguration(updateUserAccessAssignment(
+      DEFAULT_GOVERNANCE_CONFIGURATION,
+      {
+        userId: "teacher-001",
+        role: "royal_college_staff",
+        organisationId: ORGANISATIONS.royalCollege.id,
+        resourceScopes: ["staff:central"],
+      },
+    ));
+
+    expect(resolvePortalLogin("teacher", "2323")).toMatchObject({
+      destination: "/staff/dashboard",
+      session: {
+        userId: "teacher-001",
+        role: "royal_college_staff",
+        organisation: { id: ORGANISATIONS.royalCollege.id },
+        resourceScopes: ["staff:central"],
+      },
+    });
+  });
+
+  it("lets an active assigned President sign in with assignment scope", () => {
     const now = Date.now();
     const result = resolvePortalLogin(
       "new.president@example.org",
@@ -36,7 +98,9 @@ describe("resolvePortalLogin", () => {
         userId: "president-current",
         userName: "ประธานคนปัจจุบัน",
         email: "new.president@example.org",
-        role: "college_president",
+        role: "president",
+        organisationScope: ORGANISATIONS.therapeuticCollege,
+        resourceScopes: ["signature:college"],
         collegeCode: "วภท.",
         collegeName: "วิทยาลัยเภสัชบำบัดแห่งประเทศไทย",
         startsAt: new Date(now - 60_000).toISOString(),
@@ -48,25 +112,71 @@ describe("resolvePortalLogin", () => {
     expect(result).toMatchObject({
       destination: "/president/dashboard",
       session: {
-        role: "college_president",
+        role: "president",
         userId: "president-current",
-        collegeCode: "วภท.",
+        organisation: { id: ORGANISATIONS.therapeuticCollege.id },
+        resourceScopes: ["signature:college"],
       },
     });
   });
 
-  it("does not honor a non-member return path for a member", () => {
-    expect(resolvePortalLogin("member@example.com", "anything", "/admin/settings").destination)
-      .toBe("/member/dashboard");
+  it.each([
+    ["member", "student"],
+    ["staff", "royal_college_staff"],
+    ["finance_officer", "royal_college_staff"],
+    ["college_president", "president"],
+  ] as const)("migrates legacy %s sessions to %s", (legacyRole, canonicalRole) => {
+    window.localStorage.setItem(LEGACY_SESSION_KEY, JSON.stringify({
+      role: legacyRole,
+      displayName: "Legacy User",
+      signedInAt: "2026-08-11T07:30:00.000Z",
+      userId: "legacy-user",
+      collegeCode: "วภท.",
+    }));
+
+    expect(readPortalSession()?.role).toBe(canonicalRole);
+    expect(JSON.parse(window.localStorage.getItem(PORTAL_SESSION_KEY)!).role).toBe(canonicalRole);
+    expect(window.localStorage.getItem(LEGACY_SESSION_KEY)).toBeNull();
   });
 
-  it("reads a valid saved role and ignores malformed storage", () => {
-    const session = resolvePortalLogin("finance", "2323").session;
+  it("falls back to a valid legacy session when current storage is malformed", () => {
+    window.localStorage.setItem(PORTAL_SESSION_KEY, "not-json");
+    window.localStorage.setItem(LEGACY_SESSION_KEY, JSON.stringify({
+      role: "member",
+      displayName: "Legacy Student",
+      signedInAt: "2026-08-11T07:30:00.000Z",
+    }));
+    expect(readPortalSession()?.role).toBe("student");
+  });
+
+  it.each([
+    {
+      role: "super_admin",
+      organisation: ORGANISATIONS.siriraj,
+      resourceScopes: ["*"],
+    },
+    {
+      role: "student",
+      organisation: ORGANISATIONS.siriraj,
+      resourceScopes: ["course:offering-bcp-101"],
+    },
+  ] as const)("rejects a stored $role session with incompatible Organisation or Resource Scope", (invalid) => {
+    window.localStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify({
+      ...invalid,
+      displayName: "Invalid Scope",
+      userId: "invalid-scope-user",
+      signedInAt: "2026-08-11T07:30:00.000Z",
+    }));
+    expect(readPortalSession()).toBeNull();
+  });
+
+  it("emits a same-window event whenever a session is saved", () => {
+    const listener = vi.fn();
+    window.addEventListener(PORTAL_SESSION_EVENT, listener);
+    const session = resolvePortalLogin("teacher", "2323").session;
     savePortalSession(session);
     expect(readPortalSession()).toEqual(session);
-
-    window.localStorage.setItem(PORTAL_SESSION_KEY, "not-json");
-    expect(readPortalSession()).toBeNull();
-    window.localStorage.removeItem(PORTAL_SESSION_KEY);
+    expect(listener).toHaveBeenCalledOnce();
+    window.removeEventListener(PORTAL_SESSION_EVENT, listener);
   });
 });

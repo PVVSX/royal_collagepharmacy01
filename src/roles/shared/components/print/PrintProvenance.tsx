@@ -35,7 +35,7 @@ export function PrintProvenance({ documentTitle }: PrintProvenanceProps) {
   return (
     <footer
       aria-label="ข้อมูลที่มาของเอกสาร"
-      className="absolute inset-x-[20mm] bottom-[8mm] break-inside-avoid border-t border-outline-subtle pt-2 text-center text-[9px] leading-4 text-content-muted"
+      className="absolute inset-x-[20mm] bottom-[8mm] break-inside-avoid border-t border-print-border pt-2 text-center text-[9px] leading-4 text-print-subtle"
     >
       <p>
         จัดทำจากระบบสารสนเทศสมาชิกและการสอบวิชาชีพ ·{" "}

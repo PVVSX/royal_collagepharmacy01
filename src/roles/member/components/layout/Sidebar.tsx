@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { OrganizationLogo } from "@/roles/shared/components/brand/OrganizationLogo";
 import { clearPortalSession } from "@/roles/shared/features/roles/mock-login";
+import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 
 
 // กลุ่ม nav แบบมี section label
@@ -24,10 +25,7 @@ const navGroups: {
       { href: "/member/dashboard", icon: "dashboard", label: "ภาพรวม" },
       { href: "/member/passport", icon: "badge", label: "หนังสือเดินทางวิชาชีพ" },
       { href: "/member/students", icon: "person", label: "ข้อมูลของฉัน" },
-      { href: "/member/cpd", icon: "workspace_premium", label: "หน่วยกิต CPD" },
-      { href: "/member/pathway", icon: "route", label: "เส้นทางการศึกษา" },
       { href: "/member/admission", icon: "quiz", label: "สมัครสอบ" },
-      { href: "/member/research", icon: "science", label: "ฐานข้อมูลงานวิจัย" },
     ],
   },
   {
@@ -35,6 +33,7 @@ const navGroups: {
     items: [
       { href: "/member/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
       { href: "/member/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
+      { href: "/member/results", icon: "fact_check", label: "ผลการเรียน" },
       { href: "/member/schedule", icon: "calendar_today", label: "ตารางเรียน" },
     ],
   },
@@ -49,6 +48,7 @@ const navGroups: {
 
 function SidebarNav({ pathname }: { pathname: string }) {
   const router = useRouter();
+  const { session } = usePortalSession();
   const isActive = (href: string) => {
     if (href === "/member/dashboard") return pathname === "/member/dashboard";
     return pathname.startsWith(href);
@@ -91,6 +91,7 @@ function SidebarNav({ pathname }: { pathname: string }) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    aria-current={active ? "page" : undefined}
                     className={cn(
                       "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-caption font-medium transition-all duration-150",
                       active
@@ -126,16 +127,17 @@ function SidebarNav({ pathname }: { pathname: string }) {
       <div className="p-4">
         <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent transition-colors">
           <Avatar className="h-8 w-8">
-            <img src="/somchai_profile.png" alt="สมชาย ใจดี" className="h-full w-full object-cover rounded-full" />
+            <img src="/somchai_profile.png" alt="" className="h-full w-full object-cover rounded-full" />
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate text-sidebar-foreground">ภก. สมชาย ใจดี</p>
-            <p className="text-xs opacity-90 text-sidebar-foreground/70">ผู้เข้ารับการฝึกอบรม</p>
+            <p className="text-sm font-medium truncate text-sidebar-foreground">{session?.displayName ?? "กำลังโหลด"}</p>
+            <p className="truncate text-xs text-sidebar-foreground/70">ผู้เข้ารับการฝึกอบรม · {session?.organisation.code ?? "—"}</p>
           </div>
           <button
             onClick={() => { clearPortalSession(); router.push("/"); }}
             className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground transition-colors"
             title="ออกจากระบบ"
+            aria-label="ออกจากระบบ"
           >
             <span className="material-symbols-outlined text-lg">logout</span>
           </button>

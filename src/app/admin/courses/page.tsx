@@ -48,7 +48,7 @@ export default function CoursesPage() {
         </Link>
       </div>
 
-      <Card className="min-w-0 card-shadow">
+      <Card className="min-w-0">
         <CardHeader className="pb-4 border-b">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div className="min-w-0 max-w-full overflow-x-auto pb-1 sm:pb-0">

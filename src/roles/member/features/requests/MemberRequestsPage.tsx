@@ -22,6 +22,7 @@ import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { registrationData, studentDetailData } from "@/roles/shared/data";
 import { formatFileSize } from "@/roles/shared/features/file-metadata";
 import { HandwrittenSignaturePreview } from "@/roles/shared/features/requests/HandwrittenSignature";
+import { selectRequestsForStudentSession } from "@/roles/shared/features/requests/request-access";
 import {
   REQUEST_CATALOG,
   REQUEST_EVENT_LABELS,
@@ -42,6 +43,7 @@ import {
 import { useRequestStore } from "@/roles/shared/features/requests/request-store";
 import { currentMemberPassport } from "@/roles/shared/member/domain";
 import { CURRENT_COLLEGE_CODE } from "@/roles/shared/features/roles/role-assignment";
+import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 
 type RequestFilter = RequestStatus | "all";
 type FormValues = Record<string, string>;
@@ -283,6 +285,7 @@ function RequestDetail({ request }: { request: MockRequest }) {
 
 export default function MemberRequestsPage() {
   const { requests, storageError, isReady, addRequest, updateRequest } = useRequestStore();
+  const { session, isReady: isSessionReady } = usePortalSession();
   const [filter, setFilter] = useState<RequestFilter>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [step, setStep] = useState(1);
@@ -296,13 +299,18 @@ export default function MemberRequestsPage() {
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
 
   const category = categoryId ? getRequestCategory(categoryId) : undefined;
-  const detailRequest = requests.find((request) => request.id === detailId) ?? null;
+  const memberId = session?.role === "student" ? session.userId : "";
+  const memberRequests = useMemo(
+    () => selectRequestsForStudentSession(requests, session),
+    [requests, session],
+  );
+  const detailRequest = memberRequests.find((request) => request.id === detailId) ?? null;
   const filteredRequests = useMemo(
     () =>
       filter === "all"
-        ? requests
-        : requests.filter((request) => request.status === filter),
-    [filter, requests],
+        ? memberRequests
+        : memberRequests.filter((request) => request.status === filter),
+    [filter, memberRequests],
   );
 
   const resetDraft = () => {
@@ -491,8 +499,8 @@ export default function MemberRequestsPage() {
       status: "staff_review",
       collegeCode: CURRENT_COLLEGE_CODE,
       requester: {
-        memberId: currentMemberPassport.memberId,
-        name: memberName,
+        memberId,
+        name: session?.displayName ?? memberName,
         email: identity.email,
       },
       fields: fieldEntries,
@@ -503,15 +511,15 @@ export default function MemberRequestsPage() {
       events: [{
         id: makeTimelineId("event-submitted", now),
         type: "submitted",
-        actorRole: "member",
+        actorRole: "student",
         actorName: memberName,
         createdAt: nowIso,
       }],
       progress: progressForStatus("staff_review"),
     };
     if (editingRequestId) {
-      const editingRequest = requests.find((current) => current.id === editingRequestId);
-      if (!editingRequest || !canTransitionRequest(editingRequest.status, "staff_review", "member")) {
+      const editingRequest = memberRequests.find((current) => current.id === editingRequestId);
+      if (!editingRequest || !canTransitionRequest(editingRequest.status, "staff_review", "student")) {
         toast.error("สถานะคำร้องเปลี่ยนแล้ว กรุณาปิดแบบฟอร์มและลองอีกครั้ง");
         return;
       }
@@ -530,7 +538,7 @@ export default function MemberRequestsPage() {
           ...current.comments,
           ...(noteChanged ? [{
             id: makeTimelineId("comment-member", now, current.comments.length),
-            actorRole: "member" as const,
+            actorRole: "student" as const,
             actorName: memberName,
             message: note,
             createdAt: nowIso,
@@ -541,7 +549,7 @@ export default function MemberRequestsPage() {
           {
             id: makeTimelineId("event-resubmitted", now, current.events.length),
             type: "resubmitted",
-            actorRole: "member",
+            actorRole: "student",
             actorName: memberName,
             createdAt: nowIso,
           },
@@ -585,8 +593,8 @@ export default function MemberRequestsPage() {
           {FILTERS.map((item) => {
             const count =
               item.id === "all"
-                ? requests.length
-                : requests.filter((request) => request.status === item.id).length;
+                ? memberRequests.length
+                : memberRequests.filter((request) => request.status === item.id).length;
             return (
               <button
                 key={item.id}
@@ -605,7 +613,7 @@ export default function MemberRequestsPage() {
           })}
         </div>
 
-        {!isReady ? (
+        {!isReady || !isSessionReady ? (
           <Card>
             <CardContent className="flex min-h-56 items-center justify-center gap-2 text-sm text-muted-foreground">
               <span className="material-symbols-outlined animate-spin">progress_activity</span>
@@ -617,7 +625,7 @@ export default function MemberRequestsPage() {
             {filteredRequests.map((request) => {
               const status = REQUEST_STATUS_META[request.status];
               const latestStaffComment = request.comments
-                .filter((comment) => comment.actorRole === "staff")
+                .filter((comment) => comment.actorRole === "royal_college_staff")
                 .at(-1);
               return (
                 <Card key={request.id} className={`border-l-4 ${status.borderClass}`}>

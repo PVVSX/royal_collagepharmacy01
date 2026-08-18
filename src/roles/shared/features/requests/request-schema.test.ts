@@ -58,10 +58,10 @@ describe("request workflow", () => {
   });
 
   it("allows only the assigned role transitions", () => {
-    expect(canTransitionRequest("staff_review", "awaiting_president_signature", "staff")).toBe(true);
+    expect(canTransitionRequest("staff_review", "awaiting_president_signature", "royal_college_staff")).toBe(true);
     expect(canTransitionRequest("awaiting_president_signature", "signed", "president")).toBe(true);
-    expect(canTransitionRequest("awaiting_president_signature", "signed", "staff")).toBe(false);
-    expect(canTransitionRequest("signed", "staff_review", "member")).toBe(false);
+    expect(canTransitionRequest("awaiting_president_signature", "signed", "royal_college_staff")).toBe(false);
+    expect(canTransitionRequest("signed", "staff_review", "student")).toBe(false);
   });
 
   it("creates a deterministic mock document identifier", () => {
@@ -145,5 +145,41 @@ describe("request-store migration", () => {
     });
     expect(migrated?.mockSignature?.signerName).toBe(signatureMetadata.signerName);
     expect(migrated?.mockSignature?.handwrittenSignature).toBeUndefined();
+  });
+
+  it("preserves structured signature workflow evidence and ordered steps", () => {
+    const migrated = normalizeStoredRequest({
+      ...baseRequest,
+      signatureWorkflow: {
+        kind: "two_level",
+        preparedAt: "2026-08-11T03:30:00.000Z",
+        preparedBy: {
+          userId: "staff-001",
+          userName: "เจ้าหน้าที่ราชวิทยาลัย",
+          role: "royal_college_staff",
+          organisationId: "org-royal-college",
+          organisationCode: "รวภท.",
+          organisationName: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย",
+        },
+        documentFingerprint: "DOC-12345678",
+        evidenceReference: "MEMO-2569-101",
+        steps: [
+          { id: "step-1", order: 1, level: "college", organisationId: "org-college-vpt", organisationCode: "วภท.", organisationName: "วิทยาลัยเภสัชบำบัดแห่งประเทศไทย", status: "awaiting_signature" },
+          { id: "step-2", order: 2, level: "royal_college", organisationId: "org-royal-college", organisationCode: "รวภท.", organisationName: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย", status: "pending" },
+        ],
+      },
+    });
+    expect(migrated?.signatureWorkflow?.evidenceReference).toBe("MEMO-2569-101");
+    expect(migrated?.signatureWorkflow?.steps.map((step) => step.level)).toEqual(["college", "royal_college"]);
+  });
+
+  it("migrates legacy request actor roles to the canonical six-role contract", () => {
+    const migrated = normalizeStoredRequest({
+      ...baseRequest,
+      comments: [{ id: "comment-legacy", actorRole: "staff", actorName: "เจ้าหน้าที่", message: "ตรวจแล้ว", createdAt: baseRequest.updatedAt }],
+      events: [{ id: "event-legacy", type: "submitted", actorRole: "member", actorName: baseRequest.requester.name, createdAt: baseRequest.createdAt }],
+    });
+    expect(migrated?.comments[0].actorRole).toBe("royal_college_staff");
+    expect(migrated?.events[0].actorRole).toBe("student");
   });
 });

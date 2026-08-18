@@ -69,7 +69,7 @@ export default function CreateCoursePage() {
         </div>
       </div>
 
-      <Card className="card-shadow">
+      <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">

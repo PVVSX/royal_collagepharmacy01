@@ -43,7 +43,7 @@ export default function CertificatesManagementPage() {
         <p className="text-sm text-content-muted mt-1">อนุมัติและออกวุฒิบัตรวิชาชีพเภสัชกรรมให้กับผู้ที่สอบผ่านเกณฑ์ (สภาเภสัชกรรม)</p>
       </div>
 
-      <Card className="card-shadow">
+      <Card>
         <CardHeader className="pb-4 border-b">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div className="flex bg-surface-container p-1 rounded-lg w-fit">

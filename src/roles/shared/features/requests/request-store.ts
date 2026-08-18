@@ -19,6 +19,10 @@ import {
   type RequestEvent,
   type RequestEventType,
   type RequestStatus,
+  type SignatureLevel,
+  type SignatureWorkflow,
+  type SignatureWorkflowKind,
+  type SignatureWorkflowStep,
 } from "./request-schema";
 
 const STORAGE_KEY = "royal-college.mock-requests.v2";
@@ -29,6 +33,15 @@ function cloneHandwrittenSignature(signature: HandwrittenSignature): Handwritten
   return {
     version: 1,
     strokes: signature.strokes.map((stroke) => stroke.map((point) => ({ ...point }))),
+  };
+}
+
+function cloneMockSignature(signature: MockESignature): MockESignature {
+  return {
+    ...signature,
+    handwrittenSignature: signature.handwrittenSignature
+      ? cloneHandwrittenSignature(signature.handwrittenSignature)
+      : undefined,
   };
 }
 
@@ -45,11 +58,12 @@ function cloneRequest(request: MockRequest): MockRequest {
     comments: request.comments.map((comment) => ({ ...comment })),
     events: request.events.map((event) => ({ ...event })),
     progress: [...request.progress],
-    mockSignature: request.mockSignature ? {
-      ...request.mockSignature,
-      handwrittenSignature: request.mockSignature.handwrittenSignature
-        ? cloneHandwrittenSignature(request.mockSignature.handwrittenSignature)
-        : undefined,
+    mockSignature: request.mockSignature ? cloneMockSignature(request.mockSignature) : undefined,
+    signatures: request.signatures?.map(cloneMockSignature),
+    signatureWorkflow: request.signatureWorkflow ? {
+      ...request.signatureWorkflow,
+      preparedBy: { ...request.signatureWorkflow.preparedBy },
+      steps: request.signatureWorkflow.steps.map((step) => ({ ...step })),
     } : undefined,
   };
 }
@@ -180,8 +194,13 @@ function normalizeDocuments(
   }));
 }
 
-function isActorRole(value: unknown): value is RequestActorRole {
-  return value === "member" || value === "staff" || value === "president" || value === "system";
+function normalizeActorRole(value: unknown): RequestActorRole | null {
+  if (value === "member") return "student";
+  if (value === "staff") return "royal_college_staff";
+  if (value === "student" || value === "royal_college_staff" || value === "president" || value === "system") {
+    return value;
+  }
+  return null;
 }
 
 function isEventType(value: unknown): value is RequestEventType {
@@ -189,6 +208,8 @@ function isEventType(value: unknown): value is RequestEventType {
     value === "information_requested" ||
     value === "resubmitted" ||
     value === "forwarded_for_signature" ||
+    value === "signature_step_completed" ||
+    value === "forwarded_to_next_signer" ||
     value === "signed" ||
     value === "rejected" ||
     value === "migrated";
@@ -197,10 +218,11 @@ function isEventType(value: unknown): value is RequestEventType {
 function normalizeComments(value: unknown, raw: Record<string, unknown>): RequestComment[] {
   const comments = Array.isArray(value)
     ? value.flatMap((comment) => {
+        const actorRole = isObject(comment) ? normalizeActorRole(comment.actorRole) : null;
         if (
           !isObject(comment) ||
           !isString(comment.id) ||
-          !isActorRole(comment.actorRole) ||
+          !actorRole ||
           !isString(comment.actorName) ||
           !isString(comment.message) ||
           !isString(comment.createdAt)
@@ -209,7 +231,7 @@ function normalizeComments(value: unknown, raw: Record<string, unknown>): Reques
         }
         return [{
           id: comment.id,
-          actorRole: comment.actorRole,
+          actorRole,
           actorName: comment.actorName,
           message: comment.message,
           createdAt: comment.createdAt,
@@ -220,7 +242,7 @@ function normalizeComments(value: unknown, raw: Record<string, unknown>): Reques
   if (comments.length === 0 && isString(raw.reviewerNote)) {
     comments.push({
       id: `comment-migrated-${isString(raw.id) ? raw.id : "unknown"}`,
-      actorRole: "staff",
+      actorRole: "royal_college_staff",
       actorName: isString(raw.reviewedBy) ? raw.reviewedBy : "เจ้าหน้าที่",
       message: raw.reviewerNote,
       createdAt: isString(raw.reviewedAt)
@@ -234,11 +256,12 @@ function normalizeComments(value: unknown, raw: Record<string, unknown>): Reques
 function normalizeEvents(value: unknown, raw: Record<string, unknown>, status: RequestStatus): RequestEvent[] {
   const events = Array.isArray(value)
     ? value.flatMap((event) => {
+        const actorRole = isObject(event) ? normalizeActorRole(event.actorRole) : null;
         if (
           !isObject(event) ||
           !isString(event.id) ||
           !isEventType(event.type) ||
-          !isActorRole(event.actorRole) ||
+          !actorRole ||
           !isString(event.actorName) ||
           !isString(event.createdAt)
         ) {
@@ -247,7 +270,7 @@ function normalizeEvents(value: unknown, raw: Record<string, unknown>, status: R
         return [{
           id: event.id,
           type: event.type,
-          actorRole: event.actorRole,
+          actorRole,
           actorName: event.actorName,
           createdAt: event.createdAt,
           note: isString(event.note) ? event.note : undefined,
@@ -263,13 +286,13 @@ function normalizeEvents(value: unknown, raw: Record<string, unknown>, status: R
     ? raw.requester.name
     : "สมาชิก";
   const migrated: RequestEvent[] = [
-    { id: `event-migrated-${id}-submitted`, type: "submitted", actorRole: "member", actorName: requester, createdAt },
+    { id: `event-migrated-${id}-submitted`, type: "submitted", actorRole: "student", actorName: requester, createdAt },
     { id: `event-migrated-${id}`, type: "migrated", actorRole: "system", actorName: "ระบบ", createdAt: updatedAt },
   ];
   if (status === "signed") {
     migrated.push({ id: `event-migrated-${id}-signed`, type: "signed", actorRole: "system", actorName: "ระบบเดิม", createdAt: updatedAt });
   } else if (status === "rejected") {
-    migrated.push({ id: `event-migrated-${id}-rejected`, type: "rejected", actorRole: "staff", actorName: "เจ้าหน้าที่", createdAt: updatedAt });
+    migrated.push({ id: `event-migrated-${id}-rejected`, type: "rejected", actorRole: "royal_college_staff", actorName: "เจ้าหน้าที่", createdAt: updatedAt });
   }
   return migrated;
 }
@@ -303,6 +326,86 @@ function normalizeSignature(value: unknown): MockESignature | undefined {
     handwrittenSignature: isHandwrittenSignature(value.handwrittenSignature)
       ? cloneHandwrittenSignature(value.handwrittenSignature)
       : undefined,
+    workflowStepId: isString(value.workflowStepId) ? value.workflowStepId : undefined,
+    level: value.level === "college" || value.level === "royal_college"
+      ? value.level
+      : undefined,
+    organisationId: isString(value.organisationId) ? value.organisationId : undefined,
+  };
+}
+
+function isWorkflowKind(value: unknown): value is SignatureWorkflowKind {
+  return value === "college_only" || value === "royal_only" || value === "two_level";
+}
+
+function isSignatureLevel(value: unknown): value is SignatureLevel {
+  return value === "college" || value === "royal_college";
+}
+
+function normalizeWorkflowStep(value: unknown): SignatureWorkflowStep | null {
+  if (!isObject(value)) return null;
+  const status = value.status === "pending" || value.status === "awaiting_signature" ||
+    value.status === "signed" || value.status === "rejected"
+    ? value.status
+    : null;
+  if (
+    !isString(value.id) ||
+    typeof value.order !== "number" ||
+    !isSignatureLevel(value.level) ||
+    !isString(value.organisationId) ||
+    !isString(value.organisationCode) ||
+    !isString(value.organisationName) ||
+    !status
+  ) {
+    return null;
+  }
+  return {
+    id: value.id,
+    order: value.order,
+    level: value.level,
+    organisationId: value.organisationId,
+    organisationCode: value.organisationCode,
+    organisationName: value.organisationName,
+    status,
+    signerAssignmentId: isString(value.signerAssignmentId) ? value.signerAssignmentId : undefined,
+    signerUserId: isString(value.signerUserId) ? value.signerUserId : undefined,
+    signerName: isString(value.signerName) ? value.signerName : undefined,
+    decidedAt: isString(value.decidedAt) ? value.decidedAt : undefined,
+    note: isString(value.note) ? value.note : undefined,
+  };
+}
+
+function normalizeSignatureWorkflow(value: unknown): SignatureWorkflow | undefined {
+  if (!isObject(value) || !isWorkflowKind(value.kind) || !isString(value.preparedAt) ||
+      !isString(value.documentFingerprint) || !isObject(value.preparedBy) ||
+      !Array.isArray(value.steps)) {
+    return undefined;
+  }
+  const preparedBy = value.preparedBy;
+  if (
+    !isString(preparedBy.userId) || !isString(preparedBy.userName) ||
+    preparedBy.role !== "royal_college_staff" ||
+    !isString(preparedBy.organisationId) || !isString(preparedBy.organisationCode) ||
+    !isString(preparedBy.organisationName)
+  ) {
+    return undefined;
+  }
+  const steps = value.steps.map(normalizeWorkflowStep);
+  if (steps.length === 0 || steps.some((step) => step === null)) return undefined;
+  return {
+    kind: value.kind,
+    preparedAt: value.preparedAt,
+    preparedBy: {
+      userId: preparedBy.userId,
+      userName: preparedBy.userName,
+      role: "royal_college_staff",
+      organisationId: preparedBy.organisationId,
+      organisationCode: preparedBy.organisationCode,
+      organisationName: preparedBy.organisationName,
+    },
+    documentFingerprint: value.documentFingerprint,
+    evidenceReference: isString(value.evidenceReference) ? value.evidenceReference : undefined,
+    steps: steps as SignatureWorkflowStep[],
   };
 }
 
@@ -359,6 +462,13 @@ export function normalizeStoredRequest(value: unknown): MockRequest | null {
     events: normalizeEvents(value.events, value, status),
     progress: progressForStatus(status),
     mockSignature: normalizeSignature(value.mockSignature),
+    signatures: Array.isArray(value.signatures)
+      ? value.signatures.flatMap((signature) => {
+          const normalized = normalizeSignature(signature);
+          return normalized ? [normalized] : [];
+        })
+      : undefined,
+    signatureWorkflow: normalizeSignatureWorkflow(value.signatureWorkflow),
   };
 }
 

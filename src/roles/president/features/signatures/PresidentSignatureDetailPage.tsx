@@ -10,20 +10,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { usePresidentAccess } from "@/roles/president/president-access";
+import { appendAuditEvent } from "@/roles/shared/features/audit";
 import { formatFileSize } from "@/roles/shared/features/file-metadata";
 import { HandwrittenSignaturePreview } from "@/roles/shared/features/requests/HandwrittenSignature";
 import {
   REQUEST_EVENT_LABELS,
   REQUEST_STATUS_META,
-  canTransitionRequest,
-  makeTimelineId,
-  progressForStatus,
   type HandwrittenSignature,
 } from "@/roles/shared/features/requests/request-schema";
 import { useRequestStore } from "@/roles/shared/features/requests/request-store";
-import { isRoleAssignmentActive } from "@/roles/shared/features/roles/role-assignment";
 import {
+  canPresidentActOnRequest,
   canPresidentViewRequest,
+  getActiveSignatureStep,
+  getEffectiveSignatureWorkflow,
+  rejectRequestAsPresident,
   signRequestAsPresident,
 } from "./president-signature";
 import { SignaturePad } from "./SignaturePad";
@@ -31,6 +32,19 @@ import { SignaturePad } from "./SignaturePad";
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" });
 }
+
+const workflowKindLabel = {
+  college_only: "ระดับวิทยาลัยเท่านั้น",
+  royal_only: "ระดับราชวิทยาลัยเท่านั้น",
+  two_level: "สองระดับตามลำดับ",
+} as const;
+
+const stepStatusLabel = {
+  pending: "รอตามลำดับ",
+  awaiting_signature: "รอลงนาม",
+  signed: "ลงนามแล้ว",
+  rejected: "ไม่อนุมัติ",
+} as const;
 
 export default function PresidentSignatureDetailPage({ requestId }: { requestId: string }) {
   const router = useRouter();
@@ -48,27 +62,32 @@ export default function PresidentSignatureDetailPage({ requestId }: { requestId:
   if (!request) {
     return <div className="mx-auto max-w-xl py-16 text-center"><span className="material-symbols-outlined text-5xl text-muted-foreground">search_off</span><h1 className="mt-3 text-xl font-semibold">ไม่พบคำร้อง</h1><p className="mt-2 text-sm text-muted-foreground">รายการอาจถูกย้ายหรือเลขที่คำร้องไม่ถูกต้อง</p><Button asChild className="mt-5"><Link href="/president/signatures">กลับไปรายการรอลงนาม</Link></Button></div>;
   }
-  if (!assignment || request.collegeCode !== assignment.collegeCode) {
-    return <div className="mx-auto max-w-xl py-16 text-center"><span className="material-symbols-outlined text-5xl text-danger">lock</span><h1 className="mt-3 text-xl font-semibold">ไม่มีสิทธิ์ดูคำร้องนี้</h1><p className="mt-2 text-sm text-muted-foreground">คำร้องอยู่คนละวิทยาลัยกับวาระปัจจุบัน</p><Button asChild className="mt-5"><Link href="/president/signatures">กลับไปรายการของวิทยาลัย</Link></Button></div>;
-  }
-  if (!canPresidentViewRequest(request)) {
-    return <div className="mx-auto max-w-xl py-16 text-center"><span className="material-symbols-outlined text-5xl text-danger">lock</span><h1 className="mt-3 text-xl font-semibold">ยังไม่มีสิทธิ์ดูคำร้องนี้</h1><p className="mt-2 text-sm text-muted-foreground">คำร้องยังไม่ได้ส่งให้ประธานลงนาม หรือไม่ได้อยู่ในประวัติการพิจารณาของประธาน</p><Button asChild className="mt-5"><Link href="/president/signatures">กลับไปรายการของวิทยาลัย</Link></Button></div>;
+  if (!assignment || !canPresidentViewRequest(request, assignment)) {
+    return <div className="mx-auto max-w-xl py-16 text-center"><span className="material-symbols-outlined text-5xl text-danger">lock</span><h1 className="mt-3 text-xl font-semibold">ไม่มีสิทธิ์ดูเอกสารนี้</h1><p className="mt-2 text-sm text-muted-foreground">เอกสารยังไม่ถึงลำดับลงนาม อยู่คนละ Organisation Scope หรือไม่ได้อยู่ในประวัติของคุณ</p><Button asChild className="mt-5"><Link href="/president/signatures">กลับไปคิวของฉัน</Link></Button></div>;
   }
 
   const status = REQUEST_STATUS_META[request.status];
-  const actionable = request.status === "awaiting_president_signature";
+  const actionable = canPresidentActOnRequest(request, assignment);
   const attachedDocuments = request.documents.filter((document) => document.file);
-
+  const workflow = getEffectiveSignatureWorkflow(request);
+  const activeStep = getActiveSignatureStep(request);
+  const signatures = request.signatures ?? (request.mockSignature ? [request.mockSignature] : []);
   const signRequest = () => {
     setFormError("");
     try {
-      updateRequest(request.id, (current) => signRequestAsPresident({
-        request: current,
-        assignment,
-        signedAt: new Date(),
-        handwrittenSignature,
-        consentAccepted,
-      }));
+      const now = new Date();
+      const signedRequest = signRequestAsPresident({ request, assignment, signedAt: now, handwrittenSignature, consentAccepted });
+      appendAuditEvent({
+        actor: { userId: assignment.userId, userName: assignment.userName, role: "president", organisation: assignment.organisationScope, resourceScopes: assignment.resourceScopes },
+        action: "document.sign",
+        resource: { type: "document", id: request.id, label: request.title, organisationId: activeStep?.organisationId },
+        before: { status: request.status, step: activeStep?.id },
+        after: { status: signedRequest.status, workflow: signedRequest.signatureWorkflow?.kind, step: activeStep?.id },
+        reason: "ตรวจเอกสารและหลักฐานครบถ้วนก่อนลงลายมือชื่อ",
+        evidenceReference: workflow?.documentFingerprint,
+        occurredAt: now.toISOString(),
+      });
+      updateRequest(request.id, () => signedRequest);
       toast.success(`ลงนามคำร้อง ${request.id} เรียบร้อยแล้ว`);
       router.push("/president/history");
     } catch (error) {
@@ -77,40 +96,26 @@ export default function PresidentSignatureDetailPage({ requestId }: { requestId:
   };
 
   const rejectRequest = () => {
-    const note = decisionNote.trim();
-    if (!note) {
-      setFormError("กรุณาระบุเหตุผลที่ไม่อนุมัติ");
-      return;
+    try {
+      const now = new Date();
+      const note = decisionNote.trim();
+      const rejectedRequest = rejectRequestAsPresident({ request, assignment, rejectedAt: now, reason: note });
+      appendAuditEvent({
+        actor: { userId: assignment.userId, userName: assignment.userName, role: "president", organisation: assignment.organisationScope, resourceScopes: assignment.resourceScopes },
+        action: "document.reject",
+        resource: { type: "document", id: request.id, label: request.title, organisationId: activeStep?.organisationId },
+        before: { status: request.status, step: activeStep?.id },
+        after: { status: rejectedRequest.status, step: activeStep?.id },
+        reason: note,
+        evidenceReference: workflow?.documentFingerprint,
+        occurredAt: now.toISOString(),
+      });
+      updateRequest(request.id, () => rejectedRequest);
+      toast.success(`บันทึกผลคำร้อง ${request.id} แล้ว`);
+      router.push("/president/history");
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "ไม่สามารถบันทึกผลได้ กรุณาลองใหม่อีกครั้ง");
     }
-    const now = new Date();
-    if (!isRoleAssignmentActive(assignment, now) || !canTransitionRequest(request.status, "rejected", "president")) {
-      setFormError("วาระหรือสถานะคำร้องเปลี่ยนแล้ว กรุณากลับไปเปิดรายการใหม่");
-      return;
-    }
-    const nowIso = now.toISOString();
-    updateRequest(request.id, (current) => ({
-      ...current,
-      status: "rejected",
-      updatedAt: nowIso,
-      comments: [...current.comments, {
-        id: makeTimelineId("comment-president", now, current.comments.length),
-        actorRole: "president",
-        actorName: assignment.userName,
-        message: note,
-        createdAt: nowIso,
-      }],
-      events: [...current.events, {
-        id: makeTimelineId("event-rejected", now, current.events.length),
-        type: "rejected",
-        actorRole: "president",
-        actorName: assignment.userName,
-        createdAt: nowIso,
-        note,
-      }],
-      progress: progressForStatus("rejected"),
-    }));
-    toast.success(`บันทึกผลคำร้อง ${request.id} แล้ว`);
-    router.push("/president/history");
   };
 
   return (
@@ -120,6 +125,8 @@ export default function PresidentSignatureDetailPage({ requestId }: { requestId:
 
       <Card><CardContent className="space-y-6 px-4 md:px-6">
         <header className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between"><div className="min-w-0"><p className="font-mono text-xs text-muted-foreground">{request.id}</p><h1 className="mt-1 break-words text-xl font-semibold text-foreground">{request.title}</h1><p className="mt-1 text-xs text-muted-foreground">{request.typeLabel} · ยื่นเมื่อ {request.displayDate}</p></div><Badge variant={status.variant} className="h-auto shrink-0 self-start py-1">{status.label}</Badge></header>
+
+        {workflow ? <section aria-labelledby="president-workflow-heading"><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 id="president-workflow-heading" className="text-sm font-semibold">ข้อมูลก่อนตัดสินใจ</h2><Badge variant="info">{workflowKindLabel[workflow.kind]}</Badge></div><dl className="grid gap-3 rounded-2xl border border-border bg-muted/30 p-4 sm:grid-cols-2"><div><dt className="text-xs text-muted-foreground">ประเภทเอกสาร</dt><dd className="mt-1 text-sm font-medium">{request.typeLabel}</dd></div><div><dt className="text-xs text-muted-foreground">เจ้าของเอกสาร</dt><dd className="mt-1 text-sm font-medium">{request.requester.name}</dd></div><div><dt className="text-xs text-muted-foreground">Organisation ปัจจุบัน</dt><dd className="mt-1 text-sm font-medium">{activeStep?.organisationName ?? assignment.organisationScope.name}</dd></div><div><dt className="text-xs text-muted-foreground">สถานะปัจจุบัน</dt><dd className="mt-1 text-sm font-medium">{activeStep ? stepStatusLabel[activeStep.status] : REQUEST_STATUS_META[request.status].label}</dd></div><div><dt className="text-xs text-muted-foreground">ผู้เตรียมเอกสาร</dt><dd className="mt-1 text-sm font-medium">{workflow.preparedBy.userName}<span className="block text-xs font-normal text-muted-foreground">{workflow.preparedBy.organisationName}</span></dd></div><div><dt className="text-xs text-muted-foreground">หลักฐานต้นทาง</dt><dd className="mt-1 break-all font-mono text-sm font-medium">{workflow.evidenceReference ?? "—"}</dd></div><div className="sm:col-span-2"><dt className="text-xs text-muted-foreground">Document Fingerprint</dt><dd className="mt-1 break-all font-mono text-sm font-semibold text-primary">{workflow.documentFingerprint}</dd></div></dl><ol className="mt-3 grid gap-2 sm:grid-cols-2" aria-label="ลำดับการลงนาม">{[...workflow.steps].sort((left, right) => left.order - right.order).map((step) => <li key={step.id} className="rounded-2xl border border-border p-3"><div className="flex items-center justify-between gap-2"><p className="text-sm font-semibold">ขั้น {step.order}: {step.level === "college" ? "ระดับวิทยาลัย" : "ระดับราชวิทยาลัย"}</p><Badge variant={step.status === "signed" ? "success" : step.status === "rejected" ? "danger" : step.status === "awaiting_signature" ? "warning" : "neutral"}>{stepStatusLabel[step.status]}</Badge></div><p className="mt-1 text-xs text-muted-foreground">{step.organisationName}</p>{step.signerName ? <p className="mt-2 text-xs font-medium">{step.signerName}{step.decidedAt ? ` · ${formatDateTime(step.decidedAt)}` : ""}</p> : null}{step.note ? <p className="mt-1 text-xs text-muted-foreground">{step.note}</p> : null}</li>)}</ol></section> : null}
 
         <section aria-labelledby="president-requester-heading"><h2 id="president-requester-heading" className="mb-2 text-sm font-semibold">ผู้ยื่นคำร้อง</h2><dl className="grid gap-3 rounded-2xl bg-muted/50 p-4 sm:grid-cols-2"><div><dt className="text-xs text-muted-foreground">ชื่อ-นามสกุล</dt><dd className="mt-1 text-sm font-medium">{request.requester.name}</dd></div><div><dt className="text-xs text-muted-foreground">รหัสสมาชิก</dt><dd className="mt-1 font-mono text-sm font-medium">{request.requester.memberId}</dd></div><div className="sm:col-span-2"><dt className="text-xs text-muted-foreground">อีเมล</dt><dd className="mt-1 break-all text-sm font-medium">{request.requester.email}</dd></div></dl></section>
 
@@ -131,12 +138,16 @@ export default function PresidentSignatureDetailPage({ requestId }: { requestId:
 
         {request.comments.length > 0 && <section className="rounded-2xl border border-info-border bg-info-soft p-4" aria-labelledby="president-comments-heading"><h2 id="president-comments-heading" className="text-sm font-semibold text-info-on-soft">หมายเหตุและการสนทนา</h2><div className="mt-2 space-y-3">{request.comments.map((comment) => <div key={comment.id} className="border-t border-info-border/60 pt-2 first:border-0 first:pt-0"><p className="whitespace-pre-wrap text-sm text-info-on-soft">{comment.message}</p><p className="mt-1 text-xs text-info-on-soft/80">{comment.actorName} · {formatDateTime(comment.createdAt)}</p></div>)}</div></section>}
 
+        {signatures.length > 0 ? <section aria-labelledby="prior-signatures-heading"><h2 id="prior-signatures-heading" className="mb-2 text-sm font-semibold">ขั้นตอนลงนามที่ผ่านมา</h2><div className="space-y-2">{signatures.map((signature) => <div key={`${signature.signerAssignmentId}-${signature.signedAt}`} className="flex flex-col gap-2 rounded-2xl border border-success-border bg-success-soft p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-success-on-soft">{signature.signerName}</p><p className="mt-1 text-xs text-success-on-soft/80">{signature.stampLabel} · {formatDateTime(signature.signedAt)}</p></div><span className="break-all font-mono text-xs text-success-on-soft/80">{signature.documentFingerprint}</span></div>)}</div></section> : null}
+
         {request.mockSignature && <section className="rounded-2xl border-2 border-success-border bg-success-soft p-5 text-center" aria-labelledby="signature-stamp-heading"><span className="material-symbols-outlined text-4xl text-success-on-soft">verified</span><h2 id="signature-stamp-heading" className="mt-2 text-sm font-semibold text-success-on-soft">{request.mockSignature.stampLabel}</h2>{request.mockSignature.handwrittenSignature && <div className="mx-auto mt-4 max-w-md rounded-2xl border border-success-border bg-logo-surface px-4 py-2"><HandwrittenSignaturePreview signature={request.mockSignature.handwrittenSignature} ariaLabel={`ลายมือชื่อของ ${request.mockSignature.signerName}`} /></div>}<p className="mt-2 text-lg font-semibold text-success-on-soft">{request.mockSignature.signerName}</p><p className="mt-1 text-xs text-success-on-soft/80">{formatDateTime(request.mockSignature.signedAt)}</p><p className="mt-2 break-all font-mono text-xs text-success-on-soft/80">{request.mockSignature.documentFingerprint}</p></section>}
 
         <section aria-labelledby="president-timeline-heading"><h2 id="president-timeline-heading" className="mb-3 text-sm font-semibold">ประวัติคำร้อง</h2><ol className="space-y-3 border-l-2 border-border pl-5">{request.events.map((event) => <li key={event.id} className="relative text-xs"><span className="absolute -left-[27px] top-0.5 h-3 w-3 rounded-full bg-primary ring-4 ring-card" /><span className="font-medium">{REQUEST_EVENT_LABELS[event.type]}</span><span className="ml-1 text-muted-foreground">โดย {event.actorName} · {formatDateTime(event.createdAt)}</span>{event.note && <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{event.note}</p>}</li>)}</ol></section>
       </CardContent></Card>
 
-      {actionable && <Card><CardContent className="space-y-5 px-4 md:px-6"><div><h2 className="text-base font-semibold">ยืนยันการลงนาม</h2><p className="mt-1 text-xs text-muted-foreground">ตรวจสอบข้อมูลทั้งหมดก่อนลงลายมือชื่อ ระบบจะบันทึกผู้ลงนาม เวลา ลายเส้น และรหัสอ้างอิงเอกสาร</p></div><div className="rounded-2xl border border-border bg-muted/20 p-4"><p className="text-xs text-muted-foreground">ผู้ลงนามตามวาระปัจจุบัน</p><p className="mt-1 text-sm font-semibold text-foreground">{assignment.userName}</p></div><SignaturePad value={handwrittenSignature} onChange={(value) => { setHandwrittenSignature(value); setFormError(""); }} invalid={formError.startsWith("กรุณาใช้เมาส์")} ariaDescribedBy={formError ? "president-signature-form-error" : undefined} /><div className="space-y-1.5"><label htmlFor="president-decision-note" className="text-xs font-medium">เหตุผลกรณีไม่อนุมัติ</label><Textarea id="president-decision-note" value={decisionNote} onChange={(event) => { setDecisionNote(event.target.value); setFormError(""); }} rows={3} placeholder="จำเป็นเมื่อเลือกไม่อนุมัติ" /></div><label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border p-4"><input type="checkbox" checked={consentAccepted} onChange={(event) => { setConsentAccepted(event.target.checked); setFormError(""); }} className="mt-0.5 h-4 w-4 accent-primary" /><span className="text-sm leading-relaxed">ข้าพเจ้ายืนยันว่าได้ตรวจสอบข้อมูลคำร้อง และยินยอมให้ระบบบันทึกลายมือชื่อพร้อมชื่อ วันเวลา และรหัสอ้างอิงเอกสาร</span></label><div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="destructive" onClick={rejectRequest}>ไม่อนุมัติ</Button><Button onClick={signRequest}><span className="material-symbols-outlined text-base">draw</span>ยืนยันและลงนาม</Button></div></CardContent></Card>}
+      {(workflow || signatures.length > 0) ? <div role="note" className="rounded-2xl border border-warning-border bg-warning-soft p-4 text-sm text-warning-on-soft"><strong>คำเตือน:</strong> ลายมือชื่อในระบบต้นแบบเป็นข้อมูลจำลองและไม่มีผลทางกฎหมาย</div> : null}
+
+      {actionable && <Card><CardContent className="space-y-5 px-4 md:px-6"><div><h2 className="text-base font-semibold">ยืนยันการลงนาม</h2><p className="mt-1 text-xs text-muted-foreground">ตรวจสอบข้อมูลทั้งหมดก่อนลงลายมือชื่อ ระบบจะบันทึกผู้ลงนาม เวลา ลายเส้น และรหัสอ้างอิงเอกสาร</p></div><div className="rounded-2xl border border-border bg-muted/20 p-4"><p className="text-xs text-muted-foreground">ผู้ลงนามตามวาระปัจจุบัน</p><p className="mt-1 text-sm font-semibold text-foreground">{assignment.userName}</p></div><SignaturePad value={handwrittenSignature} onChange={(value) => { setHandwrittenSignature(value); setFormError(""); }} invalid={formError.startsWith("กรุณาใช้เมาส์")} ariaDescribedBy={formError ? "president-signature-form-error" : undefined} label={activeStep?.level === "royal_college" ? "ลายมือชื่อประธานราชวิทยาลัย" : "ลายมือชื่อประธานวิทยาลัย"} /><div className="space-y-1.5"><label htmlFor="president-decision-note" className="text-xs font-medium">เหตุผลกรณีไม่อนุมัติ</label><Textarea id="president-decision-note" value={decisionNote} onChange={(event) => { setDecisionNote(event.target.value); setFormError(""); }} rows={3} placeholder="จำเป็นเมื่อเลือกไม่อนุมัติ" /></div><label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border p-4"><input type="checkbox" checked={consentAccepted} onChange={(event) => { setConsentAccepted(event.target.checked); setFormError(""); }} className="mt-0.5 h-4 w-4 accent-primary" /><span className="text-sm leading-relaxed">ข้าพเจ้ายืนยันว่าได้ตรวจสอบข้อมูลคำร้อง และยินยอมให้ระบบบันทึกลายมือชื่อพร้อมชื่อ วันเวลา และรหัสอ้างอิงเอกสาร</span></label><div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="destructive" onClick={rejectRequest}>ไม่อนุมัติ</Button><Button onClick={signRequest}><span className="material-symbols-outlined text-base">draw</span>ยืนยันและลงนาม</Button></div></CardContent></Card>}
     </div>
   );
 }

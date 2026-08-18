@@ -57,7 +57,7 @@ export function HandwrittenSignaturePreview({
       role="img"
       aria-label={ariaLabel}
       focusable="false"
-      className={cn("aspect-[10/3] w-full text-admin-content", className)}
+      className={cn("aspect-[10/3] w-full text-signature-ink", className)}
     >
       {signature.strokes.map((stroke, strokeIndex) => {
         if (stroke.length === 0) return null;

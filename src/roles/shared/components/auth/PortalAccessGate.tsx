@@ -2,42 +2,32 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { canPortalSessionAccessArea, type PortalArea } from "@/roles/shared/features/roles/access-control";
 import {
-  PORTAL_SESSION_KEY,
-  readPortalSession,
-} from "@/roles/shared/features/roles/mock-login";
-
-const SERVER_SNAPSHOT = "portal-session:server";
-
-function subscribe(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-  return () => window.removeEventListener("storage", onStoreChange);
-}
-
-function getSnapshot() {
-  return window.localStorage.getItem(PORTAL_SESSION_KEY);
-}
-
-function getServerSnapshot() {
-  return SERVER_SNAPSHOT;
-}
+  canPortalSessionAccessArea,
+  type PortalAreaInput,
+} from "@/roles/shared/features/roles/access-control";
+import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 
 export function PortalAccessGate({
   area,
+  organisationId,
+  exactOrganisationId,
+  resourceId,
   children,
 }: {
-  area: PortalArea;
+  area: PortalAreaInput;
+  organisationId?: string;
+  exactOrganisationId?: string;
+  resourceId?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const serializedSession = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const { session, isReady } = usePortalSession();
 
-  if (serializedSession === SERVER_SNAPSHOT) {
+  if (!isReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4" role="status">
         <span className="material-symbols-outlined mr-2 animate-spin">progress_activity</span>
@@ -46,8 +36,13 @@ export function PortalAccessGate({
     );
   }
 
-  const session = serializedSession ? readPortalSession() : null;
-  if (canPortalSessionAccessArea(session, area, pathname)) return children;
+  if (canPortalSessionAccessArea(session, area, pathname, {
+    organisationId,
+    exactOrganisationId,
+    resourceId,
+  })) {
+    return children;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">

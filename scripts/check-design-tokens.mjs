@@ -7,7 +7,6 @@ import { fileURLToPath } from "node:url";
 
 const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE_ROOTS = ["src/app", "src/components", "src/roles"];
-const EXCLUDED_DIRECTORY = "src/app/print";
 const SOURCE_FILE = /\.tsx?$/;
 
 const PALETTE_UTILITY = new RegExp(
@@ -25,6 +24,7 @@ const ARBITRARY_COLOR_PROPERTY = new RegExp(
 const RAW_HEX_COLOR = /(?<![A-Za-z0-9-])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![0-9a-fA-F])/g;
 const RAW_FUNCTION_COLOR = /(?<![A-Za-z0-9-])(?:rgba?|hsla?)\s*\([^\r\n)]*\)/gi;
 const INLINE_STYLE = /\bstyle\s*=/g;
+const EMBEDDED_STYLE = /<style(?:\s|>)/g;
 
 const reportOnly = process.argv.slice(2).includes("--report");
 
@@ -36,10 +36,6 @@ function toProjectPath(absolutePath) {
   return path.relative(PROJECT_ROOT, absolutePath).split(path.sep).join("/");
 }
 
-function isExcluded(projectPath) {
-  return projectPath === EXCLUDED_DIRECTORY || projectPath.startsWith(`${EXCLUDED_DIRECTORY}/`);
-}
-
 async function collectSourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   entries.sort((left, right) => compareText(left.name, right.name));
@@ -47,12 +43,6 @@ async function collectSourceFiles(directory) {
   const files = [];
   for (const entry of entries) {
     const absolutePath = path.join(directory, entry.name);
-    const projectPath = toProjectPath(absolutePath);
-
-    if (isExcluded(projectPath)) {
-      continue;
-    }
-
     if (entry.isDirectory()) {
       files.push(...await collectSourceFiles(absolutePath));
     } else if (entry.isFile() && SOURCE_FILE.test(entry.name)) {
@@ -111,7 +101,11 @@ function scanLine(findings, file, sourceLine, lineNumber) {
   }
 
   for (const match of sourceLine.matchAll(INLINE_STYLE)) {
-    addFinding(findings, "warning", "inline-style", file, lineNumber, match.index, "style=");
+    addFinding(findings, "violation", "inline-style", file, lineNumber, match.index, "style=");
+  }
+
+  for (const match of sourceLine.matchAll(EMBEDDED_STYLE)) {
+    addFinding(findings, "violation", "embedded-style", file, lineNumber, match.index, "<style>");
   }
 }
 

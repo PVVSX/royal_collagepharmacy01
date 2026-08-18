@@ -112,7 +112,7 @@ export default function RegistrationsApprovalPage() {
         <p className="text-sm text-content-muted mt-1">อนุมัติ ขอข้อมูลเพิ่ม และตรวจประวัติการเปลี่ยนสถานะ</p>
       </div>
 
-      <Card className="card-shadow">
+      <Card>
         <CardHeader className="pb-4 border-b">
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap bg-surface-sunken p-1 rounded-lg w-fit">

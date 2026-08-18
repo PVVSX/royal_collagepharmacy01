@@ -4,6 +4,7 @@ import { cpdData } from "@/roles/shared/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { toast } from "sonner";
@@ -13,6 +14,8 @@ import {
   continuingEducationStatusMeta,
   getContinuingEducationStatus,
 } from "@/roles/shared/member/domain/selectors";
+
+const breakdownTones = ["chart1", "chart2", "chart3", "chart4"] as const;
 
 export default function CPDPage() {
   const percentage = (cpdData.currentCredits / cpdData.targetCredits) * 100;
@@ -39,7 +42,7 @@ export default function CPDPage() {
           
           {/* Left Column: Radial Progress & Overview */}
           <div className="lg:col-span-1 space-y-6">
-            <Card className="card-shadow border-t-4 border-t-primary overflow-hidden relative">
+            <Card className="border-t-4 border-t-primary overflow-hidden relative">
               {/* Background Decoration */}
               <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                 <span className="material-symbols-outlined text-9xl">stars</span>
@@ -81,7 +84,7 @@ export default function CPDPage() {
             </Card>
 
             {/* Breakdown Chart */}
-            <Card className="card-shadow">
+            <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary text-xl">pie_chart</span>
@@ -96,12 +99,12 @@ export default function CPDPage() {
                         <span className="font-medium text-muted-foreground">{item.category}</span>
                         <span className="font-bold">{item.value} <span className="font-normal text-muted-foreground">CPD</span></span>
                       </div>
-                      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className="h-full rounded-full transition-all duration-1000" 
-                          style={{ width: `${(item.value / cpdData.currentCredits) * 100}%`, backgroundColor: item.fill }}
-                        />
-                      </div>
+                      <Progress
+                        aria-label={`${item.category} ${item.value} CPD`}
+                        value={(item.value / cpdData.currentCredits) * 100}
+                        tone={breakdownTones[index % breakdownTones.length]}
+                        className="h-2 [&::-webkit-progress-value]:duration-1000 [&::-moz-progress-bar]:duration-1000"
+                      />
                     </div>
                   ))}
                 </div>
@@ -113,7 +116,7 @@ export default function CPDPage() {
           <div className="lg:col-span-2 space-y-6">
             
             {/* History Timeline */}
-            <Card className="card-shadow">
+            <Card>
               <CardHeader className="pb-4 border-b">
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-base flex items-center gap-2">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { profileData } from "@/roles/shared/data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,12 @@ const STEPS = [
   { id: 2, title: "ตรวจสอบคุณสมบัติ" },
   { id: 3, title: "ยืนยันการสมัคร" },
 ];
+
+const stepProgressWidthClass: Record<number, string> = {
+  1: "w-0",
+  2: "w-1/2",
+  3: "w-full",
+};
 
 const colleges = [
   {
@@ -699,8 +706,10 @@ export default function ExamApplicationPage() {
         <div className="flex items-center justify-between relative px-4 md:px-10 mb-2">
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted -z-10 rounded-full" />
           <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary -z-10 rounded-full transition-all duration-500 ease-in-out"
-            style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
+            className={cn(
+              "absolute left-0 top-1/2 -z-10 h-1 -translate-y-1/2 rounded-full bg-primary transition-all duration-500 ease-in-out",
+              stepProgressWidthClass[currentStep]
+            )}
           />
           {STEPS.map((step) => {
             const isActive = step.id === currentStep;
@@ -827,7 +836,7 @@ export default function ExamApplicationPage() {
             {/* ── STEP 3: ยืนยัน ───────────────────────────────────────────────── */}
             {currentStep === 3 && (
               <motion.div key="step3" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}>
-                <Card className="card-shadow border-t-4 border-t-primary">
+                <Card className="border-t-4 border-t-primary">
                   <CardHeader className="text-center pb-2">
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                       <span className="material-symbols-outlined text-primary text-3xl">task_alt</span>

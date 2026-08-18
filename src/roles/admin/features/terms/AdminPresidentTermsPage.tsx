@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -9,40 +9,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  PORTAL_SESSION_KEY,
-  readPortalSession,
-} from "@/roles/shared/features/roles/mock-login";
-import {
   formatAssignmentPeriod,
   isRoleAssignmentActive,
+  validateRoleAssignment,
   type RoleAssignment,
 } from "@/roles/shared/features/roles/role-assignment";
 import { useRoleAssignmentStore } from "@/roles/shared/features/roles/role-assignment-store";
+import { ORGANISATIONS } from "@/roles/shared/features/roles/access-model";
+import { createAuditActorSnapshot, useAuditLog } from "@/roles/shared/features/audit";
+import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 
 const COLLEGES = [
-  { code: "วคบท.", name: "วิทยาลัยการคุ้มครองผู้บริโภคด้านยาและสุขภาพแห่งประเทศไทย" },
-  { code: "CPAT", name: "วิทยาลัยการบริหารเภสัชกิจแห่งประเทศไทย" },
-  { code: "วภช.", name: "วิทยาลัยเภสัชกรรมชุมชนแห่งประเทศไทย" },
-  { code: "สมุนไพร", name: "วิทยาลัยเภสัชกรรมสมุนไพรแห่งประเทศไทย" },
-  { code: "วภท.", name: "วิทยาลัยเภสัชบำบัดแห่งประเทศไทย" },
+  ORGANISATIONS.therapeuticCollege,
+  ORGANISATIONS.communityCollege,
+  ORGANISATIONS.royalCollege,
 ] as const;
 
-function subscribeToSession(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-  return () => window.removeEventListener("storage", onStoreChange);
-}
-
-function getSessionSnapshot() {
-  return window.localStorage.getItem(PORTAL_SESSION_KEY);
-}
-
-function getSessionServerSnapshot() {
-  return null;
-}
-
 export default function AdminPresidentTermsPage() {
-  const sessionValue = useSyncExternalStore(subscribeToSession, getSessionSnapshot, getSessionServerSnapshot);
-  const session = useMemo(() => sessionValue ? readPortalSession() : null, [sessionValue]);
+  const { session } = usePortalSession();
+  const { appendEvent } = useAuditLog();
   const { assignments, addAssignment, isReady, storageError } = useRoleAssignmentStore();
   const [clock] = useState(() => new Date());
   const [collegeCode, setCollegeCode] = useState<(typeof COLLEGES)[number]["code"]>("วภท.");
@@ -53,14 +38,14 @@ export default function AdminPresidentTermsPage() {
   const [formError, setFormError] = useState("");
   const isSuperAdmin = session?.role === "super_admin";
   const terms = assignments
-    .filter((assignment) => assignment.role === "college_president")
+    .filter((assignment) => assignment.role === "president")
     .sort((left, right) => left.collegeCode.localeCompare(right.collegeCode, "th") || right.startsAt.localeCompare(left.startsAt));
 
   if (!isReady) {
     return <div className="flex min-h-[60vh] items-center justify-center gap-2 text-sm text-admin-content-muted"><span className="material-symbols-outlined animate-spin">progress_activity</span>กำลังตรวจสอบสิทธิ์</div>;
   }
   if (!isSuperAdmin) {
-    return <div className="mx-auto max-w-xl py-16 text-center"><span className="material-symbols-outlined text-5xl text-danger">admin_panel_settings</span><h1 className="mt-3 text-xl font-semibold text-admin-content">สงวนสิทธิ์สำหรับผู้ดูแลระบบสูงสุด</h1><p className="mt-2 text-sm text-admin-content-muted">บัญชีเจ้าหน้าที่และฝ่ายการเงินไม่สามารถกำหนดวาระประธานได้</p><Button asChild className="mt-5"><Link href="/admin/dashboard">กลับหน้าภาพรวม</Link></Button></div>;
+    return <div className="mx-auto max-w-xl py-16 text-center"><span className="material-symbols-outlined text-5xl text-danger">admin_panel_settings</span><h1 className="mt-3 text-xl font-semibold text-admin-content">สงวนสิทธิ์สำหรับผู้ดูแลระบบสูงสุด</h1><p className="mt-2 text-sm text-admin-content-muted">Role อื่นไม่สามารถกำหนดวาระประธานได้</p><Button asChild className="mt-5"><Link href="/admin/dashboard">กลับหน้าภาพรวม</Link></Button></div>;
   }
 
   const addTerm = () => {
@@ -82,16 +67,41 @@ export default function AdminPresidentTermsPage() {
       userId: `president-${college.code}-${sequence}`,
       userName: userName.trim(),
       email: email.trim(),
-      role: "college_president",
+      role: "president",
+      organisationScope: college,
+      resourceScopes: [college.kind === "royal_college" ? "signature:royal_college" : "signature:college"],
       collegeCode: college.code,
       collegeName: college.name,
       startsAt: startDate.toISOString(),
       endsAt: endDate.toISOString(),
       appointedBy: session.displayName,
     };
-    const validationError = addAssignment(assignment);
+    const validationError = validateRoleAssignment(assignment, assignments);
     if (validationError) {
       setFormError(validationError);
+      return;
+    }
+    const auditEvent = appendEvent({
+      actor: createAuditActorSnapshot(session),
+      action: "access.role_scope_change",
+      resource: {
+        type: "president_term",
+        id: assignment.id,
+        label: `${assignment.userName} · ${assignment.collegeCode}`,
+        organisationId: assignment.organisationScope.id,
+      },
+      before: null,
+      after: assignment,
+      reason: "แต่งตั้งผู้ดำรงตำแหน่งตามช่วงวาระที่กำหนด",
+      evidenceReference: `appointment:${assignment.id}`,
+    });
+    if (!auditEvent) {
+      setFormError("บันทึก User Audit Log ไม่สำเร็จ จึงยังไม่เพิ่มวาระ");
+      return;
+    }
+    const persistError = addAssignment(assignment);
+    if (persistError) {
+      setFormError(persistError);
       return;
     }
     setUserName("");

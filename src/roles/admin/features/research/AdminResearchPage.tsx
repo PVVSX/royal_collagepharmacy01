@@ -73,7 +73,7 @@ export function AdminResearchPage() {
         <p className="mt-1 text-sm text-content-muted">ตรวจข้อมูล หลักฐาน และสิทธิ์เผยแพร่ก่อนนำผลงานเข้าสู่ฐานข้อมูล</p>
       </div>
 
-      <Card className="card-shadow">
+      <Card>
         <CardHeader className="border-b border-border pb-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div

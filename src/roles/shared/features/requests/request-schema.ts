@@ -14,13 +14,19 @@ export type RequestStatus =
   | "signed"
   | "rejected";
 
-export type RequestActorRole = "member" | "staff" | "president" | "system";
+export type RequestActorRole =
+  | "student"
+  | "royal_college_staff"
+  | "president"
+  | "system";
 
 export type RequestEventType =
   | "submitted"
   | "information_requested"
   | "resubmitted"
   | "forwarded_for_signature"
+  | "signature_step_completed"
+  | "forwarded_to_next_signer"
   | "signed"
   | "rejected"
   | "migrated";
@@ -176,6 +182,46 @@ export interface MockESignature {
   stampLabel: string;
   consentText: string;
   handwrittenSignature?: HandwrittenSignature;
+  workflowStepId?: string;
+  level?: SignatureLevel;
+  organisationId?: string;
+}
+
+export type SignatureWorkflowKind = "college_only" | "royal_only" | "two_level";
+export type SignatureLevel = "college" | "royal_college";
+export type SignatureStepStatus = "pending" | "awaiting_signature" | "signed" | "rejected";
+
+export interface SignatureWorkflowPreparer {
+  userId: string;
+  userName: string;
+  role: "royal_college_staff";
+  organisationId: string;
+  organisationCode: string;
+  organisationName: string;
+}
+
+export interface SignatureWorkflowStep {
+  id: string;
+  order: number;
+  level: SignatureLevel;
+  organisationId: string;
+  organisationCode: string;
+  organisationName: string;
+  status: SignatureStepStatus;
+  signerAssignmentId?: string;
+  signerUserId?: string;
+  signerName?: string;
+  decidedAt?: string;
+  note?: string;
+}
+
+export interface SignatureWorkflow {
+  kind: SignatureWorkflowKind;
+  preparedAt: string;
+  preparedBy: SignatureWorkflowPreparer;
+  documentFingerprint: string;
+  evidenceReference?: string;
+  steps: SignatureWorkflowStep[];
 }
 
 export interface MockRequest {
@@ -197,6 +243,8 @@ export interface MockRequest {
   events: RequestEvent[];
   progress: string[];
   mockSignature?: MockESignature;
+  signatures?: MockESignature[];
+  signatureWorkflow?: SignatureWorkflow;
 }
 
 const FIVE_MEGABYTES = 5 * 1024 * 1024;
@@ -555,15 +603,15 @@ export const HISTORICAL_REQUESTS: readonly MockRequest[] = [
     comments: [
       {
         id: "comment-historical-001",
-        actorRole: "staff",
+        actorRole: "royal_college_staff",
         actorName: "เจ้าหน้าที่ทะเบียน",
         message: "ตรวจสอบเอกสารแล้ว อนุมัติการแก้ไขข้อมูล",
         createdAt: "2026-01-16T04:00:00.000Z",
       },
     ],
     events: [
-      { id: "event-historical-001-a", type: "submitted", actorRole: "member", actorName: CURRENT_MEMBER.name, createdAt: "2026-01-15T02:30:00.000Z" },
-      { id: "event-historical-001-b", type: "forwarded_for_signature", actorRole: "staff", actorName: "เจ้าหน้าที่ทะเบียน", createdAt: "2026-01-16T04:00:00.000Z" },
+      { id: "event-historical-001-a", type: "submitted", actorRole: "student", actorName: CURRENT_MEMBER.name, createdAt: "2026-01-15T02:30:00.000Z" },
+      { id: "event-historical-001-b", type: "forwarded_for_signature", actorRole: "royal_college_staff", actorName: "เจ้าหน้าที่ทะเบียน", createdAt: "2026-01-16T04:00:00.000Z" },
       { id: "event-historical-001-c", type: "signed", actorRole: "president", actorName: "ภญ. ดร. พิมพ์ชนก วัฒนกิจ", createdAt: "2026-01-17T04:00:00.000Z" },
     ],
     progress: progressForStatus("signed"),
@@ -603,10 +651,57 @@ export const HISTORICAL_REQUESTS: readonly MockRequest[] = [
     documents: [],
     comments: [],
     events: [
-      { id: "event-historical-002-a", type: "submitted", actorRole: "member", actorName: CURRENT_MEMBER.name, createdAt: "2026-01-20T03:15:00.000Z" },
-      { id: "event-historical-002-b", type: "forwarded_for_signature", actorRole: "staff", actorName: "เจ้าหน้าที่ทะเบียน", createdAt: "2026-01-21T03:15:00.000Z" },
+      { id: "event-historical-002-a", type: "submitted", actorRole: "student", actorName: CURRENT_MEMBER.name, createdAt: "2026-01-20T03:15:00.000Z" },
+      { id: "event-historical-002-b", type: "forwarded_for_signature", actorRole: "royal_college_staff", actorName: "เจ้าหน้าที่ทะเบียน", createdAt: "2026-01-21T03:15:00.000Z" },
     ],
     progress: progressForStatus("awaiting_president_signature"),
+    signatureWorkflow: {
+      kind: "two_level",
+      preparedAt: "2026-01-21T03:15:00.000Z",
+      preparedBy: {
+        userId: "staff-002",
+        userName: "เจ้าหน้าที่งานเอกสาร",
+        role: "royal_college_staff",
+        organisationId: "org-royal-college",
+        organisationCode: "รวภท.",
+        organisationName: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย",
+      },
+      documentFingerprint: "DOC-9C27D1A2",
+      evidenceReference: "MEMO-2569-021",
+      steps: [
+        { id: "ง.1-2569-002-signature-college", order: 1, level: "college", organisationId: "org-college-vpt", organisationCode: "วภท.", organisationName: "วิทยาลัยเภสัชบำบัดแห่งประเทศไทย", status: "awaiting_signature" },
+        { id: "ง.1-2569-002-signature-royal", order: 2, level: "royal_college", organisationId: "org-royal-college", organisationCode: "รวภท.", organisationName: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย", status: "pending" },
+      ],
+    },
+  },
+  {
+    id: "รภ-2569-005",
+    categoryId: "certificate",
+    typeLabel: "หนังสือรับรอง",
+    title: "ขอหนังสือรับรองมาตรฐานการฝึกอบรม",
+    displayDate: "22 ม.ค. 2569",
+    createdAt: "2026-01-22T02:30:00.000Z",
+    updatedAt: "2026-01-23T04:00:00.000Z",
+    status: "awaiting_president_signature",
+    collegeCode: "วภท.",
+    requester: { memberId: "วภท-2568-014", name: "ภญ. พิมพ์ลภัส สุขเกษม", email: "pimlapas@rpc.ac.th" },
+    fields: [{ id: "purpose", label: "วัตถุประสงค์", value: "ใช้ประกอบการรับรองคุณวุฒิฝึกอบรม" }],
+    courses: [],
+    documents: [],
+    comments: [],
+    events: [
+      { id: "event-royal-005-a", type: "submitted", actorRole: "student", actorName: "ภญ. พิมพ์ลภัส สุขเกษม", createdAt: "2026-01-22T02:30:00.000Z" },
+      { id: "event-royal-005-b", type: "forwarded_for_signature", actorRole: "royal_college_staff", actorName: "เจ้าหน้าที่งานเอกสาร", createdAt: "2026-01-23T04:00:00.000Z" },
+    ],
+    progress: progressForStatus("awaiting_president_signature"),
+    signatureWorkflow: {
+      kind: "royal_only",
+      preparedAt: "2026-01-23T04:00:00.000Z",
+      preparedBy: { userId: "staff-002", userName: "เจ้าหน้าที่งานเอกสาร", role: "royal_college_staff", organisationId: "org-royal-college", organisationCode: "รวภท.", organisationName: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย" },
+      documentFingerprint: "DOC-7E42A9C1",
+      evidenceReference: "CERT-REF-2569-005",
+      steps: [{ id: "รภ-2569-005-signature-royal", order: 1, level: "royal_college", organisationId: "org-royal-college", organisationCode: "รวภท.", organisationName: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย", status: "awaiting_signature" }],
+    },
   },
   {
     id: "อ.1-2569-003",
@@ -630,7 +725,7 @@ export const HISTORICAL_REQUESTS: readonly MockRequest[] = [
     documents: [],
     comments: [],
     events: [
-      { id: "event-historical-003-a", type: "submitted", actorRole: "member", actorName: CURRENT_MEMBER.name, createdAt: "2026-01-25T06:45:00.000Z" },
+      { id: "event-historical-003-a", type: "submitted", actorRole: "student", actorName: CURRENT_MEMBER.name, createdAt: "2026-01-25T06:45:00.000Z" },
     ],
     progress: progressForStatus("staff_review"),
   },
@@ -657,15 +752,15 @@ export const HISTORICAL_REQUESTS: readonly MockRequest[] = [
     comments: [
       {
         id: "comment-historical-004",
-        actorRole: "staff",
+        actorRole: "royal_college_staff",
         actorName: "หัวหน้าสาขา",
         message: "พ้นกำหนดเปลี่ยนแปลงสาขาสำหรับปีการศึกษาปัจจุบัน",
         createdAt: "2025-12-12T07:20:00.000Z",
       },
     ],
     events: [
-      { id: "event-historical-004-a", type: "submitted", actorRole: "member", actorName: CURRENT_MEMBER.name, createdAt: "2025-12-10T02:00:00.000Z" },
-      { id: "event-historical-004-b", type: "rejected", actorRole: "staff", actorName: "หัวหน้าสาขา", createdAt: "2025-12-12T07:20:00.000Z", note: "พ้นกำหนดเปลี่ยนแปลงสาขาสำหรับปีการศึกษาปัจจุบัน" },
+      { id: "event-historical-004-a", type: "submitted", actorRole: "student", actorName: CURRENT_MEMBER.name, createdAt: "2025-12-10T02:00:00.000Z" },
+      { id: "event-historical-004-b", type: "rejected", actorRole: "royal_college_staff", actorName: "หัวหน้าสาขา", createdAt: "2025-12-12T07:20:00.000Z", note: "พ้นกำหนดเปลี่ยนแปลงสาขาสำหรับปีการศึกษาปัจจุบัน" },
     ],
     progress: progressForStatus("rejected"),
   },
@@ -704,10 +799,10 @@ export function progressForStatus(status: RequestStatus): string[] {
 }
 
 const TRANSITIONS: Record<RequestActorRole, Partial<Record<RequestStatus, readonly RequestStatus[]>>> = {
-  member: {
+  student: {
     needs_information: ["staff_review"],
   },
-  staff: {
+  royal_college_staff: {
     staff_review: ["needs_information", "awaiting_president_signature", "rejected"],
     needs_information: ["rejected"],
   },
@@ -761,11 +856,30 @@ export function makeMockDocumentFingerprint(
   return `DOC-${stableMockHash(payload)}`;
 }
 
+export function makeRequestDocumentFingerprint(request: MockRequest) {
+  const payload = JSON.stringify({
+    id: request.id,
+    categoryId: request.categoryId,
+    collegeCode: request.collegeCode,
+    requester: request.requester.memberId,
+    fields: request.fields,
+    applicantNote: request.applicantNote,
+    courses: request.courses,
+    documents: request.documents.map((document) => ({
+      id: document.id,
+      file: document.file,
+    })),
+  });
+  return `DOC-${stableMockHash(payload)}`;
+}
+
 export const REQUEST_EVENT_LABELS: Record<RequestEventType, string> = {
   submitted: "ยื่นคำร้อง",
   information_requested: "ขอข้อมูลเพิ่มเติม",
   resubmitted: "ส่งข้อมูลกลับเพื่อตรวจสอบ",
   forwarded_for_signature: "ส่งให้ประธานลงนาม",
+  signature_step_completed: "ลงนามตามลำดับขั้นแล้ว",
+  forwarded_to_next_signer: "ส่งต่อให้ผู้ลงนามระดับถัดไป",
   signed: "ประธานลงนามแล้ว",
   rejected: "ไม่อนุมัติคำร้อง",
   migrated: "ย้ายข้อมูลจากระบบเดิม",

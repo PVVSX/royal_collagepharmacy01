@@ -13,7 +13,7 @@ export function PersonalInfoCard({ data, isReadOnly = true }: PersonalInfoCardPr
   const labelClassName = "text-xs text-muted-foreground";
 
   return (
-    <Card className="card-shadow">
+    <Card>
       <CardHeader className="pb-3 border-b border-border/50 bg-muted/20">
         <CardTitle className="text-base flex items-center gap-2">
           <span className="material-symbols-outlined text-primary text-xl">person</span>

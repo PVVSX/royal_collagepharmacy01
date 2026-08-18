@@ -25,7 +25,7 @@ export function WorkplaceCard({ data, isReadOnly = true }: WorkplaceCardProps) {
   const phone = "02-999-9999";
 
   return (
-    <Card className="card-shadow">
+    <Card>
       <CardHeader className="pb-3 border-b border-border/50 bg-muted/20">
         <CardTitle className="text-base flex items-center justify-between">
           <div className="flex items-center gap-2">

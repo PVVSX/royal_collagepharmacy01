@@ -62,7 +62,7 @@ export default function ByCollegePage() {
         ) : (
           <Accordion type="single" defaultValue={filtered[0]?.name} collapsible className="space-y-3">
             {filtered.map((college) => (
-              <AccordionItem key={college.name} value={college.name} className="bg-card rounded-lg card-shadow border px-5">
+              <AccordionItem key={college.name} value={college.name} className="bg-card rounded-lg shadow-app-card border px-5">
                 <AccordionTrigger className="hover:no-underline py-4">
                   <div className="flex items-center gap-3 text-left">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0"><span className="material-symbols-outlined text-primary text-xl">school</span></div>

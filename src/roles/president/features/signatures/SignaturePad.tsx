@@ -22,6 +22,7 @@ interface SignaturePadProps {
   disabled?: boolean;
   invalid?: boolean;
   ariaDescribedBy?: string;
+  label?: string;
 }
 
 type SignatureStroke = HandwrittenSignaturePoint[];
@@ -121,6 +122,7 @@ export function SignaturePad({
   disabled = false,
   invalid = false,
   ariaDescribedBy,
+  label = "ลายมือชื่อประธานวิทยาลัย",
 }: SignaturePadProps) {
   const generatedId = useId();
   const labelId = `${generatedId}-label`;
@@ -282,7 +284,7 @@ export function SignaturePad({
     <div className={cn("space-y-2", className)}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p id={labelId} className="text-sm font-medium text-foreground">
-          ลายมือชื่อประธานวิทยาลัย
+          {label}
         </p>
         <Button
           type="button"
@@ -303,7 +305,7 @@ export function SignaturePad({
       <canvas
         ref={canvasRef}
         className={cn(
-          "aspect-[10/3] w-full touch-none rounded-2xl border border-border bg-logo-surface text-admin-content outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 aria-invalid:border-danger aria-invalid:ring-3 aria-invalid:ring-danger/20",
+          "aspect-[10/3] w-full touch-none rounded-2xl border border-border bg-logo-surface text-signature-ink outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 aria-invalid:border-danger aria-invalid:ring-3 aria-invalid:ring-danger/20",
           disabled ? "cursor-not-allowed opacity-50" : "cursor-crosshair",
         )}
         aria-labelledby={labelId}

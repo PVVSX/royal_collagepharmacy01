@@ -8,6 +8,7 @@ import { currentMemberPassport } from "@/roles/shared/member/domain";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { PersonalInfoCard } from "@/roles/shared/member/components/PersonalInfoCard";
 import { AddressCard } from "@/roles/shared/member/components/AddressCard";
@@ -135,7 +136,7 @@ export default function StudentsPage() {
                 </div>
 
                 {/* IDs & Contact */}
-                <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2 text-xs md:text-sm text-muted-foreground bg-muted/30 p-2.5 rounded-xl border border-border/50 inline-flex">
+                <div className="inline-flex flex-wrap items-center justify-center gap-x-5 gap-y-2 rounded-xl border border-border/50 bg-muted/30 p-2.5 text-xs text-muted-foreground md:justify-start md:text-sm">
                   <div className="flex items-center gap-1.5 font-medium">
                     <span className={icon16}>badge</span> วภท-2568-001
                   </div>
@@ -237,9 +238,13 @@ export default function StudentsPage() {
                 </div>
               </div>
               {/* Progress bar */}
-              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-1">
-                <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${(s.cpdCredits / s.cpdTarget) * 100}%` }} />
-              </div>
+              <Progress
+                aria-label="ความคืบหน้าหน่วยกิต CPD"
+                value={s.cpdCredits}
+                max={s.cpdTarget}
+                tone="brand"
+                className="mt-1 h-1.5 [&::-webkit-progress-value]:duration-1000 [&::-moz-progress-bar]:duration-1000"
+              />
               <div className="text-3xs text-muted-foreground text-right mt-0.5">เหลืออีก {s.cpdTarget - s.cpdCredits} หน่วยกิต</div>
             </div>
             
@@ -254,9 +259,13 @@ export default function StudentsPage() {
                 </div>
               </div>
               {/* Progress bar */}
-              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mt-1">
-                <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${(s.creditsEarned / s.creditsTotal) * 100}%` }} />
-              </div>
+              <Progress
+                aria-label="ความคืบหน้าหน่วยกิตสะสม"
+                value={s.creditsEarned}
+                max={s.creditsTotal}
+                tone="brand"
+                className="mt-1 h-1.5 [&::-webkit-progress-value]:duration-1000 [&::-moz-progress-bar]:duration-1000"
+              />
               <div className="text-3xs text-muted-foreground text-right mt-0.5">ครึ่งทางแล้ว!</div>
             </div>
 

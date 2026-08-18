@@ -9,7 +9,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <PortalAccessGate area="member">
+    <PortalAccessGate area="student">
     <div className="flex min-h-screen">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col md:pl-sidebar">

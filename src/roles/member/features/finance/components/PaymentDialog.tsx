@@ -91,11 +91,11 @@ export default function PaymentDialog({ item, onOpenChange, onSubmitted }: Payme
               <span className="material-symbols-outlined text-4xl">check_circle</span>
             </div>
             <DialogTitle className="mb-2 text-xl">
-              {method === "promptpay" ? "ส่งหลักฐานเรียบร้อยแล้ว" : "ชำระเงินสำเร็จ"}
+              ชำระเงินสำเร็จ
             </DialogTitle>
             <DialogDescription className="max-w-md text-sm leading-6">
               {method === "promptpay"
-                ? "เจ้าหน้าที่จะตรวจสอบหลักฐานก่อนออกใบเสร็จ"
+                ? "System Actor ยืนยันรายการแล้ว ระบบบันทึกเลขอ้างอิงและข้อมูลไฟล์หลักฐาน"
                 : "ระบบบันทึกเฉพาะวิธีชำระและเลขอ้างอิง ไม่จัดเก็บเลขบัตรหรือ CVV"}
             </DialogDescription>
             <Button className="mt-6 min-w-32" onClick={() => onOpenChange(false)}>เสร็จสิ้น</Button>
@@ -176,7 +176,7 @@ export default function PaymentDialog({ item, onOpenChange, onSubmitted }: Payme
               )}
 
               {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>}
-              <Button type="submit" className="w-full">{method === "promptpay" ? "ส่งหลักฐาน" : "ชำระเงิน"}</Button>
+              <Button type="submit" className="w-full">ชำระเงิน</Button>
             </form>
           </>
         )}

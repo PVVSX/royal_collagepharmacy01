@@ -10,6 +10,7 @@ import { REQUEST_STATUS_META } from "@/roles/shared/features/requests/request-sc
 import { useRequestStore } from "@/roles/shared/features/requests/request-store";
 import { formatAssignmentPeriod } from "@/roles/shared/features/roles/role-assignment";
 import {
+  getPresidentDecision,
   isPresidentFinalizedRequest,
   selectAwaitingSignatureRequests,
 } from "@/roles/president/features/signatures/president-signature";
@@ -17,11 +18,12 @@ import {
 export default function PresidentDashboardPage() {
   const { assignment, storageError: assignmentError } = usePresidentAccess();
   const { requests, isReady, storageError } = useRequestStore();
-  const collegeRequests = requests.filter((request) => request.collegeCode === assignment?.collegeCode);
-  const pending = selectAwaitingSignatureRequests(requests, assignment?.collegeCode ?? "");
-  const presidentHistory = collegeRequests.filter(isPresidentFinalizedRequest);
-  const signed = presidentHistory.filter((request) => request.status === "signed");
-  const rejectedByPresident = presidentHistory.filter((request) => request.status === "rejected");
+  const pending = selectAwaitingSignatureRequests(requests, assignment);
+  const presidentHistory = assignment
+    ? requests.filter((request) => isPresidentFinalizedRequest(request, assignment))
+    : [];
+  const signed = assignment ? presidentHistory.filter((request) => getPresidentDecision(request, assignment)?.status === "signed") : [];
+  const rejectedByPresident = assignment ? presidentHistory.filter((request) => getPresidentDecision(request, assignment)?.status === "rejected") : [];
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6">

@@ -23,6 +23,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
+import { ROLE_PRESENTATION } from "@/roles/shared/features/roles/access-model";
 
 const adminNotificationsData: typeof notificationsData = [
   {
@@ -56,6 +58,7 @@ const breadcrumbMap: Record<string, { trail: { label: string; href: string }[]; 
   "/member/students": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ข้อมูลของฉัน" },
   "/member/schedule": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ตารางเรียน" },
   "/member/registration": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "การลงทะเบียนเรียน" },
+  "/member/results": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ผลการเรียนแบบผ่าน/ไม่ผ่าน" },
   "/member/finance": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "การเงิน" },
   "/member/finance/channels": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }, { label: "การเงิน", href: "/member/finance" }], current: "ช่องทางการชำระเงิน" },
   "/member/requests": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "คำร้องของฉัน" },
@@ -91,18 +94,16 @@ export default function TopNav() {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const { session } = usePortalSession();
   const isAdminRoute = pathname.startsWith("/admin");
   const activeNotifications = isAdminRoute ? adminNotificationsData : notificationsData;
   const unreadNotificationCount = activeNotifications.filter((notification) => !notification.isRead).length;
-  const activeProfile = isAdminRoute
-    ? {
-        title: "โปรไฟล์ผู้ดูแลระบบ",
-        description: "System Admin • Super Admin • admin@pharmacy.or.th",
-      }
-    : {
-        title: "โปรไฟล์ผู้ใช้",
-        description: "ภก. สมชาย ใจดี (somchai.j@student.rpc.ac.th)",
-      };
+  const activeProfile = {
+    title: session?.displayName ?? (isAdminRoute ? "โปรไฟล์ผู้ดูแลระบบ" : "โปรไฟล์ผู้ใช้"),
+    description: session
+      ? `${ROLE_PRESENTATION[session.role].label} • ${session.organisation.name}`
+      : "กำลังโหลดข้อมูลผู้ใช้",
+  };
   const adminStudentDetailMatch = pathname.match(/^\/admin\/students\/([^/]+)\/?$/);
 
   let bc = adminStudentDetailMatch

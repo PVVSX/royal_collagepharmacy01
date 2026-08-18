@@ -38,7 +38,7 @@ export default function ExamsManagementPage() {
         <p className="text-sm text-muted-foreground mt-1">ตรวจสอบสิทธิ์การสอบและบันทึกผลสอบของผู้เข้าศึกษา</p>
       </div>
 
-      <Card className="card-shadow">
+      <Card>
         <CardHeader className="pb-4 border-b">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div className="flex bg-surface-container p-1 rounded-lg w-fit">

@@ -80,7 +80,7 @@ export default function AllCoursesPage() {
           <p className="text-sm">ไม่พบรายวิชาที่ค้นหา</p>
         </div>
       ) : (
-        <div className="min-w-0 overflow-hidden rounded-lg border bg-card card-shadow">
+        <div className="min-w-0 overflow-hidden rounded-lg border bg-card shadow-app-card">
           <Table className="min-w-[760px] xl:min-w-[960px]">
             <TableHeader>
               <TableRow>

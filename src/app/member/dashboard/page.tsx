@@ -9,6 +9,12 @@ import { Progress } from "@/components/ui/progress";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 
 const iconClass = "material-symbols-outlined text-xl";
+const chartTones = [
+  { progress: "chart1", marker: "bg-chart-1" },
+  { progress: "chart2", marker: "bg-chart-2" },
+  { progress: "chart3", marker: "bg-chart-3" },
+  { progress: "chart4", marker: "bg-chart-4" },
+] as const;
 
 export default function DashboardPage() {
   const d = dashboardData;
@@ -42,7 +48,7 @@ export default function DashboardPage() {
           { icon: "how_to_reg", label: "สถานะการฝึกอบรม", value: d.trainingStatus, color: "text-secondary-foreground", bg: "bg-secondary/20", border: false, borderDestructive: false },
           // { icon: "warning", label: "ยอดค้างชำระ", value: `฿${d.balanceDue.toLocaleString()}`, color: "text-destructive", bg: "bg-destructive/10", border: false, borderDestructive: true },
         ].map((m) => (
-          <Card key={m.label} className={`card-shadow ${m.border ? "border-l-4 border-l-chart-3" : ""} ${m.borderDestructive ? "border-l-4 border-l-destructive" : ""}`}>
+          <Card key={m.label} className={`${m.border ? "border-l-4 border-l-chart-3" : ""} ${m.borderDestructive ? "border-l-4 border-l-destructive" : ""}`}>
             <CardContent className="p-4 flex items-center gap-3">
               <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${m.bg} flex-shrink-0`}>
                 <span className={`${iconClass} ${m.color}`}>{m.icon}</span>
@@ -57,7 +63,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Upcoming Event Banner */}
-      <Card className="card-shadow overflow-hidden mb-5 border-none relative h-[160px] md:h-[200px] hover:shadow-md transition-shadow cursor-pointer">
+      <Card className="overflow-hidden mb-5 border-none relative h-[160px] md:h-[200px] hover:shadow-md transition-shadow cursor-pointer">
         <img src="/images/assets/meeting/meeting-banner.png" alt="Upcoming Event" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-scrim-strong via-scrim to-transparent flex flex-col justify-center p-5 md:p-8">
           <Badge variant="infoOverlay" className="mb-2 w-fit text-3xs">กิจกรรมกำลังจะมาถึง</Badge>
@@ -71,7 +77,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* CPD Progress */}
-        <Card className="lg:col-span-2 card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
+        <Card className="lg:col-span-2 hover:-translate-y-1 hover:shadow-md transition-all">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">ความคืบหน้าการสะสม CPD</CardTitle>
             <CardDescription className="text-xs">สะสมได้ {cpdData.currentCredits} จาก {cpdData.targetCredits} CPD · หมดอายุ {cpdData.expiryDate}</CardDescription>
@@ -100,12 +106,11 @@ export default function DashboardPage() {
                       <span className="font-medium text-muted-foreground">{item.category}</span>
                       <span className="font-bold">{item.value} <span className="font-normal text-muted-foreground">CPD</span></span>
                     </div>
-                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full rounded-full transition-all duration-1000" 
-                        style={{ width: `${(item.value / cpdData.currentCredits) * 100}%`, backgroundColor: item.fill }}
-                      />
-                    </div>
+                    <Progress
+                      value={(item.value / cpdData.currentCredits) * 100}
+                      tone={chartTones[index % chartTones.length].progress}
+                      className="h-2"
+                    />
                   </div>
                 ))}
               </div>
@@ -114,7 +119,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* Credits Donut */}
-        <Card className="card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
+        <Card className="hover:-translate-y-1 hover:shadow-md transition-all">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">ความก้าวหน้าหน่วยกิต</CardTitle>
             <CardDescription className="text-xs">เก็บได้แล้ว {d.creditsEarned} จาก {d.creditsTotal} หน่วยกิต</CardDescription>
@@ -129,7 +134,7 @@ export default function DashboardPage() {
               {d.creditsBreakdown.map((item, i) => (
                 <div key={i} className="flex flex-col bg-muted/40 p-3.5 rounded-xl border border-border/50 hover:bg-muted/80 transition-colors">
                   <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
-                    <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: item.fill }} />
+                    <div className={`h-2.5 w-2.5 rounded-full shadow-sm ${chartTones[i % chartTones.length].marker}`} />
                     <span className="text-2xs font-medium">{item.name}</span>
                   </div>
                   <div className="flex items-end justify-between">
@@ -144,7 +149,7 @@ export default function DashboardPage() {
 
       {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4"> */}
         {/* Schedule */}
-        {/* <Card className="card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
+        {/* <Card className="hover:-translate-y-1 hover:shadow-md transition-all">
           <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm">ตารางเรียนวันนี้</CardTitle>
             <Link href="/member/schedule" className="text-xs text-primary hover:underline flex items-center gap-0.5">
@@ -174,7 +179,7 @@ export default function DashboardPage() {
         </Card> */}
 
         {/* Announcements */}
-        {/* <Card className="card-shadow hover:-translate-y-1 hover:shadow-md transition-all">
+        {/* <Card className="hover:-translate-y-1 hover:shadow-md transition-all">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">ประกาศและข่าวสาร</CardTitle>
           </CardHeader>

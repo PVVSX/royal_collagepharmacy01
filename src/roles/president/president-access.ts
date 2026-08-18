@@ -3,23 +3,23 @@
 import { useMemo, useSyncExternalStore } from "react";
 
 import {
-  PORTAL_SESSION_KEY,
+  getPortalSessionStorageSnapshot,
   readPortalSession,
+  subscribeToPortalSession,
 } from "@/roles/shared/features/roles/mock-login";
 import { resolvePresidentSessionAssignment } from "@/roles/shared/features/roles/role-assignment";
 import { useRoleAssignmentStore } from "@/roles/shared/features/roles/role-assignment-store";
 
 function subscribeToSession(onStoreChange: () => void) {
-  window.addEventListener("storage", onStoreChange);
-  return () => window.removeEventListener("storage", onStoreChange);
+  return subscribeToPortalSession(onStoreChange);
 }
 
 function getSessionSnapshot() {
-  return window.localStorage.getItem(PORTAL_SESSION_KEY);
+  return getPortalSessionStorageSnapshot();
 }
 
 function getSessionServerSnapshot() {
-  return null;
+  return "";
 }
 
 function subscribeToClock(onStoreChange: () => void) {
@@ -48,14 +48,16 @@ export function usePresidentAccess() {
   );
   const { assignments, isReady, storageError } = useRoleAssignmentStore();
   const session = useMemo(
-    () => serializedSession ? readPortalSession() : null,
+    () => serializedSession
+      ? readPortalSession({ persistMigration: false })
+      : null,
     [serializedSession],
   );
   const assignment = useMemo(() => {
     if (
-      session?.role !== "college_president" ||
+      session?.role !== "president" ||
       !session.userId ||
-      !session.collegeCode
+      !session.organisation
     ) {
       return null;
     }
@@ -70,7 +72,7 @@ export function usePresidentAccess() {
     assignment,
     isReady,
     storageError,
-    hasPresidentRole: session?.role === "college_president",
-    canAccess: session?.role === "college_president" && Boolean(assignment),
+    hasPresidentRole: session?.role === "president",
+    canAccess: session?.role === "president" && Boolean(assignment),
   };
 }

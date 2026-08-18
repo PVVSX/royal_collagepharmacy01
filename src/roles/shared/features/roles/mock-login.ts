@@ -1,29 +1,174 @@
 import {
+  ORGANISATION_LIST,
+  ORGANISATIONS,
+  ROLE_PRESENTATION,
+  isOrganisationScope,
+  isRoleScopeCompatible,
+  isSystemRole,
+  type OrganisationScope,
+  type SystemRole,
+} from "./access-model";
+import {
+  readGovernanceConfiguration,
+  type UserAccessAssignment,
+} from "./governance-configuration";
+import {
   isRoleAssignmentActive,
   type RoleAssignment,
-  type SystemRole,
 } from "./role-assignment";
 
 export interface PortalSession {
   role: SystemRole;
   displayName: string;
   signedInAt: string;
-  userId?: string;
+  userId: string;
+  organisation: OrganisationScope;
+  resourceScopes: string[];
   collegeCode?: string;
 }
 
 const roleAccounts = [
-  { identifier: "admin", password: "2323", role: "super_admin", displayName: "System Admin", userId: "super-admin", home: "/admin/dashboard" },
-  { identifier: "officer", password: "2323", role: "staff", displayName: "เจ้าหน้าที่วิทยาลัย", userId: "staff-vpt", collegeCode: "วภท.", home: "/admin/dashboard" },
-  { identifier: "finance", password: "2323", role: "finance_officer", displayName: "เจ้าหน้าที่การเงิน", userId: "finance-vpt", collegeCode: "วภท.", home: "/admin/finance" },
-  { identifier: "president", password: "2323", role: "college_president", displayName: "ภก. รศ. ดร. ธนกฤต ศรีวิชัย", userId: "president-vpt-current", collegeCode: "วภท.", home: "/president/dashboard" },
-] as const;
+  {
+    identifier: "student",
+    password: "2323",
+    role: "student",
+    displayName: "ภก. สมชาย ใจดี",
+    userId: "วภท-2568-001",
+    organisation: ORGANISATIONS.siriraj,
+    resourceScopes: ["student:self"],
+  },
+  {
+    identifier: "admin",
+    password: "2323",
+    role: "super_admin",
+    displayName: "System Admin",
+    userId: "super-admin",
+    organisation: ORGANISATIONS.system,
+    resourceScopes: ["*"],
+  },
+  {
+    identifier: "teacher",
+    password: "2323",
+    role: "teacher",
+    displayName: "อ. ภก. กิตติพงศ์ วัฒนเภสัช",
+    userId: "teacher-001",
+    organisation: ORGANISATIONS.siriraj,
+    resourceScopes: ["course:proposal", "course:offering-bcp-101", "course:offering-vpt-301"],
+  },
+  {
+    identifier: "teacher2",
+    password: "2323",
+    role: "teacher",
+    displayName: "อ. ภญ. ชนิดา ศรีสุข",
+    userId: "teacher-002",
+    organisation: ORGANISATIONS.chula,
+    resourceScopes: ["course:proposal", "course:offering-vpt-302"],
+  },
+  {
+    identifier: "teacher3",
+    password: "2323",
+    role: "teacher",
+    displayName: "อ. ภก. ธีรภัทร พรหมรักษ์",
+    userId: "teacher-003",
+    organisation: ORGANISATIONS.siriraj,
+    resourceScopes: ["course:proposal", "course:assigned"],
+  },
+  {
+    identifier: "institution",
+    password: "2323",
+    role: "institution_admin",
+    displayName: "ภก. วิชาญ อัครเวช",
+    userId: "institution-admin-001",
+    organisation: ORGANISATIONS.siriraj,
+    resourceScopes: ["institution:org-inst-siriraj"],
+  },
+  {
+    identifier: "officer",
+    password: "2323",
+    role: "royal_college_staff",
+    displayName: "ภญ. ปาริชาติ สุขเกษม",
+    userId: "staff-001",
+    organisation: ORGANISATIONS.royalCollege,
+    resourceScopes: ["staff:central"],
+  },
+  {
+    identifier: "finance",
+    password: "2323",
+    role: "royal_college_staff",
+    displayName: "ภญ. ปาริชาติ สุขเกษม",
+    userId: "staff-001",
+    organisation: ORGANISATIONS.royalCollege,
+    resourceScopes: ["staff:central"],
+  },
+  {
+    identifier: "president",
+    password: "2323",
+    role: "president",
+    displayName: "ภก. รศ. ดร. ธนกฤต ศรีวิชัย",
+    userId: "president-vpt-current",
+    organisation: ORGANISATIONS.therapeuticCollege,
+    resourceScopes: ["signature:college"],
+  },
+  {
+    identifier: "royalpresident",
+    password: "2323",
+    role: "president",
+    displayName: "ภญ. รศ. ดร. อรทัย พิทักษ์วิชาชีพ",
+    userId: "president-rpc-current",
+    organisation: ORGANISATIONS.royalCollege,
+    resourceScopes: ["signature:royal_college"],
+  },
+] as const satisfies readonly {
+  identifier: string;
+  password: string;
+  role: SystemRole;
+  displayName: string;
+  userId: string;
+  organisation: OrganisationScope;
+  resourceScopes: readonly string[];
+}[];
 
-export const PORTAL_SESSION_KEY = "royal-college.portal-session.v1";
+export const PORTAL_SESSION_KEY = "royal-college.portal-session.v2";
+const LEGACY_PORTAL_SESSION_KEY = "royal-college.portal-session.v1";
+export const PORTAL_SESSION_EVENT = "royal-college:portal-session-updated";
 
-function memberDestination(requestedPath?: string | null) {
-  if (requestedPath?.startsWith("/member/")) return requestedPath;
-  return "/member/dashboard";
+function requestedDestination(role: SystemRole, requestedPath?: string | null) {
+  const home = ROLE_PRESENTATION[role].home;
+  const expectedPrefix = home.slice(0, home.lastIndexOf("/") + 1);
+  return requestedPath?.startsWith(expectedPrefix) ? requestedPath : home;
+}
+
+function sessionForAccount(
+  account: (typeof roleAccounts)[number],
+  accessAssignment?: UserAccessAssignment,
+): PortalSession {
+  const assignedOrganisation = accessAssignment
+    ? ORGANISATION_LIST.find((item) => item.id === accessAssignment.organisationId)
+    : undefined;
+  const useAssignment = Boolean(
+    accessAssignment &&
+    assignedOrganisation &&
+    isRoleScopeCompatible(
+      accessAssignment.role,
+      assignedOrganisation,
+      accessAssignment.resourceScopes,
+    ),
+  );
+  const effectiveOrganisation = useAssignment ? assignedOrganisation! : account.organisation;
+  const role = useAssignment ? accessAssignment!.role : account.role;
+  return {
+    role,
+    displayName: account.displayName,
+    userId: account.userId,
+    organisation: { ...effectiveOrganisation },
+    resourceScopes: useAssignment
+      ? [...accessAssignment!.resourceScopes]
+      : [...account.resourceScopes],
+    ...(effectiveOrganisation.kind === "college" || effectiveOrganisation.kind === "royal_college"
+      ? { collegeCode: effectiveOrganisation.code }
+      : {}),
+    signedInAt: new Date().toISOString(),
+  };
 }
 
 export function resolvePortalLogin(
@@ -31,11 +176,12 @@ export function resolvePortalLogin(
   password: string,
   requestedPath?: string | null,
   roleAssignments: readonly RoleAssignment[] = [],
+  accessAssignments?: readonly UserAccessAssignment[],
 ) {
   const normalizedIdentifier = identifier.trim().toLowerCase();
   const assignedPresident = password === "2323"
     ? roleAssignments.find((assignment) => (
-        assignment.role === "college_president" &&
+        assignment.role === "president" &&
         isRoleAssignmentActive(assignment) &&
         (assignment.email.trim().toLowerCase() === normalizedIdentifier ||
           assignment.userId.trim().toLowerCase() === normalizedIdentifier)
@@ -43,74 +189,160 @@ export function resolvePortalLogin(
     : undefined;
   if (assignedPresident) {
     return {
-      destination: "/president/dashboard",
+      destination: ROLE_PRESENTATION.president.home,
       session: {
-        role: "college_president",
+        role: "president",
         displayName: assignedPresident.userName,
         userId: assignedPresident.userId,
+        organisation: { ...assignedPresident.organisationScope },
+        resourceScopes: [...assignedPresident.resourceScopes],
         collegeCode: assignedPresident.collegeCode,
         signedInAt: new Date().toISOString(),
       } satisfies PortalSession,
     };
   }
+
   const account = roleAccounts.find((candidate) => (
     candidate.identifier === normalizedIdentifier && candidate.password === password
   ));
-
+  const configuredAssignments = accessAssignments ?? (
+    typeof window === "undefined"
+      ? []
+      : readGovernanceConfiguration().userAssignments
+  );
   if (account) {
+    const session = sessionForAccount(
+      account,
+      configuredAssignments.find((assignment) => assignment.userId === account.userId),
+    );
     return {
-      destination: account.home,
-      session: {
-        role: account.role,
-        displayName: account.displayName,
-        userId: account.userId,
-        ...("collegeCode" in account ? { collegeCode: account.collegeCode } : {}),
-        signedInAt: new Date().toISOString(),
-      } satisfies PortalSession,
+      destination: requestedDestination(session.role, requestedPath),
+      session,
     };
   }
 
+  const studentAccount = roleAccounts[0];
+  const session = sessionForAccount(
+    studentAccount,
+    configuredAssignments.find((assignment) => assignment.userId === studentAccount.userId),
+  );
   return {
-    destination: memberDestination(requestedPath),
-    session: {
-      role: "member",
-      displayName: identifier.trim() || "สมาชิก",
-      signedInAt: new Date().toISOString(),
-    } satisfies PortalSession,
+    destination: requestedDestination(session.role, requestedPath),
+    session,
   };
 }
 
 export function savePortalSession(session: PortalSession) {
   window.localStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify(session));
+  window.localStorage.removeItem(LEGACY_PORTAL_SESSION_KEY);
+  window.dispatchEvent(new Event(PORTAL_SESSION_EVENT));
 }
 
-export function readPortalSession(): PortalSession | null {
-  const serialized = window.localStorage.getItem(PORTAL_SESSION_KEY);
-  if (!serialized) return null;
+function normalizeLegacyRole(value: unknown): SystemRole | null {
+  if (isSystemRole(value)) return value;
+  if (value === "member") return "student";
+  if (value === "staff" || value === "finance_officer") return "royal_college_staff";
+  if (value === "college_president") return "president";
+  return null;
+}
 
-  try {
-    const value: unknown = JSON.parse(serialized);
-    if (!value || typeof value !== "object") return null;
-    const session = value as Partial<PortalSession>;
-    if (
-      (session.role !== "member" &&
-        session.role !== "staff" &&
-        session.role !== "finance_officer" &&
-        session.role !== "college_president" &&
-        session.role !== "super_admin") ||
-      typeof session.displayName !== "string" ||
-      typeof session.signedInAt !== "string" ||
-      (session.userId !== undefined && typeof session.userId !== "string") ||
-      (session.collegeCode !== undefined && typeof session.collegeCode !== "string")
-    ) {
-      return null;
-    }
-    return session as PortalSession;
-  } catch {
+function defaultOrganisation(role: SystemRole, collegeCode?: string): OrganisationScope {
+  if (role === "super_admin") return ORGANISATIONS.system;
+  if (role === "royal_college_staff") return ORGANISATIONS.royalCollege;
+  if (role === "president") {
+    return collegeCode === ORGANISATIONS.royalCollege.code
+      ? ORGANISATIONS.royalCollege
+      : collegeCode === ORGANISATIONS.communityCollege.code
+        ? ORGANISATIONS.communityCollege
+        : ORGANISATIONS.therapeuticCollege;
+  }
+  return ORGANISATIONS.siriraj;
+}
+
+function defaultResourceScopes(role: SystemRole, organisation: OrganisationScope) {
+  if (role === "student") return ["student:self"];
+  if (role === "teacher") return [];
+  if (role === "president") {
+    return [organisation.kind === "royal_college"
+      ? "signature:royal_college"
+      : "signature:college"];
+  }
+  return ["*"];
+}
+
+function normalizeStoredSession(value: unknown): PortalSession | null {
+  if (!value || typeof value !== "object") return null;
+  const session = value as Partial<PortalSession> & { role?: unknown };
+  const role = normalizeLegacyRole(session.role);
+  if (!role || typeof session.displayName !== "string" || typeof session.signedInAt !== "string") {
     return null;
   }
+  const organisation = isOrganisationScope(session.organisation)
+    ? { ...session.organisation }
+    : defaultOrganisation(role, session.collegeCode);
+  const resourceScopes = Array.isArray(session.resourceScopes)
+    ? session.resourceScopes.filter((scope): scope is string => typeof scope === "string")
+    : defaultResourceScopes(role, organisation);
+  if (!isRoleScopeCompatible(role, organisation, resourceScopes)) return null;
+  return {
+    role,
+    displayName: session.displayName,
+    userId: typeof session.userId === "string" ? session.userId : `${role}-legacy`,
+    organisation,
+    resourceScopes,
+    ...(typeof session.collegeCode === "string"
+      ? { collegeCode: session.collegeCode }
+      : organisation.kind === "college" || organisation.kind === "royal_college"
+        ? { collegeCode: organisation.code }
+        : {}),
+    signedInAt: session.signedInAt,
+  };
+}
+
+export function readPortalSession({
+  persistMigration = true,
+}: { persistMigration?: boolean } = {}): PortalSession | null {
+  const candidates = [
+    { key: PORTAL_SESSION_KEY, value: window.localStorage.getItem(PORTAL_SESSION_KEY) },
+    { key: LEGACY_PORTAL_SESSION_KEY, value: window.localStorage.getItem(LEGACY_PORTAL_SESSION_KEY) },
+  ];
+  for (const candidate of candidates) {
+    if (!candidate.value) continue;
+    try {
+      const parsed: unknown = JSON.parse(candidate.value);
+      const normalized = normalizeStoredSession(parsed);
+      if (!normalized) continue;
+      if (persistMigration && (
+        candidate.key === LEGACY_PORTAL_SESSION_KEY ||
+        JSON.stringify(parsed) !== JSON.stringify(normalized)
+      )) {
+        savePortalSession(normalized);
+      }
+      return normalized;
+    } catch {
+      // Try the legacy key when the current value cannot be migrated.
+    }
+  }
+  return null;
+}
+
+export function getPortalSessionStorageSnapshot() {
+  return window.localStorage.getItem(PORTAL_SESSION_KEY) ??
+    window.localStorage.getItem(LEGACY_PORTAL_SESSION_KEY) ??
+    "";
+}
+
+export function subscribeToPortalSession(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(PORTAL_SESSION_EVENT, onStoreChange);
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(PORTAL_SESSION_EVENT, onStoreChange);
+  };
 }
 
 export function clearPortalSession() {
   window.localStorage.removeItem(PORTAL_SESSION_KEY);
+  window.localStorage.removeItem(LEGACY_PORTAL_SESSION_KEY);
+  window.dispatchEvent(new Event(PORTAL_SESSION_EVENT));
 }

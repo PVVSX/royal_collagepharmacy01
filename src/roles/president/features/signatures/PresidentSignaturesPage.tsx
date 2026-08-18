@@ -18,14 +18,14 @@ export default function PresidentSignaturesPage() {
   const [search, setSearch] = useState("");
   const pending = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("th-TH");
-    return selectAwaitingSignatureRequests(requests, assignment?.collegeCode ?? "")
+    return selectAwaitingSignatureRequests(requests, assignment)
       .filter((request) => !query || [request.id, request.title, request.requester.name, request.requester.memberId].some((value) => value.toLocaleLowerCase("th-TH").includes(query)))
       .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
-  }, [assignment?.collegeCode, requests, search]);
+  }, [assignment, requests, search]);
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6">
-      <header><h1 className="text-2xl font-bold tracking-tight text-foreground">คำร้องรอลงนาม</h1><p className="mt-1 text-sm text-muted-foreground">รายการที่เจ้าหน้าที่ตรวจสอบแล้วของ {assignment?.collegeCode}</p></header>
+      <header><h1 className="text-2xl font-bold tracking-tight text-foreground">เอกสารรอลงนาม</h1><p className="mt-1 text-sm text-muted-foreground">เฉพาะขั้นที่ถึงลำดับและอยู่ใน {assignment?.organisationScope.name}</p></header>
       {storageError && <div role="alert" className="rounded-2xl border border-warning-border bg-warning-soft p-3 text-xs text-warning-on-soft">{storageError}</div>}
       <Card><CardContent className="space-y-4 px-4 md:px-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="text-base font-semibold text-foreground">รายการทั้งหมด</h2><p className="mt-1 text-xs text-muted-foreground">{isReady ? `${pending.length} รายการ` : "กำลังโหลด"}</p></div><div className="relative w-full sm:w-80"><span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">search</span><Input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="ค้นหาเลขที่คำร้องหรือชื่อผู้ยื่น" aria-label="ค้นหาคำร้องรอลงนาม" className="pl-9" /></div></div>
