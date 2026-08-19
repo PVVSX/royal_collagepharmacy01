@@ -9,6 +9,7 @@ import {
   type SystemRole,
 } from "./access-model";
 import {
+  migrateKnownLegacyTeacherResourceScopes,
   readGovernanceConfiguration,
   type UserAccessAssignment,
 } from "./governance-configuration";
@@ -29,7 +30,8 @@ export interface PortalSession {
 
 const roleAccounts = [
   {
-    identifier: "student",
+    identifier: "ภ.12345",
+    aliases: ["student"],
     password: "2323",
     role: "student",
     displayName: "ภก. สมชาย ใจดี",
@@ -53,7 +55,7 @@ const roleAccounts = [
     displayName: "อ. ภก. กิตติพงศ์ วัฒนเภสัช",
     userId: "teacher-001",
     organisation: ORGANISATIONS.siriraj,
-    resourceScopes: ["course:proposal", "course:offering-bcp-101", "course:offering-vpt-301"],
+    resourceScopes: ["course:proposal", "course:assigned", "course:offering-bcp-101", "course:offering-vpt-301"],
   },
   {
     identifier: "teacher2",
@@ -62,7 +64,7 @@ const roleAccounts = [
     displayName: "อ. ภญ. ชนิดา ศรีสุข",
     userId: "teacher-002",
     organisation: ORGANISATIONS.chula,
-    resourceScopes: ["course:proposal", "course:offering-vpt-302"],
+    resourceScopes: ["course:proposal", "course:assigned", "course:offering-vpt-302"],
   },
   {
     identifier: "teacher3",
@@ -120,6 +122,7 @@ const roleAccounts = [
   },
 ] as const satisfies readonly {
   identifier: string;
+  aliases?: readonly string[];
   password: string;
   role: SystemRole;
   displayName: string;
@@ -203,7 +206,7 @@ export function resolvePortalLogin(
   }
 
   const account = roleAccounts.find((candidate) => (
-    candidate.identifier === normalizedIdentifier && candidate.password === password
+    (candidate.identifier === normalizedIdentifier || ("aliases" in candidate && (candidate.aliases as readonly string[]).includes(normalizedIdentifier))) && candidate.password === password
   ));
   const configuredAssignments = accessAssignments ?? (
     typeof window === "undefined"
@@ -221,15 +224,7 @@ export function resolvePortalLogin(
     };
   }
 
-  const studentAccount = roleAccounts[0];
-  const session = sessionForAccount(
-    studentAccount,
-    configuredAssignments.find((assignment) => assignment.userId === studentAccount.userId),
-  );
-  return {
-    destination: requestedDestination(session.role, requestedPath),
-    session,
-  };
+  throw new Error("ข้อมูลเข้าสู่ระบบไม่ถูกต้อง");
 }
 
 export function savePortalSession(session: PortalSession) {
@@ -280,14 +275,21 @@ function normalizeStoredSession(value: unknown): PortalSession | null {
   const organisation = isOrganisationScope(session.organisation)
     ? { ...session.organisation }
     : defaultOrganisation(role, session.collegeCode);
-  const resourceScopes = Array.isArray(session.resourceScopes)
+  const userId = typeof session.userId === "string" ? session.userId : `${role}-legacy`;
+  const storedResourceScopes = Array.isArray(session.resourceScopes)
     ? session.resourceScopes.filter((scope): scope is string => typeof scope === "string")
     : defaultResourceScopes(role, organisation);
+  const resourceScopes = migrateKnownLegacyTeacherResourceScopes({
+    userId,
+    role,
+    organisationId: organisation.id,
+    resourceScopes: storedResourceScopes,
+  });
   if (!isRoleScopeCompatible(role, organisation, resourceScopes)) return null;
   return {
     role,
     displayName: session.displayName,
-    userId: typeof session.userId === "string" ? session.userId : `${role}-legacy`,
+    userId,
     organisation,
     resourceScopes,
     ...(typeof session.collegeCode === "string"

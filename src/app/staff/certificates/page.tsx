@@ -1,2 +1,5 @@
-import StaffOperationsPage from "@/roles/staff/features/operations/StaffOperationsPage";
-export default function Page() { return <StaffOperationsPage domain="certificates" />; }
+import StaffCertificatesPage from "@/roles/staff/features/certificates/StaffCertificatesPage";
+
+export default function Page() {
+  return <StaffCertificatesPage />;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -18,32 +18,32 @@ export default function LoginPage() {
   const { assignments } = useRoleAssignmentStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const loginTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => () => {
-    if (loginTimerRef.current) clearTimeout(loginTimerRef.current);
-  }, []);
-
+  const [loginError, setLoginError] = useState<string | null>(null);
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
+    setLoginError(null);
     setIsSubmitting(true);
     toast.loading("กำลังตรวจสอบข้อมูล...", { id: "login" });
     
-    loginTimerRef.current = setTimeout(() => {
-      loginTimerRef.current = null;
-      const requestedPath = new URLSearchParams(window.location.search).get("next");
-      const result = resolvePortalLogin(email, password, requestedPath, assignments);
+    const requestedPath = new URLSearchParams(window.location.search).get("next");
+    try {
+      const result = resolvePortalLogin(identifier, password, requestedPath, assignments);
       savePortalSession(result.session);
       toast.success("เข้าสู่ระบบสำเร็จ", { id: "login" });
       router.push(result.destination);
-    }, 1500);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "ไม่สามารถเข้าสู่ระบบได้";
+      setLoginError(message);
+      toast.error(message, { id: "login" });
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-background">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background font-sans">
       
       {/* Left Panel: Background Image */}
       <div className="hidden md:flex md:w-1/2 lg:w-[55%] relative flex-col justify-end p-12 text-content-on-image overflow-hidden">
@@ -57,69 +57,62 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            <div className="w-20 h-20 rounded-xl bg-content-on-image/10 backdrop-blur-md p-3 mb-6 border border-content-on-image/20 shadow-lg">
-              <OrganizationLogo className="w-full h-full object-contain" />
-            </div>
+            <OrganizationLogo className="mb-6 h-24 w-auto object-contain lg:h-28 xl:h-32" />
             <h1 className="text-4xl font-bold mb-4 leading-tight">
               ราชวิทยาลัยเภสัชกรรม<br />แห่งประเทศไทย
             </h1>
-            <p className="text-lg text-content-on-image/80 font-medium">
-              Royal Pharmacy College Portal<br />
-              ระบบสารสนเทศสมาชิกและการสอบวิชาชีพ
-            </p>
+            <p className="text-lg text-content-on-image/80 font-medium">ระบบบริการสมาชิกวิชาชีพ</p>
           </motion.div>
         </div>
       </div>
 
       {/* Right Panel: Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative border-t-4 border-primary md:border-t-0">
+      <div className="relative flex flex-1 flex-col border-t-4 border-primary p-6 sm:p-12 md:border-t-0">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-sm"
+          className="my-auto w-full max-w-sm self-center"
         >
           <div className="md:hidden flex flex-col items-center mb-8">
-            <div className="w-20 h-20 bg-surface-raised rounded-full shadow-sm border border-border p-3 mb-4">
-              <OrganizationLogo className="w-full h-full object-contain" />
-            </div>
+            <OrganizationLogo className="mb-4 h-24 w-auto object-contain sm:h-28" />
             <h1 className="text-xl font-bold text-center text-primary">ราชวิทยาลัยเภสัชกรรม<br/>แห่งประเทศไทย</h1>
           </div>
 
           <div className="mb-8">
-            <p className="text-2xs font-semibold uppercase tracking-wider text-primary mb-1">ระบบสารสนเทศราชวิทยาลัย · College Portal</p>
+            <p className="text-2xs font-semibold uppercase tracking-wider text-primary mb-1">ระบบบริการสมาชิกราชวิทยาลัย</p>
             <h2 className="text-2xl font-bold text-foreground mb-2">เข้าสู่ระบบ</h2>
-            <p className="text-sm text-muted-foreground">กรุณาเข้าสู่ระบบเพื่อเข้าใช้งานหนังสือเดินทางวิชาชีพและบริการต่างๆ</p>
+            <p className="text-sm text-muted-foreground">เข้าสู่ระบบเพื่อใช้บริการข้อมูลวิชาชีพของคุณ</p>
           </div>
 
           <form className="space-y-5" onSubmit={handleLogin}>
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-foreground/80" htmlFor="email">
-                อีเมล (Email)
+              <label className="text-sm font-semibold text-foreground/80" htmlFor="identifier">
+                เลขที่ใบประกอบวิชาชีพ
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
-                  <span className="material-symbols-outlined text-xl">mail</span>
+                  <span className="material-symbols-outlined text-xl">badge</span>
                 </span>
                 <Input 
-                  id="email" 
+                  id="identifier"
                   type="text" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com" 
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="เช่น ภ.12345"
+                  autoComplete="username"
+                  required
                   className="pl-10 h-11 bg-muted/30 focus-visible:bg-transparent transition-colors" 
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center">
                 <label className="text-sm font-semibold text-foreground/80" htmlFor="password">
-                  รหัสผ่าน (Password)
+                  รหัสผ่าน
                 </label>
-                <a href="#" onClick={(e) => { e.preventDefault(); toast.info("กรุณาติดต่อฝ่ายทะเบียนเพื่อรีเซ็ตรหัสผ่าน"); }} className="text-xs font-semibold text-primary hover:underline">
-                  ลืมรหัสผ่าน?
-                </a>
+
               </div>
               <div className="relative">
                 <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground">
@@ -131,6 +124,8 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••" 
+                  autoComplete="current-password"
+                  required
                   className="pl-10 pr-10 h-11 bg-muted/30 focus-visible:bg-transparent transition-colors" 
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -140,20 +135,6 @@ export default function LoginPage() {
                   </span>
                 </button>
               </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <input 
-                type="checkbox" 
-                id="remember" 
-                className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-brand"
-              />
-              <label
-                htmlFor="remember"
-                className="text-sm font-medium leading-none text-muted-foreground cursor-pointer"
-              >
-                จดจำฉันไว้ในระบบ
-              </label>
             </div>
 
             <Button type="submit" disabled={isSubmitting} className="w-full h-11 text-base font-semibold shadow-md mt-2">
@@ -166,23 +147,17 @@ export default function LoginPage() {
                 "เข้าสู่ระบบ"
               )}
             </Button>
+            {loginError && (
+              <p role="alert" className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                {loginError}
+              </p>
+            )}
           </form>
 
-          <div className="mt-8 text-center text-sm text-muted-foreground">
-            ยังไม่มีบัญชีผู้ใช้งาน?{" "}
-            <a href="#" onClick={(e) => { e.preventDefault(); toast.info("กรุณาติดต่อเจ้าหน้าที่เพื่อขอเปิดบัญชีผู้ใช้งาน"); }} className="font-semibold text-primary hover:underline">
-              ลงทะเบียนใหม่
-            </a>
-          </div>
-
-          <div className="mt-12 pt-6 border-t border-border flex items-center justify-center gap-4 text-xs text-muted-foreground/60">
-            <span>© 2026 ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย</span>
-            <span>•</span>
-            <a href="#" className="hover:text-primary transition-colors">นโยบายความเป็นส่วนตัว</a>
-            <span>•</span>
-            <a href="#" className="hover:text-primary transition-colors">ติดต่อเรา</a>
-          </div>
         </motion.div>
+        <footer className="mt-10 text-center text-xs text-muted-foreground/70">
+          © 2026 ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย
+        </footer>
       </div>
 
     </div>

@@ -85,6 +85,38 @@ describe("Super Admin governance configuration", () => {
       .toEqual(DEFAULT_GOVERNANCE_CONFIGURATION.userAssignments.find((item) => item.userId === "super-admin"));
   });
 
+  it("migrates only the recognized legacy Teacher default to dynamic assignment scope", () => {
+    const legacyDefault = normalizeGovernanceConfiguration({
+      schemaVersion: 1,
+      userAssignments: [{
+        userId: "teacher-001",
+        role: "teacher",
+        organisationId: "org-inst-siriraj",
+        resourceScopes: [
+          "course:proposal",
+          "course:offering-bcp-101",
+          "course:offering-vpt-301",
+        ],
+      }],
+      integrations: [],
+    });
+    const customized = normalizeGovernanceConfiguration({
+      schemaVersion: 1,
+      userAssignments: [{
+        userId: "teacher-001",
+        role: "teacher",
+        organisationId: "org-inst-siriraj",
+        resourceScopes: ["course:proposal", "course:offering-bcp-101"],
+      }],
+      integrations: [],
+    });
+
+    expect(legacyDefault.userAssignments.find((item) => item.userId === "teacher-001")?.resourceScopes)
+      .toContain("course:assigned");
+    expect(customized.userAssignments.find((item) => item.userId === "teacher-001")?.resourceScopes)
+      .toEqual(["course:proposal", "course:offering-bcp-101"]);
+  });
+
   it("persists a valid assignment and integration setting", () => {
     const withAssignment = updateUserAccessAssignment(DEFAULT_GOVERNANCE_CONFIGURATION, {
       userId: "teacher-001",

@@ -22,11 +22,13 @@ describe("portal login and session migration", () => {
   });
 
   it.each([
-    ["student@example.com", "anything", "student", "/member/dashboard"],
+    ["ภ.12345", "2323", "student", "/member/dashboard"],
+    ["student", "2323", "student", "/member/dashboard"],
     ["teacher", "2323", "teacher", "/teacher/dashboard"],
     ["institution", "2323", "institution_admin", "/institution/dashboard"],
     ["officer", "2323", "royal_college_staff", "/staff/dashboard"],
     ["president", "2323", "president", "/president/dashboard"],
+    ["royalpresident", "2323", "president", "/president/dashboard"],
     ["admin", "2323", "super_admin", "/admin/dashboard"],
   ] as const)("routes %s to its canonical role home", (identifier, password, role, destination) => {
     const result = resolvePortalLogin(identifier, password);
@@ -38,12 +40,20 @@ describe("portal login and session migration", () => {
   });
 
   it("binds every Student entry path to the current Student resource owner", () => {
-    expect(resolvePortalLogin("student@example.com", "anything").session).toMatchObject({
+    expect(resolvePortalLogin("ภ.12345", "2323").session).toMatchObject({
       role: "student",
       userId: "วภท-2568-001",
       displayName: "ภก. สมชาย ใจดี",
       resourceScopes: ["student:self"],
     });
+  });
+
+  it.each([
+    ["ภ.99999", "2323"],
+    ["ภ.12345", "รหัสไม่ถูกต้อง"],
+    ["student@example.com", "2323"],
+  ])("rejects unknown or invalid professional credentials without a Student fallback", (identifier, password) => {
+    expect(() => resolvePortalLogin(identifier, password)).toThrowError("ข้อมูลเข้าสู่ระบบไม่ถูกต้อง");
   });
 
   it("maps the old finance demo account into Royal College Staff", () => {
@@ -63,6 +73,8 @@ describe("portal login and session migration", () => {
   it("grants the Teacher demo account the explicit course proposal resource", () => {
     expect(resolvePortalLogin("teacher", "2323").session.resourceScopes)
       .toContain("course:proposal");
+    expect(resolvePortalLogin("teacher", "2323").session.resourceScopes)
+      .toContain("course:assigned");
   });
 
   it("applies the audited Super Admin Role and Scope assignment on the next login", () => {
@@ -147,6 +159,35 @@ describe("portal login and session migration", () => {
       signedInAt: "2026-08-11T07:30:00.000Z",
     }));
     expect(readPortalSession()?.role).toBe("student");
+  });
+
+  it("migrates only the recognized legacy Teacher session scope set", () => {
+    const baseSession = {
+      role: "teacher",
+      displayName: "อ. ภก. กิตติพงศ์ วัฒนเภสัช",
+      userId: "teacher-001",
+      organisation: ORGANISATIONS.siriraj,
+      signedInAt: "2026-08-11T07:30:00.000Z",
+    } as const;
+    window.localStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify({
+      ...baseSession,
+      resourceScopes: [
+        "course:proposal",
+        "course:offering-bcp-101",
+        "course:offering-vpt-301",
+      ],
+    }));
+
+    expect(readPortalSession()?.resourceScopes).toContain("course:assigned");
+    expect(JSON.parse(window.localStorage.getItem(PORTAL_SESSION_KEY)!).resourceScopes)
+      .toContain("course:assigned");
+
+    window.localStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify({
+      ...baseSession,
+      resourceScopes: ["course:proposal", "course:offering-bcp-101"],
+    }));
+    expect(readPortalSession()?.resourceScopes)
+      .toEqual(["course:proposal", "course:offering-bcp-101"]);
   });
 
   it.each([

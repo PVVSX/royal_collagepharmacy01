@@ -5,9 +5,9 @@ const institutionNavigation = [
   { href: "/institution/students", icon: "school", label: "ผู้เข้ารับการฝึกอบรม" },
   { href: "/institution/teachers", icon: "co_present", label: "อาจารย์" },
   { href: "/institution/assignments", icon: "assignment_ind", label: "มอบหมายการสอน" },
-  { href: "/institution/courses", icon: "menu_book", label: "รายวิชาและรุ่นเรียน" },
-  { href: "/institution/registrations", icon: "how_to_reg", label: "ติดตามการลงทะเบียน" },
-  { href: "/institution/results", icon: "fact_check", label: "ติดตามผลผ่าน/ไม่ผ่าน" },
+  { href: "/institution/courses", icon: "menu_book", label: "รายวิชาที่เปิดสอน" },
+  { href: "/institution/registrations", icon: "how_to_reg", label: "ติดตามสถานะลงทะเบียน" },
+  { href: "/institution/results", icon: "fact_check", label: "ติดตามผลการเรียน" },
 ] as const;
 
 export default function InstitutionLayout({ children }: { children: React.ReactNode }) {

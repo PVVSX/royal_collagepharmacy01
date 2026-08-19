@@ -6,7 +6,7 @@ import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { registrationData, studentDetailData } from "@/roles/shared/data";
 import {
   getCurrentPassportSync,
   fullNameTh,
@@ -14,8 +14,6 @@ import {
   ageFromDob,
   maskCitizenId,
   formatThaiDate,
-  cpdProgressPct,
-  cpdRemaining,
   competenciesByCluster,
   effectiveLevel,
   daysUntilLicenseExpiry,
@@ -111,15 +109,6 @@ export default function PassportPage() {
 
   return (
     <PageShell size="wide" className="space-y-5">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <a href="/member/dashboard" className="transition-colors hover:text-primary">หน้าหลัก</a>
-        <span className="material-symbols-outlined text-base text-muted-foreground/50">chevron_right</span>
-        <span className="flex items-center gap-1 font-medium text-primary">
-          <span className="material-symbols-outlined text-base">badge</span> หนังสือเดินทางวิชาชีพ
-        </span>
-      </div>
-
       {/* ══ Official Document Header ══ */}
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-6 py-4">
@@ -135,9 +124,9 @@ export default function PassportPage() {
             <div className="hidden shrink-0 text-right md:block">
               <div className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
                 <span className="material-symbols-outlined text-15">badge</span>
-                หนังสือเดินทางวิชาชีพ
+                 Pharmacist Profile
               </div>
-              <p className="mt-1 text-2xs text-muted-foreground">Professional Passport</p>
+              <p className="mt-1 text-2xs text-muted-foreground">Pharmacist professional profile</p>
             </div>
           </div>
         </div>
@@ -170,6 +159,7 @@ export default function PassportPage() {
               <Field label="วันเกิด" value={formatThaiDate(p.identity.dateOfBirth)} />
               <Field label="สัญชาติ" value={p.identity.nationality} />
               <Field label="อีเมล" value={p.identity.email} />
+              <Field label="สถาบันที่กำลังศึกษา" value="สถาบันฝึกอบรมโรงพยาบาลศิริราช" />
             </div>
             {/* focus areas */}
             <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -284,15 +274,6 @@ export default function PassportPage() {
                 </div>
                 <h3 className="text-sm font-semibold leading-snug text-foreground">{s.titleTh}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">สาขา{s.specialtyTh} · {s.collegeShort}</p>
-                {typeof s.progress === "number" && (
-                  <div className="mt-2.5">
-                    <div className="mb-1 flex justify-between text-2xs">
-                      <span className="text-muted-foreground">ความคืบหน้าการฝึกอบรม</span>
-                      <span className="font-semibold text-primary">{s.progress}%</span>
-                    </div>
-                    <Progress value={s.progress} tone="brand" className="h-1.5" />
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -312,41 +293,6 @@ export default function PassportPage() {
                   </div>
                   <VerifyBadge verification={q.verification} />
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ══ E. CPD ══ */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <SectionHeader label="การศึกษาต่อเนื่อง (CPD/CPE)" icon="school" sub={`เกณฑ์ต่ออายุใบอนุญาต: ${p.cpd.targetCredits} หน่วยกิต/รอบ 5 ปี (ปีละ ≥ ${p.cpd.perYearMinimum})`} />
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-[280px_1fr]">
-          <div className="rounded-lg border border-border bg-primary/5 p-4">
-            <div className="flex items-end justify-between">
-              <div>
-                <div className="text-3xl font-bold text-primary">{p.cpd.currentCredits}</div>
-                <div className="text-xs text-muted-foreground">จาก {p.cpd.targetCredits} หน่วยกิต</div>
-              </div>
-              <div className="text-right text-xs">
-                <div className="font-semibold text-foreground">{cpdProgressPct(p)}%</div>
-                <div className="text-muted-foreground">เหลือ {cpdRemaining(p)}</div>
-              </div>
-            </div>
-            <Progress value={cpdProgressPct(p)} tone="brand" className="mt-3 h-2" />
-            <div className="mt-3 flex items-center gap-1.5 text-2xs text-muted-foreground">
-              <span className="material-symbols-outlined text-sm">event</span>
-              รอบสิ้นสุด {formatThaiDate(p.cpd.cycleExpiresAt)}
-            </div>
-          </div>
-          <div className="space-y-2">
-            {p.cpd.activities.map((a) => (
-              <div key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-border px-4 py-2.5">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium text-foreground">{a.title}</div>
-                  <div className="text-2xs text-muted-foreground">{a.category} · {formatThaiDate(a.date)}</div>
-                </div>
-                <span className="shrink-0 rounded-md bg-primary/10 px-2 py-1 text-xs font-bold text-primary">+{a.credits}</span>
               </div>
             ))}
           </div>
@@ -402,10 +348,22 @@ export default function PassportPage() {
         </div>
       </div>
 
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <SectionHeader label="การศึกษาปัจจุบัน" icon="school" sub={studentDetailData.program} />
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="วิทยาลัย" value={studentDetailData.college} />
+          <Field label="สถาบันฝึกอบรม" value="สถาบันฝึกอบรมโรงพยาบาลศิริราช" />
+          <Field label="หน่วยกิตสะสมทั้งหมด" value={`${studentDetailData.creditsEarned} จาก ${studentDetailData.creditsTotal} หน่วยกิต`} />
+        </div>
+        <div className="mt-5 overflow-x-auto rounded-lg border border-border">
+          <table className="w-full min-w-[680px] text-left text-sm"><thead className="bg-muted/50 text-xs text-muted-foreground"><tr><th className="px-4 py-3 font-medium">รหัสวิชา</th><th className="px-4 py-3 font-medium">รายวิชา</th><th className="px-4 py-3 font-medium">เวลาเรียน</th><th className="px-4 py-3 font-medium">สถานะ</th></tr></thead><tbody className="divide-y">{registrationData.courses.map((course) => <tr key={course.code}><td className="px-4 py-3 font-mono text-xs">{course.code}</td><td className="px-4 py-3 font-medium">{course.title}</td><td className="px-4 py-3 text-muted-foreground">{course.schedule}</td><td className="px-4 py-3"><Badge variant="success">ลงทะเบียนแล้ว</Badge></td></tr>)}</tbody></table>
+        </div>
+      </div>
+
       {/* Footer note */}
       <p className="flex items-center justify-center gap-1.5 text-center text-2xs text-muted-foreground">
         <span className="material-symbols-outlined text-sm">shield</span>
-        ข้อมูลนี้เป็นหนังสือเดินทางวิชาชีพมาตรฐานกลาง ออกโดย{p.issuingAuthority.nameTh} · ปรับปรุงล่าสุด {formatThaiDate(p.updatedAt)}
+        Pharmacist Profile จัดทำโดย{p.issuingAuthority.nameTh} · ปรับปรุงล่าสุด {formatThaiDate(p.updatedAt)}
       </p>
 
       <Footer />

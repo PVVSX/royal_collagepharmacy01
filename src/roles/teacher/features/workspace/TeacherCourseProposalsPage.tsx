@@ -179,7 +179,7 @@ export default function TeacherCourseProposalsPage() {
   return (
     <PageShell size="full" className="space-y-6">
       <WorkspaceHeader
-        eyebrow="Course proposal workflow"
+        eyebrow="ขั้นตอนเสนอรายวิชา"
         title="คำขอสร้างรายวิชา"
         description="สร้างรายการวิชาและติดตามผลตรวจจากเจ้าหน้าที่ราชวิทยาลัย พร้อมแก้ไขและส่งใหม่เมื่อได้รับข้อเสนอแนะ"
       />

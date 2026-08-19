@@ -47,21 +47,29 @@ import {
   DEFAULT_ACADEMIC_INSTITUTIONS,
   DEFAULT_ACADEMIC_STUDENTS,
   DEFAULT_ACADEMIC_TEACHERS,
+  DEFAULT_COURSE_OFFERING_CHANGE_REQUESTS,
   DEFAULT_COURSE_PROPOSALS,
   DEFAULT_COURSE_OFFERINGS,
   DEFAULT_STUDENT_AFFILIATIONS,
   DEFAULT_SUBJECT_RESULTS,
   DEFAULT_TEACHER_AFFILIATIONS,
   DEFAULT_TEACHING_ASSIGNMENTS,
-  canTeacherAccessOffering,
+  canTeacherAccessOfferingWithinAffiliation,
+  cancelTeachingAssignmentRecord,
   createCourseProposal as createCourseProposalRecord,
+  createCourseOfferingChangeRequest as createCourseOfferingChangeRequestRecord,
   createPendingSubjectResult,
+  createTeachingAssignmentRecord,
   isAcademicAffiliationActive,
   publishSubjectResult as publishSubjectResultRecord,
   reviseSubjectResult as reviseSubjectResultRecord,
   reviewCourseProposalRecord,
   resubmitCourseProposalRecord,
+  resubmitCourseOfferingChangeRequest as resubmitCourseOfferingChangeRequestRecord,
+  respondTeachingAssignmentRecord,
+  reviewCourseOfferingChangeRequest as reviewCourseOfferingChangeRequestRecord,
   saveSubjectResultDraft as saveSubjectResultDraftRecord,
+  stageTeachingAssignmentUpdate,
   type AcademicActor,
   type AcademicInstitution,
   type AcademicStudent,
@@ -69,6 +77,9 @@ import {
   type CourseProposal,
   type CourseProposalActor,
   type CourseProposalDecision,
+  type CourseOfferingChangeDecision,
+  type CourseOfferingChangeRequest,
+  type CourseOfferingEditablePatch,
   type CourseOffering,
   type ScopedAcademicActor,
   type StudentAffiliation,
@@ -76,6 +87,7 @@ import {
   type SubjectResultValue,
   type TeacherAffiliation,
   type TeachingAssignment,
+  type TeachingAssignmentPatch,
 } from "@/roles/shared/features/academic";
 import {
   appendAuditEvent,
@@ -133,7 +145,11 @@ export interface Program {
 export interface CourseRequest {
   id: string;
   collegeName: string;
-  courseCode: string;
+  courseCode?: string;
+  legacyCourseCode?: string;
+  kind?: "course" | "short_course";
+  classification?: "required" | "general";
+  institutionId?: string;
   courseTitle: string;
   type: string;
   duration: string;
@@ -168,6 +184,8 @@ export interface Certificate {
 export interface Settings {
   admissionOpen: boolean;
   registrationOpen: boolean;
+  registrationOpensAt: string;
+  registrationClosesAt: string;
 }
 
 export interface RegistrationReviewInput {
@@ -181,23 +199,85 @@ export interface RegistrationReviewInput {
 export interface TeachingAssignmentInput {
   teacherId: string;
   courseOfferingId: string;
-  actor: AcademicActor;
+  actor: ScopedAcademicActor;
   startsAt?: string;
   endsAt?: string;
+  reason: string;
+}
+
+export interface InstitutionTeacherInput {
+  actor: ScopedAcademicActor;
+  name: string;
+  startsAt?: string;
+  endsAt?: string;
+  reason: string;
+}
+
+export interface InstitutionTeacherUpdateInput {
+  actor: ScopedAcademicActor;
+  teacherId: string;
+  name: string;
+  reason: string;
+}
+
+export interface InstitutionTeacherEndInput {
+  actor: ScopedAcademicActor;
+  teacherId: string;
+  reason: string;
+}
+
+export interface TeachingAssignmentUpdateInput extends TeachingAssignmentInput {
+  assignmentId: string;
+  startsAt: string;
+}
+
+export interface TeachingAssignmentCancelInput {
+  actor: ScopedAcademicActor;
+  assignmentId: string;
+  reason: string;
+}
+
+export interface TeachingAssignmentResponseInput {
+  actor: ScopedAcademicActor;
+  assignmentId: string;
+  decision: "accept" | "decline";
+  reason?: string;
 }
 
 export interface AffiliationStatusInput {
   affiliationType: "student" | "teacher";
   affiliationId: string;
   status: "active" | "inactive";
-  actor: AcademicActor;
+  actor: ScopedAcademicActor;
   reason: string;
 }
 
 export interface CourseOfferingStatusInput {
   courseOfferingId: string;
   status: CourseOffering["status"];
-  actor: AcademicActor;
+  actor: ScopedAcademicActor;
+  reason: string;
+}
+
+export interface CourseOfferingChangeSubmissionInput {
+  actor: ScopedAcademicActor;
+  courseOfferingId: string;
+  reviewerTeacherId: string;
+  proposedChanges: CourseOfferingEditablePatch;
+  reason: string;
+}
+
+export interface CourseOfferingChangeResubmissionInput {
+  actor: ScopedAcademicActor;
+  requestId: string;
+  proposedChanges: CourseOfferingEditablePatch;
+  reason: string;
+}
+
+export interface CourseOfferingChangeReviewInput {
+  actor: ScopedAcademicActor;
+  requestId: string;
+  decision: CourseOfferingChangeDecision;
   reason: string;
 }
 
@@ -292,13 +372,23 @@ interface MockDbContextType {
   teacherAffiliations: TeacherAffiliation[];
   courseOfferings: CourseOffering[];
   teachingAssignments: TeachingAssignment[];
+  courseOfferingChangeRequests: CourseOfferingChangeRequest[];
   courseProposals: CourseProposal[];
   subjectResults: SubjectResult[];
   auditEvents: UserAuditEvent[];
   reviewRegistration: (input: RegistrationReviewInput) => void;
+  addInstitutionTeacher: (input: InstitutionTeacherInput) => void;
+  updateInstitutionTeacher: (input: InstitutionTeacherUpdateInput) => void;
+  endInstitutionTeacherAffiliation: (input: InstitutionTeacherEndInput) => void;
   assignTeacherToCourse: (input: TeachingAssignmentInput) => void;
+  updateTeachingAssignment: (input: TeachingAssignmentUpdateInput) => void;
+  cancelTeachingAssignment: (input: TeachingAssignmentCancelInput) => void;
+  respondTeachingAssignment: (input: TeachingAssignmentResponseInput) => void;
   updateAffiliationStatus: (input: AffiliationStatusInput) => void;
   updateCourseOfferingStatus: (input: CourseOfferingStatusInput) => void;
+  requestCourseOfferingChange: (input: CourseOfferingChangeSubmissionInput) => void;
+  resubmitCourseOfferingChange: (input: CourseOfferingChangeResubmissionInput) => void;
+  reviewCourseOfferingChange: (input: CourseOfferingChangeReviewInput) => void;
   submitCourseProposal: (input: CourseProposalSubmissionInput) => void;
   resubmitCourseProposal: (input: CourseProposalResubmissionInput) => void;
   reviewCourseProposal: (input: CourseProposalReviewInput) => void;
@@ -537,7 +627,7 @@ const defaultPrograms: Program[] = [
 
 const defaultCourseRequests: CourseRequest[] = [
   { id: "CRQ-001", collegeName: "วิทยาลัยเภสัชกรรมบำบัด", courseCode: "BCP-501", courseTitle: "การบริบาลทางเภสัชกรรมผู้ป่วยวิกฤต", type: "วุฒิบัตรเฉพาะทาง", duration: "16 สัปดาห์", capacity: 30, status: "pending", submittedAt: "24 มิ.ย. 2569" },
-  { id: "CRQ-002", collegeName: "วิทยาลัยการคุ้มครองผู้บริโภค", courseCode: "CPA-102", courseTitle: "กฎหมายและจริยธรรมวิชาชีพขั้นสูง", type: "ประกาศนียบัตรระยะสั้น", duration: "8 สัปดาห์", capacity: 50, status: "approved", submittedAt: "20 มิ.ย. 2569" },
+  { id: "CRQ-002", collegeName: "วิทยาลัยการคุ้มครองผู้บริโภค", legacyCourseCode: "CPA-102", courseTitle: "กฎหมายและจริยธรรมวิชาชีพขั้นสูง", type: "ประกาศนียบัตรระยะสั้น", kind: "short_course", classification: "general", duration: "3 เดือน", capacity: 50, status: "approved", submittedAt: "20 มิ.ย. 2569" },
 ];
 
 const memberName = `${currentMemberPassport.identity.titleTh}${currentMemberPassport.identity.firstNameTh} ${currentMemberPassport.identity.lastNameTh}`;
@@ -967,12 +1057,79 @@ function isCourseOfferingRecord(value: unknown): value is CourseOffering {
     (value.status === "open" || value.status === "closed");
 }
 
-function isTeachingAssignmentRecord(value: unknown): value is TeachingAssignment {
+function isTeachingAssignmentStatus(value: unknown): value is TeachingAssignment["status"] {
+  return value === "pending_teacher_response" || value === "accepted" ||
+    value === "declined" || value === "cancelled";
+}
+
+function isTeachingAssignmentPatchRecord(value: unknown) {
   if (!isStringRecord(value)) return false;
-  return isNonEmptyString(value.id) && isNonEmptyString(value.teacherId) &&
+  return isNonEmptyString(value.teacherId) && isNonEmptyString(value.courseOfferingId) &&
+    isNonEmptyString(value.startsAt) &&
+    (value.endsAt === undefined || isNonEmptyString(value.endsAt));
+}
+
+function normalizeTeachingAssignmentRecord(value: unknown): TeachingAssignment | null {
+  if (!isStringRecord(value)) return null;
+  const validBase = isNonEmptyString(value.id) && isNonEmptyString(value.teacherId) &&
     isNonEmptyString(value.courseOfferingId) && isNonEmptyString(value.institutionId) &&
     isNonEmptyString(value.startsAt) && (value.endsAt === undefined || isNonEmptyString(value.endsAt)) &&
     isNonEmptyString(value.assignedBy) && isNonEmptyString(value.assignedAt);
+  if (!validBase) return null;
+  const status = value.status === undefined
+    ? "accepted"
+    : isTeachingAssignmentStatus(value.status)
+      ? value.status
+      : null;
+  if (status === null) return null;
+  const pendingChanges = value.pendingChanges === undefined
+    ? undefined
+    : isTeachingAssignmentPatchRecord(value.pendingChanges)
+      ? cloneRecord(value.pendingChanges) as TeachingAssignment["pendingChanges"]
+      : null;
+  if (pendingChanges === null) return null;
+  const latestDecision = value.latestDecision;
+  const validDecision = latestDecision === undefined || (
+    isStringRecord(latestDecision) &&
+    (latestDecision.decision === "accepted" || latestDecision.decision === "declined") &&
+    isAcademicActorRecord(latestDecision.actor) &&
+    (latestDecision.reason === undefined || typeof latestDecision.reason === "string") &&
+    isNonEmptyString(latestDecision.decidedAt)
+  );
+  if (!validDecision) return null;
+  return {
+    id: value.id as string,
+    teacherId: value.teacherId as string,
+    courseOfferingId: value.courseOfferingId as string,
+    institutionId: value.institutionId as string,
+    startsAt: value.startsAt as string,
+    ...(isNonEmptyString(value.endsAt) ? { endsAt: value.endsAt } : {}),
+    assignedBy: value.assignedBy as string,
+    assignedAt: value.assignedAt as string,
+    status,
+    updatedAt: isNonEmptyString(value.updatedAt) ? value.updatedAt : value.assignedAt as string,
+    ...(pendingChanges ? { pendingChanges } : {}),
+    ...(latestDecision ? {
+      latestDecision: cloneRecord(latestDecision) as unknown as TeachingAssignment["latestDecision"],
+    } : {}),
+  };
+}
+
+export function normalizeTeachingAssignments(value: unknown) {
+  const raw = Array.isArray(value) ? value : [];
+  const rawIds = new Set(raw.flatMap((item) => (
+    isStringRecord(item) && isNonEmptyString(item.id) ? [item.id] : []
+  )));
+  const stored = raw
+    .map(normalizeTeachingAssignmentRecord)
+    .filter((item): item is TeachingAssignment => Boolean(item));
+  const storedIds = new Set(stored.map((item) => item.id));
+  return [
+    ...stored,
+    ...DEFAULT_TEACHING_ASSIGNMENTS
+      .filter((item) => !storedIds.has(item.id) && !rawIds.has(item.id))
+      .map(cloneRecord),
+  ];
 }
 
 function isAcademicActorRecord(value: unknown): value is AcademicActor {
@@ -1009,6 +1166,60 @@ function isCourseProposalActorRecord(value: unknown): value is CourseProposalAct
   const resourceScopes = (value as AcademicActor & { resourceScopes?: unknown }).resourceScopes;
   return Array.isArray(resourceScopes) &&
     resourceScopes.every((scope: unknown) => typeof scope === "string");
+}
+
+function isCourseOfferingEditablePatchRecord(value: unknown): value is CourseOfferingEditablePatch {
+  if (!isStringRecord(value)) return false;
+  const keys = Object.keys(value);
+  if (keys.length === 0 || keys.some((key) => !["courseTitle", "credits", "term", "section"].includes(key))) {
+    return false;
+  }
+  return (value.courseTitle === undefined || isNonEmptyString(value.courseTitle)) &&
+    (value.credits === undefined || (typeof value.credits === "number" && Number.isFinite(value.credits) && value.credits > 0)) &&
+    (value.term === undefined || isNonEmptyString(value.term)) &&
+    (value.section === undefined || isNonEmptyString(value.section));
+}
+
+function isCourseOfferingChangeStatus(value: unknown): value is CourseOfferingChangeRequest["status"] {
+  return value === "pending_teacher_review" || value === "needs_revision" ||
+    value === "approved" || value === "rejected";
+}
+
+function isCourseOfferingChangeHistoryRecord(
+  value: unknown,
+): value is CourseOfferingChangeRequest["history"][number] {
+  if (!isStringRecord(value)) return false;
+  return isNonEmptyString(value.id) &&
+    (value.action === "submitted" || value.action === "resubmitted" || value.action === "reviewed") &&
+    (value.fromStatus === undefined || isCourseOfferingChangeStatus(value.fromStatus)) &&
+    isCourseOfferingChangeStatus(value.toStatus) && isCourseProposalActorRecord(value.actor) &&
+    isNonEmptyString(value.occurredAt) && isNonEmptyString(value.reason);
+}
+
+function isCourseOfferingChangeRequestRecord(value: unknown): value is CourseOfferingChangeRequest {
+  if (!isStringRecord(value)) return false;
+  const latestReview = value.latestReview;
+  const validReview = latestReview === undefined || (
+    isStringRecord(latestReview) &&
+    (latestReview.decision === "needs_revision" || latestReview.decision === "approved" || latestReview.decision === "rejected") &&
+    isNonEmptyString(latestReview.reason) && isCourseProposalActorRecord(latestReview.actor) &&
+    isNonEmptyString(latestReview.reviewedAt)
+  );
+  return isNonEmptyString(value.id) && isNonEmptyString(value.courseOfferingId) &&
+    isNonEmptyString(value.institutionId) && isNonEmptyString(value.reviewerTeacherId) &&
+    isCourseOfferingEditablePatchRecord(value.proposedChanges) && isNonEmptyString(value.reason) &&
+    isCourseOfferingChangeStatus(value.status) && isCourseProposalActorRecord(value.requestedBy) &&
+    isNonEmptyString(value.requestedAt) && isNonEmptyString(value.updatedAt) && validReview &&
+    Array.isArray(value.history) && value.history.length > 0 &&
+    value.history.every(isCourseOfferingChangeHistoryRecord);
+}
+
+export function normalizeCourseOfferingChangeRequests(value: unknown) {
+  return mergeAcademicRecords(
+    value,
+    DEFAULT_COURSE_OFFERING_CHANGE_REQUESTS,
+    isCourseOfferingChangeRequestRecord,
+  );
 }
 
 function isCourseProposalHistoryRecord(
@@ -1066,6 +1277,89 @@ function hasTeacherCourseMutationScope(
 ) {
   return actor.resourceScopes.includes("course:assigned") ||
     hasResourceScope(actor.resourceScopes, `course:${courseOfferingId}`);
+}
+
+function assertInstitutionAdminMutationScope(
+  actor: ScopedAcademicActor,
+  institutionId: string,
+) {
+  const organisation = organisationForActor(actor);
+  if (
+    actor.role !== "institution_admin" ||
+    organisation.kind !== "institution" ||
+    actor.organisationId !== institutionId ||
+    !hasResourceScope(actor.resourceScopes, `institution:${institutionId}`)
+  ) {
+    throw new Error("บัญชีนี้ไม่มีสิทธิ์จัดการข้อมูลของสถาบันดังกล่าว");
+  }
+}
+
+function assignmentWindows(assignment: TeachingAssignment): TeachingAssignmentPatch[] {
+  const current: TeachingAssignmentPatch = {
+    teacherId: assignment.teacherId,
+    courseOfferingId: assignment.courseOfferingId,
+    startsAt: assignment.startsAt,
+    ...(assignment.endsAt ? { endsAt: assignment.endsAt } : {}),
+  };
+  return assignment.status === "accepted" && assignment.pendingChanges
+    ? [current, assignment.pendingChanges]
+    : [current];
+}
+
+function assignmentWindowsOverlap(
+  left: Pick<TeachingAssignmentPatch, "startsAt" | "endsAt">,
+  right: Pick<TeachingAssignmentPatch, "startsAt" | "endsAt">,
+) {
+  const leftStart = new Date(left.startsAt).getTime();
+  const rightStart = new Date(right.startsAt).getTime();
+  const leftEnd = left.endsAt ? new Date(left.endsAt).getTime() : Number.POSITIVE_INFINITY;
+  const rightEnd = right.endsAt ? new Date(right.endsAt).getTime() : Number.POSITIVE_INFINITY;
+  return leftStart < rightEnd && rightStart < leftEnd;
+}
+
+function assignmentConflictsWithPatch(
+  assignment: TeachingAssignment,
+  patch: TeachingAssignmentPatch,
+) {
+  if (assignment.status !== "pending_teacher_response" && assignment.status !== "accepted") {
+    return false;
+  }
+  return assignmentWindows(assignment).some((window) => (
+    window.teacherId === patch.teacherId &&
+    window.courseOfferingId === patch.courseOfferingId &&
+    assignmentWindowsOverlap(window, patch)
+  ));
+}
+
+function assignmentBlocksAffiliationEnd(
+  assignment: TeachingAssignment,
+  teacherId: string,
+  at: Date,
+) {
+  if (assignment.status !== "pending_teacher_response" && assignment.status !== "accepted") {
+    return false;
+  }
+  return assignmentWindows(assignment).some((window) => (
+    window.teacherId === teacherId &&
+    (!window.endsAt || new Date(window.endsAt).getTime() > at.getTime())
+  ));
+}
+
+function affiliationCoversAssignment(
+  affiliation: TeacherAffiliation,
+  assignment: TeachingAssignmentPatch,
+) {
+  if (affiliation.status !== "active") return false;
+  const affiliationStart = new Date(affiliation.startsAt).getTime();
+  const affiliationEnd = affiliation.endsAt
+    ? new Date(affiliation.endsAt).getTime()
+    : Number.POSITIVE_INFINITY;
+  const assignmentStart = new Date(assignment.startsAt).getTime();
+  const assignmentEnd = assignment.endsAt
+    ? new Date(assignment.endsAt).getTime()
+    : Number.POSITIVE_INFINITY;
+  return Number.isFinite(affiliationStart) && Number.isFinite(assignmentStart) &&
+    assignmentStart >= affiliationStart && assignmentEnd <= affiliationEnd;
 }
 
 function appendAcademicAudit(input: {
@@ -1219,7 +1513,9 @@ const defaultCertificates: Certificate[] = [
 
 const defaultSettings: Settings = {
   admissionOpen: true,
-  registrationOpen: true, // Set to true by default so user can test Registration
+  registrationOpen: true,
+  registrationOpensAt: "2026-08-24T09:00:00+07:00",
+  registrationClosesAt: "2026-09-30T16:30:00+07:00",
 };
 
 const MockDbContext = createContext<MockDbContextType | undefined>(undefined);
@@ -1240,11 +1536,12 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
   const [teacherAffiliations, setTeacherAffiliations] = useState<TeacherAffiliation[]>([]);
   const [courseOfferings, setCourseOfferings] = useState<CourseOffering[]>([]);
   const [teachingAssignments, setTeachingAssignments] = useState<TeachingAssignment[]>([]);
+  const [courseOfferingChangeRequests, setCourseOfferingChangeRequests] = useState<CourseOfferingChangeRequest[]>([]);
   const [courseProposals, setCourseProposals] = useState<CourseProposal[]>([]);
   const [subjectResults, setSubjectResults] = useState<SubjectResult[]>([]);
   const [examRequests, setExamRequests] = useState<ExamRequest[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [settings, setSettings] = useState<Settings>({ admissionOpen: true, registrationOpen: true });
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -1302,10 +1599,11 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
       DEFAULT_COURSE_OFFERINGS,
       isCourseOfferingRecord,
     );
-    const normalizedTeachingAssignments = mergeAcademicRecords(
+    const normalizedTeachingAssignments = normalizeTeachingAssignments(
       p(s("mock_teaching_assignments"), DEFAULT_TEACHING_ASSIGNMENTS),
-      DEFAULT_TEACHING_ASSIGNMENTS,
-      isTeachingAssignmentRecord,
+    );
+    const normalizedCourseOfferingChangeRequests = normalizeCourseOfferingChangeRequests(
+      p(s("mock_course_offering_change_requests"), DEFAULT_COURSE_OFFERING_CHANGE_REQUESTS),
     );
     const normalizedCourseProposals = normalizeCourseProposals(
       p(s("mock_course_proposals"), DEFAULT_COURSE_PROPOSALS),
@@ -1326,7 +1624,19 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
         : payment
     )));
     setPrograms(asArray(p(s("mock_programs"), defaultPrograms), defaultPrograms));
-    setCourseRequests(asArray(p(s("mock_courseRequests"), defaultCourseRequests), defaultCourseRequests));
+    const storedCourseRequests = asArray(p(s("mock_courseRequests"), defaultCourseRequests), defaultCourseRequests);
+    const migratedCourseRequests = storedCourseRequests.map((request) => {
+      if (request.kind) return request;
+      const isShortCourse = request.type.includes("ระยะสั้น");
+      return {
+        ...request,
+        kind: isShortCourse ? "short_course" as const : "course" as const,
+        classification: isShortCourse ? "general" as const : "required" as const,
+        legacyCourseCode: isShortCourse ? request.courseCode : request.legacyCourseCode,
+        courseCode: isShortCourse ? undefined : request.courseCode,
+      };
+    });
+    setCourseRequests(migratedCourseRequests);
     setRegistrations(normalizedRegistrations);
     setRegistrationInvoices(normalizedInvoices);
     setAcademicInstitutions(normalizedAcademicInstitutions);
@@ -1336,11 +1646,12 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
     setTeacherAffiliations(normalizedTeacherAffiliations);
     setCourseOfferings(normalizedCourseOfferings);
     setTeachingAssignments(normalizedTeachingAssignments);
+    setCourseOfferingChangeRequests(normalizedCourseOfferingChangeRequests);
     setCourseProposals(normalizedCourseProposals);
     setSubjectResults(normalizedSubjectResults);
     setExamRequests(asArray(p(s("mock_examRequests"), defaultExamRequests), defaultExamRequests));
     setCertificates(asArray(p(s("mock_certificates"), defaultCertificates), defaultCertificates));
-    setSettings(p(s("mock_settings"), defaultSettings));
+    setSettings({ ...defaultSettings, ...p(s("mock_settings"), defaultSettings) });
 
     setIsLoaded(true);
   }, []);
@@ -1361,13 +1672,14 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("mock_teacher_affiliations", JSON.stringify(teacherAffiliations));
     localStorage.setItem("mock_course_offerings", JSON.stringify(courseOfferings));
     localStorage.setItem("mock_teaching_assignments", JSON.stringify(teachingAssignments));
+    localStorage.setItem("mock_course_offering_change_requests", JSON.stringify(courseOfferingChangeRequests));
     localStorage.setItem("mock_course_proposals", JSON.stringify(courseProposals));
     localStorage.setItem("mock_subject_results", JSON.stringify(subjectResults));
     localStorage.setItem("mock_examRequests", JSON.stringify(examRequests));
     localStorage.setItem("mock_certificates", JSON.stringify(certificates));
     localStorage.setItem("mock_settings", JSON.stringify(settings));
-    localStorage.setItem("mock_db_schema_version", "4");
-  }, [academicInstitutions, academicStudents, academicTeachers, admissions, certificates, courseOfferings, courseProposals, courseRequests, examRequests, isLoaded, payments, programs, registrationInvoices, registrations, researchSubmissions, settings, studentAffiliations, subjectResults, teacherAffiliations, teachingAssignments]);
+    localStorage.setItem("mock_db_schema_version", "6");
+  }, [academicInstitutions, academicStudents, academicTeachers, admissions, certificates, courseOfferingChangeRequests, courseOfferings, courseProposals, courseRequests, examRequests, isLoaded, payments, programs, registrationInvoices, registrations, researchSubmissions, settings, studentAffiliations, subjectResults, teacherAffiliations, teachingAssignments]);
 
   const updateAdmissionStatus = (id: string, status: Status) => setAdmissions((previous) => previous.map((admission) => {
     if (admission.id !== id) return admission;
@@ -1607,7 +1919,14 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
     const assignment = teachingAssignments.find((item) => (
       item.teacherId === input.actor.userId &&
       item.courseOfferingId === current.courseOfferingId &&
-      canTeacherAccessOffering(teachingAssignments, input.actor.userId, current.courseOfferingId!, new Date(at))
+      canTeacherAccessOfferingWithinAffiliation(
+        teachingAssignments,
+        teacherAffiliations,
+        input.actor.userId,
+        current.institutionId!,
+        current.courseOfferingId!,
+        new Date(at),
+      )
     ));
     if (!assignment || input.actor.role !== "teacher" || input.actor.organisationId !== current.institutionId) {
       throw new Error("Teacher cannot review a registration outside their assignment");
@@ -1664,42 +1983,201 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
       )));
     }
   };
-  const assignTeacherToCourse = (input: TeachingAssignmentInput) => {
-    if (input.actor.role !== "institution_admin") {
-      throw new Error("Only an Institution Admin can change a teaching assignment");
-    }
-    const offering = courseOfferings.find((item) => item.id === input.courseOfferingId);
-    if (!offering || offering.institutionId !== input.actor.organisationId) {
-      throw new Error("Course offering is outside the Institution Admin scope");
-    }
-    const startsAt = input.startsAt ?? new Date().toISOString();
-    const start = new Date(startsAt);
-    if (!Number.isFinite(start.getTime())) throw new Error("Teaching assignment start is invalid");
-    if (input.endsAt && new Date(input.endsAt).getTime() <= start.getTime()) {
-      throw new Error("Teaching assignment end must be after its start");
-    }
-    const teacherAffiliation = teacherAffiliations.find((affiliation) => (
-      affiliation.teacherId === input.teacherId &&
-      affiliation.institutionId === input.actor.organisationId &&
-      isAcademicAffiliationActive(affiliation, start)
+  const requiredInstitutionReason = (value: string) => {
+    const reason = value.trim();
+    if (!reason) throw new Error("กรุณาระบุเหตุผลประกอบการดำเนินการ");
+    return reason;
+  };
+  const hasOutstandingCourseChange = (request: CourseOfferingChangeRequest) => (
+    request.status === "pending_teacher_review" || request.status === "needs_revision"
+  );
+  const assignmentChangeWouldOrphanCourseReview = (
+    current: TeachingAssignment,
+    next: TeachingAssignment,
+    at: Date,
+  ) => {
+    if (current.status !== "accepted") return false;
+    const relevantRequests = courseOfferingChangeRequests.filter((request) => (
+      hasOutstandingCourseChange(request) &&
+      request.reviewerTeacherId === current.teacherId &&
+      request.courseOfferingId === current.courseOfferingId &&
+      request.institutionId === current.institutionId
     ));
-    if (!teacherAffiliation) throw new Error("Teacher is outside the Institution Admin scope");
-    if (canTeacherAccessOffering(teachingAssignments, input.teacherId, offering.id, start)) {
-      throw new Error("Teacher already has an active assignment for this course offering");
+    if (relevantRequests.length === 0) return false;
+    const nextAssignments = teachingAssignments.map((assignment) => (
+      assignment.id === current.id ? next : assignment
+    ));
+    return relevantRequests.some((request) => (
+      !canTeacherAccessOfferingWithinAffiliation(
+        nextAssignments,
+        teacherAffiliations,
+        request.reviewerTeacherId,
+        request.institutionId,
+        request.courseOfferingId,
+        at,
+      )
+    ));
+  };
+  const assertAssignmentChangeKeepsCourseReview = (
+    current: TeachingAssignment,
+    next: TeachingAssignment,
+    at: Date,
+  ) => {
+    if (assignmentChangeWouldOrphanCourseReview(current, next, at)) {
+      throw new Error("ไม่สามารถเปลี่ยนหรือยกเลิกการมอบหมายนี้ได้ เนื่องจากมีคำขอปรับข้อมูลรายวิชาที่ยังรอการดำเนินการ");
     }
-    const assignment: TeachingAssignment = {
-      id: `teaching-assignment-${globalThis.crypto?.randomUUID?.() ?? Date.now()}`,
-      teacherId: input.teacherId,
-      courseOfferingId: offering.id,
-      institutionId: offering.institutionId,
+  };
+  const addInstitutionTeacher = (input: InstitutionTeacherInput) => {
+    assertInstitutionAdminMutationScope(input.actor, input.actor.organisationId);
+    const name = input.name.trim();
+    if (!name) throw new Error("กรุณาระบุชื่ออาจารย์");
+    const reason = requiredInstitutionReason(input.reason);
+    const at = new Date().toISOString();
+    const startsAt = input.startsAt ?? at;
+    if (!Number.isFinite(new Date(startsAt).getTime())) throw new Error("วันเริ่มสังกัดไม่ถูกต้อง");
+    if (input.endsAt) {
+      if (!Number.isFinite(new Date(input.endsAt).getTime())) {
+        throw new Error("วันสิ้นสุดสังกัดไม่ถูกต้อง");
+      }
+      if (new Date(input.endsAt).getTime() <= new Date(startsAt).getTime()) {
+        throw new Error("วันสิ้นสุดสังกัดต้องอยู่หลังวันเริ่มต้น");
+      }
+    }
+    const teacher: AcademicTeacher = {
+      id: `teacher-${globalThis.crypto?.randomUUID?.() ?? Date.now()}`,
+      name,
+    };
+    const affiliation: TeacherAffiliation = {
+      id: `teacher-affiliation-${globalThis.crypto?.randomUUID?.() ?? Date.now()}`,
+      teacherId: teacher.id,
+      institutionId: input.actor.organisationId,
       startsAt,
       ...(input.endsAt ? { endsAt: input.endsAt } : {}),
-      assignedBy: input.actor.userId,
-      assignedAt: new Date().toISOString(),
+      status: "active",
     };
     appendAcademicAudit({
       actor: input.actor,
-      resourceScopes: ["*"],
+      resourceScopes: input.actor.resourceScopes,
+      action: "business_record.create",
+      resourceType: "teacher_affiliation",
+      resourceId: affiliation.id,
+      resourceLabel: teacher.name,
+      resourceOrganisationId: affiliation.institutionId,
+      before: null,
+      after: { teacher, affiliation },
+      reason,
+      evidenceReference: `teacher:${teacher.id}`,
+      occurredAt: at,
+    });
+    setAcademicTeachers((previous) => [...previous, teacher]);
+    setTeacherAffiliations((previous) => [...previous, affiliation]);
+  };
+  const updateInstitutionTeacher = (input: InstitutionTeacherUpdateInput) => {
+    assertInstitutionAdminMutationScope(input.actor, input.actor.organisationId);
+    const reason = requiredInstitutionReason(input.reason);
+    const name = input.name.trim();
+    if (!name) throw new Error("กรุณาระบุชื่ออาจารย์");
+    const teacher = academicTeachers.find((item) => item.id === input.teacherId);
+    const affiliation = teacherAffiliations.find((item) => (
+      item.teacherId === input.teacherId &&
+      item.institutionId === input.actor.organisationId &&
+      item.status === "active"
+    ));
+    if (!teacher || !affiliation) throw new Error("ไม่พบอาจารย์ในขอบเขตสถาบันนี้");
+    if (teacherAffiliations.some((item) => (
+      item.teacherId === teacher.id && item.institutionId !== input.actor.organisationId
+    ))) {
+      throw new Error("ไม่สามารถแก้ชื่อกลางของอาจารย์ที่สังกัดมากกว่าหนึ่งสถาบัน");
+    }
+    const updated = { ...teacher, name };
+    const at = new Date().toISOString();
+    appendAcademicAudit({
+      actor: input.actor,
+      resourceScopes: input.actor.resourceScopes,
+      action: "business_record.update",
+      resourceType: "academic_teacher",
+      resourceId: teacher.id,
+      resourceLabel: teacher.name,
+      resourceOrganisationId: affiliation.institutionId,
+      before: teacher,
+      after: updated,
+      reason,
+      evidenceReference: `teacher-affiliation:${affiliation.id}`,
+      occurredAt: at,
+    });
+    setAcademicTeachers((previous) => previous.map((item) => item.id === teacher.id ? updated : item));
+  };
+  const endInstitutionTeacherAffiliation = (input: InstitutionTeacherEndInput) => {
+    assertInstitutionAdminMutationScope(input.actor, input.actor.organisationId);
+    const reason = requiredInstitutionReason(input.reason);
+    const affiliation = teacherAffiliations.find((item) => (
+      item.teacherId === input.teacherId &&
+      item.institutionId === input.actor.organisationId &&
+      item.status === "active"
+    ));
+    if (!affiliation) throw new Error("ไม่พบสังกัดอาจารย์ที่ยังใช้งานในสถาบันนี้");
+    const at = new Date().toISOString();
+    if (teachingAssignments.some((assignment) => (
+      assignment.institutionId === input.actor.organisationId &&
+      assignmentBlocksAffiliationEnd(assignment, input.teacherId, new Date(at))
+    ))) {
+      throw new Error("กรุณายกเลิกการมอบหมายการสอนที่ยังมีผลก่อนสิ้นสุดสังกัดอาจารย์");
+    }
+    const updated: TeacherAffiliation = { ...affiliation, status: "inactive", endsAt: at };
+    appendAcademicAudit({
+      actor: input.actor,
+      resourceScopes: input.actor.resourceScopes,
+      action: "access.role_scope_change",
+      resourceType: "teacher_affiliation",
+      resourceId: affiliation.id,
+      resourceLabel: academicTeachers.find((item) => item.id === input.teacherId)?.name ?? input.teacherId,
+      resourceOrganisationId: affiliation.institutionId,
+      before: affiliation,
+      after: updated,
+      reason,
+      evidenceReference: `teacher:${input.teacherId}`,
+      occurredAt: at,
+    });
+    setTeacherAffiliations((previous) => previous.map((item) => item.id === affiliation.id ? updated : item));
+  };
+  const assignTeacherToCourse = (input: TeachingAssignmentInput) => {
+    const offering = courseOfferings.find((item) => item.id === input.courseOfferingId);
+    if (!offering) throw new Error("ไม่พบรายวิชาที่ต้องการมอบหมาย");
+    assertInstitutionAdminMutationScope(input.actor, offering.institutionId);
+    const reason = requiredInstitutionReason(input.reason);
+    const startsAt = input.startsAt ?? new Date().toISOString();
+    const assignment = createTeachingAssignmentRecord({
+      id: `teaching-assignment-${globalThis.crypto?.randomUUID?.() ?? Date.now()}`,
+      patch: {
+        teacherId: input.teacherId,
+        courseOfferingId: offering.id,
+        startsAt,
+        ...(input.endsAt ? { endsAt: input.endsAt } : {}),
+      },
+      institutionId: offering.institutionId,
+      assignedBy: input.actor.userId,
+    });
+    const teacherAffiliation = teacherAffiliations.find((affiliation) => (
+      affiliation.teacherId === input.teacherId &&
+      affiliation.institutionId === input.actor.organisationId &&
+      affiliationCoversAssignment(affiliation, assignment)
+    ));
+    if (!teacherAffiliation) {
+      throw new Error("ช่วงเวลามอบหมายต้องอยู่ภายในช่วงสังกัดของอาจารย์ในสถาบันนี้");
+    }
+    if (teachingAssignments.some((assignment) => (
+      assignmentConflictsWithPatch(assignment, {
+        teacherId: input.teacherId,
+        courseOfferingId: offering.id,
+        startsAt,
+        ...(input.endsAt ? { endsAt: input.endsAt } : {}),
+      })
+    ))) {
+      throw new Error("อาจารย์ท่านนี้ได้รับมอบหมายรายวิชานี้อยู่แล้ว");
+    }
+    appendAcademicAudit({
+      actor: input.actor,
+      resourceScopes: input.actor.resourceScopes,
       action: "teaching_assignment.change",
       resourceType: "teaching_assignment",
       resourceId: assignment.id,
@@ -1707,22 +2185,146 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
       resourceOrganisationId: offering.institutionId,
       before: null,
       after: assignment,
-      reason: "กำหนดอาจารย์ผู้รับผิดชอบรายวิชาตามสถาบันและรุ่นเรียน",
+      reason,
       evidenceReference: `course-offering:${offering.id}`,
       occurredAt: assignment.assignedAt,
     });
     setTeachingAssignments((previous) => [...previous, assignment]);
   };
-  const updateAffiliationStatus = (input: AffiliationStatusInput) => {
-    if (input.actor.role !== "institution_admin") {
-      throw new Error("Only an Institution Admin can change an affiliation");
+  const updateTeachingAssignment = (input: TeachingAssignmentUpdateInput) => {
+    const assignment = teachingAssignments.find((item) => item.id === input.assignmentId);
+    if (!assignment) throw new Error("ไม่พบการมอบหมายที่ต้องการแก้ไข");
+    assertInstitutionAdminMutationScope(input.actor, assignment.institutionId);
+    const reason = requiredInstitutionReason(input.reason);
+    const offering = courseOfferings.find((item) => item.id === input.courseOfferingId);
+    if (!offering || offering.institutionId !== assignment.institutionId) {
+      throw new Error("รายวิชาอยู่นอกขอบเขตสถาบัน");
     }
-    const reason = input.reason.trim();
-    if (!reason) throw new Error("Affiliation changes require a reason");
+    const patch: TeachingAssignmentPatch = {
+      teacherId: input.teacherId,
+      courseOfferingId: offering.id,
+      startsAt: input.startsAt,
+      ...(input.endsAt ? { endsAt: input.endsAt } : {}),
+    };
+    const at = new Date().toISOString();
+    const updated = stageTeachingAssignmentUpdate(assignment, patch, at);
+    const affiliation = teacherAffiliations.find((item) => (
+      item.teacherId === input.teacherId && item.institutionId === assignment.institutionId &&
+      affiliationCoversAssignment(item, patch)
+    ));
+    if (!affiliation) {
+      throw new Error("ช่วงเวลามอบหมายต้องอยู่ภายในช่วงสังกัดของอาจารย์ในสถาบันนี้");
+    }
+    if (teachingAssignments.some((item) => (
+      item.id !== assignment.id && assignmentConflictsWithPatch(item, patch)
+    ))) {
+      throw new Error("อาจารย์ท่านนี้ได้รับมอบหมายรายวิชานี้อยู่แล้ว");
+    }
+    const projected = assignment.status === "accepted"
+      ? { ...updated, ...patch, pendingChanges: undefined }
+      : updated;
+    assertAssignmentChangeKeepsCourseReview(assignment, projected, new Date(at));
+    appendAcademicAudit({
+      actor: input.actor,
+      resourceScopes: input.actor.resourceScopes,
+      action: "teaching_assignment.change",
+      resourceType: "teaching_assignment",
+      resourceId: assignment.id,
+      resourceLabel: offering.courseCode,
+      resourceOrganisationId: assignment.institutionId,
+      before: assignment,
+      after: updated,
+      reason,
+      evidenceReference: `course-offering:${offering.id}`,
+      occurredAt: at,
+    });
+    setTeachingAssignments((previous) => previous.map((item) => item.id === assignment.id ? updated : item));
+  };
+  const cancelTeachingAssignment = (input: TeachingAssignmentCancelInput) => {
+    const assignment = teachingAssignments.find((item) => item.id === input.assignmentId);
+    if (!assignment) throw new Error("ไม่พบการมอบหมายที่ต้องการยกเลิก");
+    assertInstitutionAdminMutationScope(input.actor, assignment.institutionId);
+    const reason = requiredInstitutionReason(input.reason);
+    const at = new Date().toISOString();
+    const updated = cancelTeachingAssignmentRecord(assignment, at);
+    assertAssignmentChangeKeepsCourseReview(assignment, updated, new Date(at));
+    const offering = courseOfferings.find((item) => item.id === assignment.courseOfferingId);
+    appendAcademicAudit({
+      actor: input.actor,
+      resourceScopes: input.actor.resourceScopes,
+      action: "teaching_assignment.change",
+      resourceType: "teaching_assignment",
+      resourceId: assignment.id,
+      resourceLabel: offering?.courseCode ?? assignment.courseOfferingId,
+      resourceOrganisationId: assignment.institutionId,
+      before: assignment,
+      after: updated,
+      reason,
+      evidenceReference: `course-offering:${assignment.courseOfferingId}`,
+      occurredAt: at,
+    });
+    setTeachingAssignments((previous) => previous.map((item) => item.id === assignment.id ? updated : item));
+  };
+  const respondTeachingAssignment = (input: TeachingAssignmentResponseInput) => {
+    const assignment = teachingAssignments.find((item) => item.id === input.assignmentId);
+    if (!assignment) throw new Error("ไม่พบการมอบหมายที่ต้องการตอบรับ");
+    const teacherId = assignment.pendingChanges?.teacherId ?? assignment.teacherId;
+    const courseOfferingId = assignment.pendingChanges?.courseOfferingId ?? assignment.courseOfferingId;
+    if (
+      input.actor.role !== "teacher" || input.actor.userId !== teacherId ||
+      input.actor.organisationId !== assignment.institutionId ||
+      !hasTeacherCourseMutationScope(input.actor, courseOfferingId)
+    ) {
+      throw new Error("บัญชีนี้ไม่มีสิทธิ์ตอบรับการมอบหมายดังกล่าว");
+    }
+    const at = new Date().toISOString();
+    const effectivePatch: TeachingAssignmentPatch = assignment.pendingChanges ?? {
+      teacherId: assignment.teacherId,
+      courseOfferingId: assignment.courseOfferingId,
+      startsAt: assignment.startsAt,
+      ...(assignment.endsAt ? { endsAt: assignment.endsAt } : {}),
+    };
+    const affiliation = teacherAffiliations.find((item) => (
+      item.teacherId === teacherId && item.institutionId === assignment.institutionId &&
+      affiliationCoversAssignment(item, effectivePatch)
+    ));
+    if (!affiliation) {
+      throw new Error("ช่วงเวลามอบหมายอยู่นอกช่วงสังกัดของอาจารย์ในสถาบันนี้");
+    }
+    const updated = respondTeachingAssignmentRecord({ ...input, assignment, at });
+    if (input.decision === "accept") {
+      assertAssignmentChangeKeepsCourseReview(assignment, updated, new Date(at));
+    }
+    const reason = input.reason?.trim() || "ตอบรับการมอบหมายการสอน";
+    appendAcademicAudit({
+      actor: input.actor,
+      resourceScopes: input.actor.resourceScopes,
+      action: "teaching_assignment.change",
+      resourceType: "teaching_assignment",
+      resourceId: assignment.id,
+      resourceLabel: courseOfferings.find((item) => item.id === courseOfferingId)?.courseCode ?? courseOfferingId,
+      resourceOrganisationId: assignment.institutionId,
+      before: assignment,
+      after: updated,
+      reason,
+      evidenceReference: `course-offering:${courseOfferingId}`,
+      occurredAt: at,
+    });
+    setTeachingAssignments((previous) => previous.map((item) => item.id === assignment.id ? updated : item));
+  };
+  const updateAffiliationStatus = (input: AffiliationStatusInput) => {
+    const reason = requiredInstitutionReason(input.reason);
     const source = input.affiliationType === "student" ? studentAffiliations : teacherAffiliations;
     const affiliation = source.find((item) => item.id === input.affiliationId);
-    if (!affiliation || affiliation.institutionId !== input.actor.organisationId) {
-      throw new Error("Affiliation is outside the Institution Admin scope");
+    if (!affiliation) throw new Error("ไม่พบข้อมูลสังกัดที่ต้องการเปลี่ยน");
+    assertInstitutionAdminMutationScope(input.actor, affiliation.institutionId);
+    if (input.affiliationType === "teacher" && input.status === "inactive") {
+      endInstitutionTeacherAffiliation({
+        actor: input.actor,
+        teacherId: (affiliation as TeacherAffiliation).teacherId,
+        reason,
+      });
+      return;
     }
     const at = new Date().toISOString();
     const updated = {
@@ -1732,7 +2334,7 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
     };
     appendAcademicAudit({
       actor: input.actor,
-      resourceScopes: ["institution:self"],
+      resourceScopes: input.actor.resourceScopes,
       action: "access.role_scope_change",
       resourceType: `${input.affiliationType}_affiliation`,
       resourceId: affiliation.id,
@@ -1757,24 +2359,19 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
     }
   };
   const updateCourseOfferingStatus = (input: CourseOfferingStatusInput) => {
-    if (input.actor.role !== "institution_admin") {
-      throw new Error("Only an Institution Admin can change a course offering");
-    }
-    const reason = input.reason.trim();
-    if (!reason) throw new Error("Course offering changes require a reason");
+    const reason = requiredInstitutionReason(input.reason);
     const offering = courseOfferings.find((item) => item.id === input.courseOfferingId);
-    if (!offering || offering.institutionId !== input.actor.organisationId) {
-      throw new Error("Course offering is outside the Institution Admin scope");
-    }
+    if (!offering) throw new Error("ไม่พบรายวิชาที่ต้องการเปลี่ยนสถานะ");
+    assertInstitutionAdminMutationScope(input.actor, offering.institutionId);
     const updated = { ...offering, status: input.status };
     const at = new Date().toISOString();
     appendAcademicAudit({
       actor: input.actor,
-      resourceScopes: ["institution:self"],
+      resourceScopes: input.actor.resourceScopes,
       action: "course_offering.update",
       resourceType: "course_offering",
       resourceId: offering.id,
-      resourceLabel: `${offering.courseCode} · รุ่น ${offering.section}`,
+      resourceLabel: `${offering.courseCode} · กลุ่ม ${offering.section}`,
       resourceOrganisationId: offering.institutionId,
       before: offering,
       after: updated,
@@ -1785,6 +2382,145 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
     setCourseOfferings((previous) => previous.map((item) => (
       item.id === offering.id ? updated : item
     )));
+  };
+  const assertCourseChangeReviewer = (
+    actor: ScopedAcademicActor,
+    request: CourseOfferingChangeRequest,
+  ) => {
+    if (
+      actor.role !== "teacher" || actor.userId !== request.reviewerTeacherId ||
+      actor.organisationId !== request.institutionId ||
+      !hasTeacherCourseMutationScope(actor, request.courseOfferingId) ||
+      !canTeacherAccessOfferingWithinAffiliation(
+        teachingAssignments,
+        teacherAffiliations,
+        actor.userId,
+        request.institutionId,
+        request.courseOfferingId,
+      )
+    ) {
+      throw new Error("บัญชีนี้ไม่มีสิทธิ์ตรวจคำขอปรับข้อมูลรายวิชาดังกล่าว");
+    }
+  };
+  const requestCourseOfferingChange = (input: CourseOfferingChangeSubmissionInput) => {
+    const offering = courseOfferings.find((item) => item.id === input.courseOfferingId);
+    if (!offering) throw new Error("ไม่พบรายวิชาที่ต้องการปรับข้อมูล");
+    assertInstitutionAdminMutationScope(input.actor, offering.institutionId);
+    const reason = requiredInstitutionReason(input.reason);
+    if (!canTeacherAccessOfferingWithinAffiliation(
+      teachingAssignments,
+      teacherAffiliations,
+      input.reviewerTeacherId,
+      offering.institutionId,
+      offering.id,
+    )) {
+      throw new Error("อาจารย์ผู้ตรวจสอบต้องมีสังกัดและการมอบหมายรายวิชาที่ยังมีผล");
+    }
+    if (courseOfferingChangeRequests.some((request) => (
+      request.courseOfferingId === offering.id &&
+      (request.status === "pending_teacher_review" || request.status === "needs_revision")
+    ))) {
+      throw new Error("รายวิชานี้มีคำขอปรับข้อมูลที่ยังดำเนินการไม่เสร็จ");
+    }
+    const at = new Date();
+    const created = createCourseOfferingChangeRequestRecord({
+      id: `COCHG-${at.getTime().toString(36).toUpperCase()}-${(
+        globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)
+      ).slice(0, 8).toUpperCase()}`,
+      courseOfferingId: offering.id,
+      reviewerTeacherId: input.reviewerTeacherId,
+      proposedChanges: input.proposedChanges,
+      reason,
+      actor: input.actor,
+      at: at.toISOString(),
+    });
+    appendAcademicAudit({
+      actor: input.actor,
+      resourceScopes: input.actor.resourceScopes,
+      action: "course_offering.update",
+      resourceType: "course_offering_change_request",
+      resourceId: created.id,
+      resourceLabel: offering.courseCode,
+      resourceOrganisationId: offering.institutionId,
+      before: null,
+      after: created,
+      reason,
+      evidenceReference: `course-offering:${offering.id}`,
+      occurredAt: created.requestedAt,
+    });
+    setCourseOfferingChangeRequests((previous) => [...previous, created]);
+  };
+  const resubmitCourseOfferingChange = (input: CourseOfferingChangeResubmissionInput) => {
+    const request = courseOfferingChangeRequests.find((item) => item.id === input.requestId);
+    if (!request) throw new Error("ไม่พบคำขอปรับข้อมูลรายวิชา");
+    assertInstitutionAdminMutationScope(input.actor, request.institutionId);
+    const reason = requiredInstitutionReason(input.reason);
+    const at = new Date().toISOString();
+    const updated = resubmitCourseOfferingChangeRequestRecord({
+      request,
+      proposedChanges: input.proposedChanges,
+      reason,
+      actor: input.actor,
+      at,
+    });
+    appendAcademicAudit({
+      actor: input.actor,
+      resourceScopes: input.actor.resourceScopes,
+      action: "course_offering.update",
+      resourceType: "course_offering_change_request",
+      resourceId: request.id,
+      resourceLabel: courseOfferings.find((item) => item.id === request.courseOfferingId)?.courseCode,
+      resourceOrganisationId: request.institutionId,
+      before: request,
+      after: updated,
+      reason,
+      evidenceReference: `course-offering:${request.courseOfferingId}`,
+      occurredAt: at,
+    });
+    setCourseOfferingChangeRequests((previous) => previous.map((item) => item.id === request.id ? updated : item));
+  };
+  const reviewCourseOfferingChange = (input: CourseOfferingChangeReviewInput) => {
+    const request = courseOfferingChangeRequests.find((item) => item.id === input.requestId);
+    if (!request) throw new Error("ไม่พบคำขอปรับข้อมูลรายวิชา");
+    assertCourseChangeReviewer(input.actor, request);
+    const reason = requiredInstitutionReason(input.reason);
+    const offering = courseOfferings.find((item) => item.id === request.courseOfferingId);
+    if (!offering || offering.institutionId !== request.institutionId) {
+      throw new Error("ไม่พบรายวิชาในขอบเขตคำขอ");
+    }
+    const at = new Date().toISOString();
+    const updatedRequest = reviewCourseOfferingChangeRequestRecord({
+      request,
+      decision: input.decision,
+      reason,
+      actor: input.actor,
+      at,
+    });
+    const updatedOffering = input.decision === "approved"
+      ? { ...offering, ...request.proposedChanges }
+      : offering;
+    appendAcademicAudit({
+      actor: input.actor,
+      resourceScopes: input.actor.resourceScopes,
+      action: "course_offering.update",
+      resourceType: "course_offering_change_request",
+      resourceId: request.id,
+      resourceLabel: offering.courseCode,
+      resourceOrganisationId: request.institutionId,
+      before: { request, offering },
+      after: { request: updatedRequest, offering: updatedOffering },
+      reason,
+      evidenceReference: `course-offering:${offering.id}`,
+      occurredAt: at,
+    });
+    setCourseOfferingChangeRequests((previous) => previous.map((item) => (
+      item.id === request.id ? updatedRequest : item
+    )));
+    if (input.decision === "approved") {
+      setCourseOfferings((previous) => previous.map((item) => (
+        item.id === offering.id ? updatedOffering : item
+      )));
+    }
   };
   const assertTeacherCanManageCourseProposal = (actor: CourseProposalActor, at: Date) => {
     if (actor.role !== "teacher") {
@@ -1917,7 +2653,13 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
     if (!result) throw new Error(`Subject result ${resultId} was not found`);
     const offering = courseOfferings.find((item) => item.id === result.courseOfferingId);
     if (!offering || actor.role !== "teacher" || actor.organisationId !== offering.institutionId ||
-      !canTeacherAccessOffering(teachingAssignments, actor.userId, result.courseOfferingId)) {
+      !canTeacherAccessOfferingWithinAffiliation(
+        teachingAssignments,
+        teacherAffiliations,
+        actor.userId,
+        offering.institutionId,
+        result.courseOfferingId,
+      )) {
       throw new Error("Teacher cannot access this subject result");
     }
     if (!hasTeacherCourseMutationScope(actor, offering.id)) {
@@ -1994,9 +2736,14 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
         updateRegistrationStatus,
         academicInstitutions, academicStudents, academicTeachers,
         studentAffiliations, teacherAffiliations, courseOfferings,
-        teachingAssignments, courseProposals, subjectResults, auditEvents: auditLog.events,
-        reviewRegistration, assignTeacherToCourse,
+        teachingAssignments, courseOfferingChangeRequests, courseProposals,
+        subjectResults, auditEvents: auditLog.events,
+        reviewRegistration,
+        addInstitutionTeacher, updateInstitutionTeacher, endInstitutionTeacherAffiliation,
+        assignTeacherToCourse, updateTeachingAssignment,
+        cancelTeachingAssignment, respondTeachingAssignment,
         updateAffiliationStatus, updateCourseOfferingStatus,
+        requestCourseOfferingChange, resubmitCourseOfferingChange, reviewCourseOfferingChange,
         submitCourseProposal, resubmitCourseProposal, reviewCourseProposal,
         saveSubjectResultDraft, publishSubjectResult, reviseSubjectResult,
         examRequests, setExamRequests, updateExamRequestStatus,

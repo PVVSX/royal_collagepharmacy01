@@ -1,150 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import Footer from "@/roles/shared/components/layout/Footer";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { PageShell } from "@/roles/shared/components/layout/PageShell";
 
 const faqs = [
-  {
-    question: "จะสมัครสอบ Board Certified Pharmacotherapy ได้เมื่อไหร่?",
-    answer: "โดยปกติทางราชวิทยาลัยฯ จะเปิดรับสมัครช่วงเดือนมีนาคม - พฤษภาคม ของทุกปี โปรดติดตามประกาศที่หน้าแรกหรือเมนูข่าวสาร",
-  },
-  {
-    question: "ลืมรหัสผ่านเข้าระบบ ต้องทำอย่างไร?",
-    answer: "สามารถกดปุ่ม 'ลืมรหัสผ่าน' ที่หน้าล็อกอิน เพื่อรับลิงก์รีเซ็ตรหัสผ่านทางอีเมลที่ได้ลงทะเบียนไว้ หากไม่สามารถเข้าอีเมลได้ กรุณาติดต่อแอดมินทางศูนย์ช่วยเหลือ",
-  },
-  {
-    question: "ชำระเงินค่าลงทะเบียนแล้ว แต่สถานะยังไม่เปลี่ยน",
-    answer: "ระบบจะใช้เวลาตรวจสอบยอดชำระเงินอัตโนมัติภายใน 1-3 ชั่วโมง หากเกินเวลาที่กำหนด โปรดแนบหลักฐานการโอนเงิน (สลิป) ผ่านระบบแจ้งปัญหา",
-  },
-  {
-    question: "หน่วยกิตการศึกษาต่อเนื่อง (CPD) ไม่ขึ้นในระบบ",
-    answer: "หากเป็นกิจกรรมที่จัดโดยองค์กรภายนอก อาจใช้เวลา 7-14 วันในการอัปเดตข้อมูลเข้าสู่ฐานข้อมูลกลางของสภาฯ คุณสามารถกดปุ่ม 'ซิงค์ข้อมูลกับ ศธภ.' ที่หน้า CPD เพื่อดึงข้อมูลล่าสุด",
-  }
+  { category: "บัญชี", question: "หากไม่สามารถเข้าสู่ระบบได้ ต้องทำอย่างไร?", answer: "ตรวจสอบเลขที่ใบประกอบวิชาชีพและรหัสผ่านอีกครั้ง หากยังไม่สามารถเข้าใช้งานได้ กรุณาติดต่อหน่วยงานที่ดูแลทะเบียนสมาชิก" },
+  { category: "การลงทะเบียน", question: "ตรวจสอบสถานะการลงทะเบียนได้จากที่ใด?", answer: "เปิดเมนูการลงทะเบียน แล้วเลือกส่วนติดตามสถานะ ระบบจะแสดงขั้นตอนล่าสุดและรายการที่ต้องดำเนินการ" },
+  { category: "การเงิน", question: "ชำระเงินแล้วแต่สถานะยังไม่เปลี่ยน ต้องทำอย่างไร?", answer: "ตรวจสอบว่าหลักฐานการชำระเงินถูกส่งครบถ้วน สถานะจะเปลี่ยนหลังตรวจสอบรายการ หากเกินกำหนดให้ติดต่อฝ่ายการเงินพร้อมเลขที่รายการ" },
+  { category: "ข้อมูลสมาชิก", question: "ข้อมูลใน Pharmacist Profile ไม่ถูกต้อง แก้ไขอย่างไร?", answer: "ยื่นคำร้องแก้ไขข้อมูลพร้อมเอกสารประกอบจากเมนูคำร้อง ข้อมูลที่ผ่านการตรวจสอบแล้วจะแสดงใน Pharmacist Profile" },
+  { category: "ผลการประเมิน", question: "ผลการประเมินยังไม่แสดง หมายความว่าอย่างไร?", answer: "ระบบแสดงเฉพาะผลที่ประกาศแล้ว รายการที่อยู่ระหว่างดำเนินการจะแสดงสถานะโดยไม่เปิดเผยผลก่อนประกาศ" },
 ];
 
 export default function HelpCenterPage() {
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!subject || !message) {
-      toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
-      return;
-    }
-    
-    setIsSubmitting(true);
-    setTimeout(() => {
-      toast.success("ส่งข้อความถึงเจ้าหน้าที่เรียบร้อยแล้ว (Ticket #8429)");
-      setSubject("");
-      setMessage("");
-      setIsSubmitting(false);
-    }, 1000);
-  };
+  const [query, setQuery] = useState("");
+  const normalized = query.trim().toLocaleLowerCase("th-TH");
+  const visible = faqs.filter((item) => !normalized || `${item.category} ${item.question} ${item.answer}`.toLocaleLowerCase("th-TH").includes(normalized));
 
   return (
-    <div className="flex flex-col min-h-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">ศูนย์ช่วยเหลือ (Help Center)</h1>
-        <p className="text-sm text-muted-foreground mt-1">คำถามที่พบบ่อย และระบบติดต่อสอบถามเจ้าหน้าที่</p>
+    <PageShell className="space-y-6">
+      <header><h1 className="text-2xl font-bold">ศูนย์ช่วยเหลือ</h1><p className="mt-1 text-sm text-muted-foreground">ค้นหาคำตอบเกี่ยวกับการใช้งานและขั้นตอนสำคัญ</p></header>
+      <div className="relative max-w-2xl"><span aria-hidden="true" className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">search</span><Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาคำถามหรือหัวข้อ" aria-label="ค้นหาคำถามที่พบบ่อย" className="pl-10" /></div>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <Card><CardHeader><CardTitle className="text-lg">คำถามที่พบบ่อย</CardTitle></CardHeader><CardContent>
+          <Accordion type="single" collapsible>{visible.map((faq, index) => <AccordionItem key={faq.question} value={`faq-${index}`}><AccordionTrigger className="text-left"><span><span className="mb-1 block text-xs font-medium text-primary">{faq.category}</span>{faq.question}</span></AccordionTrigger><AccordionContent className="text-sm leading-6 text-muted-foreground">{faq.answer}</AccordionContent></AccordionItem>)}</Accordion>
+          {visible.length === 0 && <div className="py-12 text-center text-sm text-muted-foreground">ไม่พบคำถามที่ตรงกับคำค้นหา</div>}
+        </CardContent></Card>
+        <Card className="h-fit"><CardHeader><CardTitle className="text-lg">ติดต่อหน่วยงาน</CardTitle></CardHeader><CardContent className="space-y-4 text-sm"><p className="text-muted-foreground">เตรียมชื่อ เลขที่ใบประกอบวิชาชีพ และรายละเอียดรายการก่อนติดต่อ</p><div><p className="font-medium">โทรศัพท์</p><p className="text-muted-foreground">0-2591-9992</p></div><div><p className="font-medium">อีเมล</p><p className="break-all text-muted-foreground">info@cpat.ac.th</p></div><Button asChild className="w-full"><a href="mailto:info@cpat.ac.th">ส่งอีเมล</a></Button></CardContent></Card>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 mb-8">
-        
-        {/* FAQs */}
-        <Card className="flex flex-col h-fit">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">live_help</span>
-              คำถามที่พบบ่อย (FAQ)
-            </CardTitle>
-            <CardDescription>หากมีข้อสงสัย ลองหาคำตอบเบื้องต้นจากที่นี่ได้เลย</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Accordion type="single" collapsible className="w-full">
-              {faqs.map((faq, index) => (
-                <AccordionItem key={index} value={`item-${index}`}>
-                  <AccordionTrigger className="text-sm text-left hover:text-primary">{faq.question}</AccordionTrigger>
-                  <AccordionContent className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-md mb-2">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </CardContent>
-        </Card>
-
-        {/* Support Ticket */}
-        <Card className="flex flex-col h-fit">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">support_agent</span>
-              ติดต่อสอบถาม (Support Ticket)
-            </CardTitle>
-            <CardDescription>แจ้งปัญหา แจ้งโอนเงิน หรือสอบถามเรื่องอื่นๆ ทีมงานจะตอบกลับภายใน 24 ชม.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">หัวข้อเรื่อง <span className="text-destructive">*</span></label>
-                <Input 
-                  placeholder="เช่น แจ้งปัญหาการชำระเงิน, สอบถามเรื่อง CPD" 
-                  value={subject} 
-                  onChange={e => setSubject(e.target.value)} 
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">รายละเอียด <span className="text-destructive">*</span></label>
-                <Textarea 
-                  placeholder="อธิบายรายละเอียดปัญหาของคุณอย่างชัดเจน..." 
-                  className="min-h-[120px] resize-y" 
-                  value={message} 
-                  onChange={e => setMessage(e.target.value)}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">แนบไฟล์รูปภาพ (ถ้ามี)</label>
-                <Input type="file" className="cursor-pointer" disabled={isSubmitting} />
-                <p className="text-3xs text-muted-foreground">รองรับไฟล์ JPG, PNG, PDF ขนาดไม่เกิน 5MB</p>
-              </div>
-              <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
-                {isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งข้อความถึงเจ้าหน้าที่'}
-              </Button>
-            </form>
-
-            <div className="mt-8 pt-6 border-t">
-              <h3 className="text-sm font-semibold mb-3">ช่องทางติดต่ออื่นๆ</h3>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-base">call</span>
-                  โทรศัพท์: 0-2591-9992 (ในเวลาทำการ)
-                </p>
-                <p className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-base">mail</span>
-                  อีเมล: info@cpat.ac.th
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-      </div>
-      
-      <Footer />
-    </div>
+    </PageShell>
   );
 }

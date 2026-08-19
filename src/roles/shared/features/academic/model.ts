@@ -50,6 +50,26 @@ export interface CourseOffering {
   status: "open" | "closed";
 }
 
+export type TeachingAssignmentStatus =
+  | "pending_teacher_response"
+  | "accepted"
+  | "declined"
+  | "cancelled";
+
+export interface TeachingAssignmentPatch {
+  teacherId: string;
+  courseOfferingId: string;
+  startsAt: string;
+  endsAt?: string;
+}
+
+export interface TeachingAssignmentDecision {
+  decision: "accepted" | "declined";
+  actor: AcademicActor;
+  reason?: string;
+  decidedAt: string;
+}
+
 export interface TeachingAssignment {
   id: string;
   teacherId: string;
@@ -59,6 +79,10 @@ export interface TeachingAssignment {
   endsAt?: string;
   assignedBy: string;
   assignedAt: string;
+  status: TeachingAssignmentStatus;
+  updatedAt: string;
+  pendingChanges?: TeachingAssignmentPatch;
+  latestDecision?: TeachingAssignmentDecision;
 }
 
 export interface AcademicActor {
@@ -73,6 +97,55 @@ export interface ScopedAcademicActor extends AcademicActor {
 }
 
 export type CourseProposalActor = ScopedAcademicActor;
+
+export type CourseOfferingChangeStatus =
+  | "pending_teacher_review"
+  | "needs_revision"
+  | "approved"
+  | "rejected";
+
+export type CourseOfferingChangeDecision = Exclude<
+  CourseOfferingChangeStatus,
+  "pending_teacher_review"
+>;
+
+export type CourseOfferingEditablePatch = Partial<
+  Pick<CourseOffering, "courseTitle" | "credits" | "term" | "section">
+>;
+
+export type CourseOfferingChangeHistoryAction = "submitted" | "resubmitted" | "reviewed";
+
+export interface CourseOfferingChangeHistoryEntry {
+  id: string;
+  action: CourseOfferingChangeHistoryAction;
+  fromStatus?: CourseOfferingChangeStatus;
+  toStatus: CourseOfferingChangeStatus;
+  actor: ScopedAcademicActor;
+  occurredAt: string;
+  reason: string;
+}
+
+export interface CourseOfferingChangeReview {
+  decision: CourseOfferingChangeDecision;
+  reason: string;
+  actor: ScopedAcademicActor;
+  reviewedAt: string;
+}
+
+export interface CourseOfferingChangeRequest {
+  id: string;
+  courseOfferingId: string;
+  institutionId: string;
+  reviewerTeacherId: string;
+  proposedChanges: CourseOfferingEditablePatch;
+  reason: string;
+  status: CourseOfferingChangeStatus;
+  requestedBy: ScopedAcademicActor;
+  requestedAt: string;
+  updatedAt: string;
+  latestReview?: CourseOfferingChangeReview;
+  history: CourseOfferingChangeHistoryEntry[];
+}
 
 export type CourseProposalStatus =
   | "submitted"
@@ -128,6 +201,36 @@ export function formatSubjectResultValue(value?: SubjectResultValue) {
   return "—";
 }
 
+export const subjectResultStatusMeta = {
+  pending: { label: "ยังไม่บันทึก", variant: "secondary" },
+  draft: { label: "ฉบับร่าง", variant: "warning" },
+  published: { label: "ประกาศแล้ว", variant: "success" },
+  revised: { label: "แก้ไขแล้ว", variant: "info" },
+} as const satisfies Record<SubjectResultStatus, {
+  label: string;
+  variant: "secondary" | "warning" | "success" | "info";
+}>;
+
+export const teachingAssignmentStatusMeta = {
+  pending_teacher_response: { label: "รออาจารย์ตอบรับ", variant: "secondary" },
+  accepted: { label: "ตอบรับแล้ว", variant: "success" },
+  declined: { label: "ไม่ตอบรับ", variant: "danger" },
+  cancelled: { label: "ยกเลิกแล้ว", variant: "secondary" },
+} as const satisfies Record<TeachingAssignmentStatus, {
+  label: string;
+  variant: "secondary" | "warning" | "success" | "danger";
+}>;
+
+export const courseOfferingChangeStatusMeta = {
+  pending_teacher_review: { label: "รออาจารย์ตรวจสอบ", variant: "secondary" },
+  needs_revision: { label: "ต้องปรับแก้", variant: "warning" },
+  approved: { label: "อนุมัติแล้ว", variant: "success" },
+  rejected: { label: "ไม่อนุมัติ", variant: "danger" },
+} as const satisfies Record<CourseOfferingChangeStatus, {
+  label: string;
+  variant: "secondary" | "warning" | "success" | "danger";
+}>;
+
 export interface SubjectResultRevision {
   id: string;
   previousValue?: SubjectResultValue;
@@ -158,6 +261,7 @@ export interface AcademicDataSnapshot {
   teacherAffiliations: TeacherAffiliation[];
   courseOfferings: CourseOffering[];
   teachingAssignments: TeachingAssignment[];
+  courseOfferingChangeRequests: CourseOfferingChangeRequest[];
   courseProposals: CourseProposal[];
   subjectResults: SubjectResult[];
 }

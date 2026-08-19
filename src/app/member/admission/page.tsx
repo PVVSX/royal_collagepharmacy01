@@ -752,7 +752,7 @@ export default function ExamApplicationPage() {
                         key={college.id}
                         onClick={() => setSelectedCollege(college.id)}
                         className={`w-full text-left flex items-center gap-5 px-5 py-5 transition-colors duration-150
-                          ${isSelected ? "bg-primary/5 border-l-4 border-l-primary" : "hover:bg-muted/40 border-l-4 border-l-transparent"}`}
+                          ${isSelected ? "bg-primary/5 font-medium" : "hover:bg-muted/40"}`}
                       >
                         <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${isSelected ? "border-primary bg-primary" : "border-border"}`}>
                           {isSelected && <div className="w-2 h-2 rounded-full bg-content-inverse" />}

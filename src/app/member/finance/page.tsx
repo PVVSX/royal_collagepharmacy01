@@ -169,7 +169,7 @@ export default function FinancePage() {
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><span className="material-symbols-outlined text-xl text-primary">account_balance_wallet</span></div>
             <div><h2 className="text-xs font-medium text-muted-foreground mb-0.5">ค่าใช้จ่ายทั้งหมด</h2><div className="text-2xl font-bold">฿{totalFees.toLocaleString()}</div></div>
           </CardContent></Card>
-          <Card className="border-l-4 border-l-destructive"><CardContent className="p-5 flex items-center gap-4">
+          <Card className="border-danger-border"><CardContent className="p-5 flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center"><span className="material-symbols-outlined text-xl text-destructive">warning</span></div>
             <div><h2 className="text-xs font-medium text-muted-foreground mb-0.5">ยอดรอชำระ/ค้างชำระ</h2><div className="text-2xl font-bold text-destructive">฿{outstandingBalance.toLocaleString()}</div></div>
           </CardContent></Card>

@@ -78,12 +78,12 @@ export function WorkflowStateTimeline({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "mx-auto flex h-8 w-8 items-center justify-center rounded-full border",
+                    "mx-auto flex h-10 w-10 items-center justify-center rounded-full border",
                     "ring-4 ring-card",
                     meta.markerClassName,
                   )}
                 >
-                  <span className="material-symbols-outlined text-base">{meta.icon}</span>
+                  <span className="material-symbols-outlined text-xl">{meta.icon}</span>
                 </span>
                 <p className="mt-2 text-xs font-semibold text-foreground">{step.label}</p>
                 <p className="mt-0.5 text-2xs font-medium text-muted-foreground">{meta.label}</p>
@@ -94,7 +94,7 @@ export function WorkflowStateTimeline({
               {!isLast ? (
                 <span
                   aria-hidden="true"
-                  className={cn("mt-4 h-0.5 min-w-8 flex-1", meta.connectorClassName)}
+                  className={cn("mt-5 h-0.5 min-w-8 flex-1", meta.connectorClassName)}
                 />
               ) : null}
             </li>

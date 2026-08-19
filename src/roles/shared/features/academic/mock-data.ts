@@ -2,12 +2,17 @@ import {
   createCourseProposal,
   reviewCourseProposalRecord,
 } from "./course-proposal-workflow";
+import {
+  createCourseOfferingChangeRequest,
+  reviewCourseOfferingChangeRequest,
+} from "./institution-workflow";
 import { createPendingSubjectResult, publishSubjectResult, reviseSubjectResult, saveSubjectResultDraft } from "./result-workflow";
 import type {
   AcademicActor,
   AcademicInstitution,
   AcademicStudent,
   AcademicTeacher,
+  CourseOfferingChangeRequest,
   CourseProposal,
   CourseProposalActor,
   CourseOffering,
@@ -71,13 +76,15 @@ export const DEFAULT_COURSE_OFFERINGS: readonly CourseOffering[] = [
   { id: "offering-vpt-301", courseCode: "วภท-301", courseTitle: "องค์ความรู้ทางเภสัชบำบัดเฉพาะทาง (สอบข้อเขียน)", credits: 12, term: "1/2569", section: "SIR-01", institutionId: "org-inst-siriraj", collegeCode: "วภท.", status: "open" },
   { id: "offering-vpt-302", courseCode: "วภท-302", courseTitle: "การสอบปากเปล่าข้างเตียงผู้ป่วย (Bedside Examination)", credits: 12, term: "1/2569", section: "CHU-01", institutionId: "org-inst-chula", collegeCode: "วภท.", status: "open" },
   { id: "offering-vpt-303", courseCode: "วภท-303", courseTitle: "การสอบโครงร่างวิทยานิพนธ์ (Thesis Proposal Examination)", credits: 12, term: "1/2569", section: "CHU-01", institutionId: "org-inst-chula", collegeCode: "วภท.", status: "open" },
+  { id: "offering-bcp-220", courseCode: "BCP-220", courseTitle: "การดูแลความปลอดภัยด้านยาเชิงระบบ", credits: 3, term: "1/2569", section: "SIR-02", institutionId: "org-inst-siriraj", collegeCode: "วภท.", status: "open" },
 ];
 
 export const DEFAULT_TEACHING_ASSIGNMENTS: readonly TeachingAssignment[] = [
-  { id: "teaching-assignment-001", teacherId: "teacher-001", courseOfferingId: "offering-bcp-101", institutionId: "org-inst-siriraj", startsAt: "2026-01-01T00:00:00.000Z", endsAt: "2027-01-01T00:00:00.000Z", assignedBy: "institution-admin-001", assignedAt: "2026-01-01T00:00:00.000Z" },
-  { id: "teaching-assignment-002", teacherId: "teacher-001", courseOfferingId: "offering-vpt-301", institutionId: "org-inst-siriraj", startsAt: "2026-01-01T00:00:00.000Z", endsAt: "2027-01-01T00:00:00.000Z", assignedBy: "institution-admin-001", assignedAt: "2026-01-01T00:00:00.000Z" },
-  { id: "teaching-assignment-003", teacherId: "teacher-002", courseOfferingId: "offering-vpt-302", institutionId: "org-inst-chula", startsAt: "2026-01-01T00:00:00.000Z", endsAt: "2027-01-01T00:00:00.000Z", assignedBy: "institution-admin-002", assignedAt: "2026-01-01T00:00:00.000Z" },
-  { id: "teaching-assignment-004", teacherId: "teacher-003", courseOfferingId: "offering-vpt-301", institutionId: "org-inst-siriraj", startsAt: "2025-01-01T00:00:00.000Z", endsAt: "2026-01-01T00:00:00.000Z", assignedBy: "institution-admin-001", assignedAt: "2025-01-01T00:00:00.000Z" },
+  { id: "teaching-assignment-001", teacherId: "teacher-001", courseOfferingId: "offering-bcp-101", institutionId: "org-inst-siriraj", startsAt: "2026-01-01T00:00:00.000Z", endsAt: "2027-01-01T00:00:00.000Z", assignedBy: "institution-admin-001", assignedAt: "2026-01-01T00:00:00.000Z", status: "accepted", updatedAt: "2026-01-01T00:00:00.000Z" },
+  { id: "teaching-assignment-002", teacherId: "teacher-001", courseOfferingId: "offering-vpt-301", institutionId: "org-inst-siriraj", startsAt: "2026-01-01T00:00:00.000Z", endsAt: "2027-01-01T00:00:00.000Z", assignedBy: "institution-admin-001", assignedAt: "2026-01-01T00:00:00.000Z", status: "accepted", updatedAt: "2026-01-01T00:00:00.000Z" },
+  { id: "teaching-assignment-003", teacherId: "teacher-002", courseOfferingId: "offering-vpt-302", institutionId: "org-inst-chula", startsAt: "2026-01-01T00:00:00.000Z", endsAt: "2027-01-01T00:00:00.000Z", assignedBy: "institution-admin-002", assignedAt: "2026-01-01T00:00:00.000Z", status: "accepted", updatedAt: "2026-01-01T00:00:00.000Z" },
+  { id: "teaching-assignment-004", teacherId: "teacher-003", courseOfferingId: "offering-vpt-301", institutionId: "org-inst-siriraj", startsAt: "2025-01-01T00:00:00.000Z", endsAt: "2026-01-01T00:00:00.000Z", assignedBy: "institution-admin-001", assignedAt: "2025-01-01T00:00:00.000Z", status: "accepted", updatedAt: "2025-01-01T00:00:00.000Z" },
+  { id: "teaching-assignment-005", teacherId: "teacher-001", courseOfferingId: "offering-bcp-220", institutionId: "org-inst-siriraj", startsAt: "2026-08-01T00:00:00.000Z", endsAt: "2027-01-01T00:00:00.000Z", assignedBy: "institution-admin-001", assignedAt: "2026-08-18T05:00:00.000Z", status: "pending_teacher_response", updatedAt: "2026-08-18T05:00:00.000Z" },
 ];
 
 const teacherOne: AcademicActor = {
@@ -111,6 +118,45 @@ const staffProposalActor: CourseProposalActor = {
   organisationId: "org-royal-college",
   resourceScopes: ["staff:central"],
 };
+
+const institutionAdminActor: CourseProposalActor = {
+  userId: "institution-admin-001",
+  userName: "ภก. วิชาญ อัครเวช",
+  role: "institution_admin",
+  organisationId: "org-inst-siriraj",
+  resourceScopes: ["institution:org-inst-siriraj"],
+};
+
+const pendingOfferingChange = createCourseOfferingChangeRequest({
+  id: "COCHG-2569-001",
+  courseOfferingId: "offering-bcp-101",
+  reviewerTeacherId: "teacher-001",
+  proposedChanges: { section: "SIR-02" },
+  reason: "ขอเพิ่มกลุ่มเรียนเพื่อรองรับผู้เข้ารับการฝึกอบรมรอบถัดไป",
+  actor: institutionAdminActor,
+  at: "2026-08-18T05:15:00.000Z",
+});
+
+const needsRevisionOfferingChange = reviewCourseOfferingChangeRequest({
+  request: createCourseOfferingChangeRequest({
+    id: "COCHG-2569-002",
+    courseOfferingId: "offering-vpt-301",
+    reviewerTeacherId: "teacher-001",
+    proposedChanges: { courseTitle: "องค์ความรู้ทางเภสัชบำบัดเฉพาะทาง" },
+    reason: "ปรับชื่อรายวิชาให้ตรงกับเอกสารประกอบการสอนฉบับล่าสุด",
+    actor: institutionAdminActor,
+    at: "2026-08-14T04:00:00.000Z",
+  }),
+  decision: "needs_revision",
+  reason: "กรุณาระบุรายละเอียดส่วนที่เปลี่ยนจากชื่อเดิมให้ชัดเจน",
+  actor: teacherOneProposalActor,
+  at: "2026-08-15T04:00:00.000Z",
+});
+
+export const DEFAULT_COURSE_OFFERING_CHANGE_REQUESTS: readonly CourseOfferingChangeRequest[] = [
+  pendingOfferingChange,
+  needsRevisionOfferingChange,
+];
 
 function proposal(input: {
   id: string;

@@ -51,7 +51,7 @@ export function PortalAccessGate({
           <span className="material-symbols-outlined text-5xl text-warning">shield_lock</span>
           <h1 className="mt-4 text-xl font-semibold">ไม่มีสิทธิ์เข้าพื้นที่นี้</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            กรุณาเข้าสู่ระบบด้วยบัญชีที่ตรงกับบทบาทของพื้นที่ที่ต้องการใช้งาน
+            กรุณาเข้าสู่ระบบด้วยบัญชีที่ได้รับอนุญาตให้ใช้งานพื้นที่นี้
           </p>
           <Button asChild className="mt-6">
             <Link href="/">กลับไปหน้าเข้าสู่ระบบ</Link>

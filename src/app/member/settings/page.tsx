@@ -1,145 +1,44 @@
 "use client";
 
-import { useState } from "react";
-import Footer from "@/roles/shared/components/layout/Footer";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { PageShell } from "@/roles/shared/components/layout/PageShell";
+import { useMemberPreferences } from "@/roles/member/features/settings/member-preferences";
 
 export default function SettingsPage() {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-
-  const handlePasswordChange = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error("กรุณากรอกข้อมูลให้ครบถ้วน");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("รหัสผ่านใหม่ไม่ตรงกัน");
-      return;
-    }
-    toast.success("เปลี่ยนรหัสผ่านเรียบร้อยแล้ว");
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-  };
+  const { preferences, setPreferences } = useMemberPreferences();
 
   return (
-    <div className="flex flex-col min-h-full">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">ตั้งค่าบัญชีและความปลอดภัย</h1>
-        <p className="text-sm text-muted-foreground mt-1">จัดการรหัสผ่าน การยืนยันตัวตน และการแจ้งเตือน</p>
+    <PageShell className="space-y-6">
+      <header><h1 className="text-2xl font-bold">การตั้งค่า</h1><p className="mt-1 text-sm text-muted-foreground">กำหนดภาษาและช่องทางรับข่าวสารสำหรับบัญชีนี้</p></header>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><span aria-hidden="true" className="material-symbols-outlined text-primary">language</span>ภาษาแสดงผล</CardTitle><CardDescription>การเลือกจะถูกจดจำในอุปกรณ์นี้</CardDescription></CardHeader>
+          <CardContent>
+            <fieldset className="grid gap-3 sm:grid-cols-2"><legend className="sr-only">เลือกภาษา</legend>
+              {([{ value: "th", label: "ภาษาไทย" }, { value: "en", label: "English" }] as const).map((option) => (
+                <label key={option.value} className="flex cursor-pointer items-center gap-3 rounded-xl border border-border p-4 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                  <input type="radio" name="locale" value={option.value} checked={preferences.locale === option.value} onChange={() => setPreferences({ locale: option.value })} className="h-4 w-4 accent-primary" />
+                  <span className="font-medium">{option.label}</span>
+                </label>
+              ))}
+            </fieldset>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><span aria-hidden="true" className="material-symbols-outlined text-primary">notifications_active</span>ช่องทางการแจ้งเตือน</CardTitle><CardDescription>เลือกข่าวสารที่ต้องการรับจากระบบ</CardDescription></CardHeader>
+          <CardContent className="divide-y">
+            <PreferenceRow label="การแจ้งเตือนภายในเว็บไซต์" checked={preferences.webNotifications} onCheckedChange={(checked) => setPreferences({ webNotifications: checked })} />
+            <PreferenceRow label="การแจ้งเตือนทางอีเมล" checked={preferences.emailNotifications} onCheckedChange={(checked) => setPreferences({ emailNotifications: checked })} />
+            <PreferenceRow label="ข่าวสารและกิจกรรมวิชาการ" checked={preferences.academicNews} onCheckedChange={(checked) => setPreferences({ academicNews: checked })} />
+          </CardContent>
+        </Card>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 mb-8">
-        
-        {/* Change Password */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">lock</span>
-                เปลี่ยนรหัสผ่าน (Change Password)
-              </CardTitle>
-              <CardDescription>อัปเดตรหัสผ่านของคุณเพื่อความปลอดภัยของบัญชี</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">รหัสผ่านปัจจุบัน</label>
-                  <Input type="password" placeholder="••••••••" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">รหัสผ่านใหม่</label>
-                  <Input type="password" placeholder="••••••••" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium">ยืนยันรหัสผ่านใหม่</label>
-                  <Input type="password" placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-                </div>
-                <Button type="submit" className="mt-2">บันทึกรหัสผ่าน</Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">shield_locked</span>
-                ความปลอดภัย (Security)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">การยืนยันตัวตนแบบสองขั้นตอน (2FA)</p>
-                  <p className="text-sm text-muted-foreground">เพิ่มความปลอดภัยด้วยการใช้รหัส OTP ผ่านมือถือ</p>
-                </div>
-                <Switch checked={twoFactorEnabled} onCheckedChange={setTwoFactorEnabled} />
-              </div>
-              <div className="border-t pt-4 flex items-center justify-between">
-                <div>
-                  <p className="font-medium">ประวัติการเข้าสู่ระบบ</p>
-                  <p className="text-sm text-muted-foreground">ตรวจสอบอุปกรณ์ที่ใช้เข้าสู่ระบบล่าสุด</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => toast.info("กำลังโหลดข้อมูลประวัติ...")}>ตรวจสอบ</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Preferences */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">notifications_active</span>
-                การแจ้งเตือน
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-medium">รับแจ้งเตือนผ่านเว็บ</div>
-                <Switch checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-medium">รับแจ้งเตือนผ่านอีเมล</div>
-                <Switch checked={true} />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-medium">จดหมายข่าววิชาการ</div>
-                <Switch checked={false} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">policy</span>
-                ความเป็นส่วนตัว
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">คุณสามารถจัดการความยินยอมในการเก็บข้อมูลตามนโยบาย PDPA ได้ที่นี่</p>
-              <Button variant="outline" className="w-full justify-start" onClick={() => toast.info("หน้านโยบายความเป็นส่วนตัว")}>
-                <span className="material-symbols-outlined text-lg mr-2">description</span>
-                จัดการข้อมูลส่วนบุคคล
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-      
-      <Footer />
-    </div>
+      <p className="rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">การเปลี่ยนรหัสผ่านและการกู้คืนบัญชีดำเนินการผ่านหน่วยงานที่ดูแลทะเบียนสมาชิก เพื่อยืนยันตัวตนก่อนแก้ไขข้อมูลสำคัญ</p>
+    </PageShell>
   );
+}
+
+function PreferenceRow({ label, checked, onCheckedChange }: { label: string; checked: boolean; onCheckedChange: (checked: boolean) => void }) {
+  return <div className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"><span className="text-sm font-medium">{label}</span><Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={label} /></div>;
 }

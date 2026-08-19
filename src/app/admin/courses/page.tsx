@@ -25,7 +25,7 @@ export default function CoursesPage() {
   const filteredRequests = courseRequests.filter((req) => {
     const matchesSearch = 
       req.courseTitle.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      req.courseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.courseCode ?? "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       req.collegeName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTab = activeTab === "all" || req.status === activeTab;
     return matchesSearch && matchesTab;
@@ -106,7 +106,7 @@ export default function CoursesPage() {
                   return (
                     <TableRow key={req.id} className="group">
                       <TableCell className="font-medium text-content">
-                        {req.courseCode}
+                        {req.courseCode ?? "ไม่มีรหัสวิชา"}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">

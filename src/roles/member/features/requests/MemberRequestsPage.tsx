@@ -628,7 +628,7 @@ export default function MemberRequestsPage() {
                 .filter((comment) => comment.actorRole === "royal_college_staff")
                 .at(-1);
               return (
-                <Card key={request.id} className={`border-l-4 ${status.borderClass}`}>
+                <Card key={request.id} className="border-border">
                   <CardContent className="px-4">
                     <button
                       type="button"

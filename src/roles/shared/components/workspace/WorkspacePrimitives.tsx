@@ -48,7 +48,23 @@ export function MetricCard({
         ? "bg-danger-soft text-danger"
         : "bg-primary/10 text-primary";
   return (
-    <Card className="border-border shadow-sm"><CardContent className="p-5"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-medium text-muted-foreground">{label}</p><p className="mt-2 text-3xl font-bold tabular-nums text-foreground">{value}</p></div><span aria-hidden="true" className={`material-symbols-outlined flex h-10 w-10 items-center justify-center rounded-full ${tone}`}>{icon}</span></div><p className="mt-3 text-xs text-muted-foreground">{note}</p></CardContent></Card>
+    <Card className="border-border">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">{label}</p>
+            <p className="mt-2 text-3xl font-bold tabular-nums text-foreground">{value}</p>
+          </div>
+          <span
+            aria-hidden="true"
+            className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full ${tone}`}
+          >
+            <span className="material-symbols-outlined text-2xl leading-none">{icon}</span>
+          </span>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">{note}</p>
+      </CardContent>
+    </Card>
   );
 }
 

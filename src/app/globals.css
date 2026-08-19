@@ -470,7 +470,10 @@
 
 /* Material Symbols is a third-party glyph font; keep one canonical setup. */
 .material-symbols-outlined {
-  display: inline-block;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
   direction: ltr;
   font-family: "Material Symbols Outlined";
   font-size: 24px;

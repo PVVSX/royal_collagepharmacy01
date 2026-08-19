@@ -2,7 +2,11 @@ import { createElement, type ReactNode } from "react";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import type { CourseProposalActor } from "@/roles/shared/features/academic";
+import {
+  canTeacherAccessOffering,
+  type CourseProposalActor,
+  type ScopedAcademicActor,
+} from "@/roles/shared/features/academic";
 import {
   AUDIT_STORAGE_KEY,
   readAuditEvents,
@@ -11,7 +15,9 @@ import {
 import {
   normalizeRegistrationInvoices,
   normalizeRegistrations,
+  normalizeCourseOfferingChangeRequests,
   normalizeCourseProposals,
+  normalizeTeachingAssignments,
   MockDbProvider,
   useMockDb,
 } from "./mock-db-provider";
@@ -38,6 +44,27 @@ const staffProposalActor: CourseProposalActor = {
   role: "royal_college_staff",
   organisationId: "org-royal-college",
   resourceScopes: ["staff:central"],
+};
+
+const institutionActor: ScopedAcademicActor = {
+  userId: "institution-admin-001",
+  userName: "ภก. วิชาญ อัครเวช",
+  role: "institution_admin",
+  organisationId: "org-inst-siriraj",
+  resourceScopes: ["institution:org-inst-siriraj"],
+};
+
+const chulaInstitutionActor: ScopedAcademicActor = {
+  userId: "institution-admin-002",
+  userName: "ภญ. อรอนงค์ วัฒนกิจ",
+  role: "institution_admin",
+  organisationId: "org-inst-chula",
+  resourceScopes: ["institution:org-inst-chula"],
+};
+
+const teacherAssignmentActor: ScopedAcademicActor = {
+  ...teacherProposalActor,
+  resourceScopes: [...teacherProposalActor.resourceScopes, "course:offering-bcp-220"],
 };
 
 describe("mock DB registration migration", () => {
@@ -306,16 +333,22 @@ describe("mock DB registration migration", () => {
         userName: "ภก. วิชาญ อัครเวช",
         role: "institution_admin",
         organisationId: "org-inst-siriraj",
+        resourceScopes: ["institution:org-inst-siriraj"],
       },
       startsAt: "2026-08-11T00:00:00.000Z",
+      reason: "เพิ่มผู้รับผิดชอบรายวิชา",
     }));
 
     expect(result.current.teachingAssignments).toContainEqual(expect.objectContaining({
       teacherId: "teacher-003",
       courseOfferingId: "offering-bcp-101",
       institutionId: "org-inst-siriraj",
+      status: "pending_teacher_response",
     }));
-    expect(readAuditEvents().at(-1)?.action).toBe("teaching_assignment.change");
+    expect(readAuditEvents().at(-1)).toMatchObject({
+      action: "teaching_assignment.change",
+      actor: { resourceScopes: ["institution:org-inst-siriraj"] },
+    });
   });
 
   it("lets an Institution Admin manage affiliations and course status only in their institution", async () => {
@@ -326,6 +359,7 @@ describe("mock DB registration migration", () => {
       userName: "ภก. วิชาญ อัครเวช",
       role: "institution_admin" as const,
       organisationId: "org-inst-siriraj",
+      resourceScopes: ["institution:org-inst-siriraj"],
     };
 
     act(() => result.current.updateAffiliationStatus({
@@ -355,7 +389,482 @@ describe("mock DB registration migration", () => {
       status: "inactive",
       actor,
       reason: "พยายามแก้ข้ามสถาบัน",
-    })).toThrowError("Affiliation is outside the Institution Admin scope");
+    })).toThrowError("บัญชีนี้ไม่มีสิทธิ์จัดการข้อมูลของสถาบันดังกล่าว");
+  });
+});
+
+describe("mock DB Institution academic workflow", () => {
+  it("migrates legacy assignments to accepted without dropping custom records", () => {
+    const normalized = normalizeTeachingAssignments([{
+      id: "teaching-assignment-legacy",
+      teacherId: "teacher-001",
+      courseOfferingId: "offering-bcp-101",
+      institutionId: "org-inst-siriraj",
+      startsAt: "2026-01-01T00:00:00.000Z",
+      assignedBy: "institution-admin-001",
+      assignedAt: "2026-01-01T00:00:00.000Z",
+    }]);
+    const legacy = normalized.find((item) => item.id === "teaching-assignment-legacy");
+
+    expect(legacy).toMatchObject({
+      status: "accepted",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    expect(normalized.some((item) => item.id === "teaching-assignment-001")).toBe(true);
+  });
+
+  it("drops an explicit unknown assignment status instead of failing open to accepted", () => {
+    const normalized = normalizeTeachingAssignments([{
+      id: "teaching-assignment-001",
+      teacherId: "teacher-001",
+      courseOfferingId: "offering-bcp-101",
+      institutionId: "org-inst-siriraj",
+      startsAt: "2026-01-01T00:00:00.000Z",
+      assignedBy: "institution-admin-001",
+      assignedAt: "2026-01-01T00:00:00.000Z",
+      status: "unknown_future_status",
+    }]);
+
+    expect(normalized.some((item) => item.id === "teaching-assignment-001")).toBe(false);
+    expect(normalized.some((item) => item.id === "teaching-assignment-002")).toBe(true);
+  });
+
+  it("hydrates pending assignment and course-change demo states", async () => {
+    expect(new Set(normalizeCourseOfferingChangeRequests([]).map((item) => item.status)))
+      .toEqual(new Set(["pending_teacher_review", "needs_revision"]));
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    expect(result.current.teachingAssignments.find((item) => item.id === "teaching-assignment-005"))
+      .toMatchObject({ status: "pending_teacher_response", courseOfferingId: "offering-bcp-220" });
+    expect(result.current.courseOfferingChangeRequests).toHaveLength(2);
+  });
+
+  it("adds, edits, and softly ends an Institution teacher with audited scope", async () => {
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    act(() => result.current.addInstitutionTeacher({
+      actor: institutionActor,
+      name: "อ. ภญ. รวิภา เมตตา",
+      reason: "เพิ่มอาจารย์ประจำสถาบัน",
+    }));
+    const teacher = result.current.academicTeachers.find((item) => item.name === "อ. ภญ. รวิภา เมตตา")!;
+    expect(teacher).toBeTruthy();
+    expect(result.current.teacherAffiliations).toContainEqual(expect.objectContaining({
+      teacherId: teacher.id,
+      institutionId: institutionActor.organisationId,
+      status: "active",
+    }));
+
+    act(() => result.current.updateInstitutionTeacher({
+      actor: institutionActor,
+      teacherId: teacher.id,
+      name: "อ. ภญ. รวิภา เมตตากุล",
+      reason: "แก้ไขชื่อให้ตรงกับเอกสารประจำตัว",
+    }));
+    expect(result.current.academicTeachers.find((item) => item.id === teacher.id)?.name)
+      .toBe("อ. ภญ. รวิภา เมตตากุล");
+
+    act(() => result.current.endInstitutionTeacherAffiliation({
+      actor: institutionActor,
+      teacherId: teacher.id,
+      reason: "สิ้นสุดการปฏิบัติงานในสถาบัน",
+    }));
+    expect(result.current.teacherAffiliations.find((item) => item.teacherId === teacher.id)?.status)
+      .toBe("inactive");
+    expect(readAuditEvents().slice(-3).map((event) => event.action)).toEqual([
+      "business_record.create",
+      "business_record.update",
+      "access.role_scope_change",
+    ]);
+    expect(readAuditEvents().at(-1)?.actor.resourceScopes)
+      .toEqual(institutionActor.resourceScopes);
+  });
+
+  it("blocks Institution mutations outside Resource Scope and ending assigned teachers", async () => {
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    expect(() => result.current.addInstitutionTeacher({
+      actor: { ...institutionActor, resourceScopes: [] },
+      name: "อาจารย์นอกสิทธิ์",
+      reason: "ทดสอบขอบเขต",
+    })).toThrowError("บัญชีนี้ไม่มีสิทธิ์จัดการข้อมูลของสถาบันดังกล่าว");
+    expect(() => result.current.endInstitutionTeacherAffiliation({
+      actor: institutionActor,
+      teacherId: "teacher-001",
+      reason: "ทดสอบการสิ้นสุดสังกัด",
+    })).toThrowError("กรุณายกเลิกการมอบหมายการสอนที่ยังมีผลก่อนสิ้นสุดสังกัดอาจารย์");
+  });
+
+  it("requires every assignment window to stay within the Teacher affiliation", async () => {
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    expect(() => result.current.addInstitutionTeacher({
+      actor: institutionActor,
+      name: "อาจารย์วันสิ้นสุดไม่ถูกต้อง",
+      startsAt: "2026-08-01T00:00:00.000Z",
+      endsAt: "not-a-date",
+      reason: "ทดสอบวันสิ้นสุด",
+    })).toThrowError("วันสิ้นสุดสังกัดไม่ถูกต้อง");
+
+    act(() => result.current.addInstitutionTeacher({
+      actor: institutionActor,
+      name: "อ. ภก. อายุสังกัด จำกัด",
+      startsAt: "2026-08-01T00:00:00.000Z",
+      endsAt: "2026-09-01T00:00:00.000Z",
+      reason: "เพิ่มอาจารย์ตามสัญญาระยะสั้น",
+    }));
+    const teacher = result.current.academicTeachers.find((item) => (
+      item.name === "อ. ภก. อายุสังกัด จำกัด"
+    ))!;
+
+    expect(() => result.current.assignTeacherToCourse({
+      actor: institutionActor,
+      teacherId: teacher.id,
+      courseOfferingId: "offering-bcp-220",
+      startsAt: "2026-08-20T00:00:00.000Z",
+      endsAt: "2026-10-01T00:00:00.000Z",
+      reason: "ทดสอบช่วงมอบหมายเกินสังกัด",
+    })).toThrowError("ช่วงเวลามอบหมายต้องอยู่ภายในช่วงสังกัดของอาจารย์ในสถาบันนี้");
+  });
+
+  it("creates distinct Teacher identities for equal display names across institutions", async () => {
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    act(() => result.current.addInstitutionTeacher({
+      actor: institutionActor,
+      name: "อ. ภญ. วารุณี ร่วมสอน",
+      reason: "เพิ่มอาจารย์ในสถาบันศิริราช",
+    }));
+    act(() => result.current.addInstitutionTeacher({
+      actor: chulaInstitutionActor,
+      name: "อ. ภญ. วารุณี ร่วมสอน",
+      reason: "เพิ่มสังกัดร่วมในสถาบันจุฬาฯ",
+    }));
+
+    const matchingTeachers = result.current.academicTeachers.filter((item) => (
+      item.name === "อ. ภญ. วารุณี ร่วมสอน"
+    ));
+    expect(matchingTeachers).toHaveLength(2);
+    expect(new Set(matchingTeachers.map((item) => item.id)).size).toBe(2);
+  });
+
+  it("blocks global Teacher renames when another institution has historical affiliation", async () => {
+    window.localStorage.setItem("mock_teacher_affiliations", JSON.stringify([{
+      id: "teacher-affiliation-historical-chula",
+      teacherId: "teacher-001",
+      institutionId: "org-inst-chula",
+      startsAt: "2024-01-01T00:00:00.000Z",
+      endsAt: "2025-01-01T00:00:00.000Z",
+      status: "inactive",
+    }]));
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    expect(() => result.current.updateInstitutionTeacher({
+      actor: institutionActor,
+      teacherId: "teacher-001",
+      name: "อ. ภญ. วารุณี เปลี่ยนชื่อ",
+      reason: "ทดสอบขอบเขตข้อมูลกลาง",
+    })).toThrowError("ไม่สามารถแก้ชื่อกลางของอาจารย์ที่สังกัดมากกว่าหนึ่งสถาบัน");
+    expect(result.current.academicTeachers.find((item) => item.id === "teacher-001")?.name)
+      .toBe("อ. ภก. กิตติพงศ์ วัฒนเภสัช");
+  });
+
+  it("counts pending assignment changes when checking duplicates and ending affiliations", async () => {
+    window.localStorage.setItem("mock_teaching_assignments", JSON.stringify([{
+      id: "teaching-assignment-pending-transfer",
+      teacherId: "teacher-001",
+      courseOfferingId: "offering-bcp-101",
+      institutionId: "org-inst-siriraj",
+      startsAt: "2026-01-01T00:00:00.000Z",
+      endsAt: "2027-01-01T00:00:00.000Z",
+      assignedBy: "institution-admin-001",
+      assignedAt: "2026-01-01T00:00:00.000Z",
+      status: "accepted",
+      updatedAt: "2026-08-18T00:00:00.000Z",
+      pendingChanges: {
+        teacherId: "teacher-003",
+        courseOfferingId: "offering-bcp-220",
+        startsAt: "2026-09-01T00:00:00.000Z",
+        endsAt: "2027-01-01T00:00:00.000Z",
+      },
+    }]));
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    expect(() => result.current.assignTeacherToCourse({
+      actor: institutionActor,
+      teacherId: "teacher-003",
+      courseOfferingId: "offering-bcp-220",
+      startsAt: "2026-09-01T00:00:00.000Z",
+      endsAt: "2027-01-01T00:00:00.000Z",
+      reason: "ทดสอบรายการซ้ำกับคำขอแก้ไข",
+    })).toThrowError("อาจารย์ท่านนี้ได้รับมอบหมายรายวิชานี้อยู่แล้ว");
+    expect(() => result.current.endInstitutionTeacherAffiliation({
+      actor: institutionActor,
+      teacherId: "teacher-003",
+      reason: "ทดสอบสิ้นสุดสังกัดขณะมีคำขอโอนงาน",
+    })).toThrowError("กรุณายกเลิกการมอบหมายการสอนที่ยังมีผลก่อนสิ้นสุดสังกัดอาจารย์");
+  });
+
+  it("prevents assignment changes from orphaning an outstanding course review", async () => {
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+    const before = result.current.teachingAssignments.find((item) => (
+      item.id === "teaching-assignment-001"
+    ));
+
+    expect(() => result.current.cancelTeachingAssignment({
+      actor: institutionActor,
+      assignmentId: "teaching-assignment-001",
+      reason: "ทดสอบยกเลิกผู้ตรวจคำขอ",
+    })).toThrowError("ไม่สามารถเปลี่ยนหรือยกเลิกการมอบหมายนี้ได้ เนื่องจากมีคำขอปรับข้อมูลรายวิชาที่ยังรอการดำเนินการ");
+    expect(() => result.current.updateTeachingAssignment({
+      actor: institutionActor,
+      assignmentId: "teaching-assignment-001",
+      teacherId: "teacher-003",
+      courseOfferingId: "offering-bcp-101",
+      startsAt: "2026-01-01T00:00:00.000Z",
+      endsAt: "2027-01-01T00:00:00.000Z",
+      reason: "ทดสอบโอนผู้ตรวจคำขอ",
+    })).toThrowError("ไม่สามารถเปลี่ยนหรือยกเลิกการมอบหมายนี้ได้ เนื่องจากมีคำขอปรับข้อมูลรายวิชาที่ยังรอการดำเนินการ");
+    expect(result.current.teachingAssignments.find((item) => item.id === "teaching-assignment-001"))
+      .toBe(before);
+  });
+
+  it("rechecks outstanding course reviews when a Teacher accepts a staged transfer", async () => {
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    act(() => result.current.respondTeachingAssignment({
+      actor: teacherAssignmentActor,
+      assignmentId: "teaching-assignment-005",
+      decision: "accept",
+    }));
+    act(() => result.current.updateTeachingAssignment({
+      actor: institutionActor,
+      assignmentId: "teaching-assignment-005",
+      teacherId: "teacher-003",
+      courseOfferingId: "offering-bcp-220",
+      startsAt: "2026-08-01T00:00:00.000Z",
+      endsAt: "2027-01-01T00:00:00.000Z",
+      reason: "เสนอเปลี่ยนอาจารย์ผู้รับผิดชอบ",
+    }));
+    act(() => result.current.requestCourseOfferingChange({
+      actor: institutionActor,
+      courseOfferingId: "offering-bcp-220",
+      reviewerTeacherId: "teacher-001",
+      proposedChanges: { section: "SIR-03" },
+      reason: "ปรับกลุ่มเรียนก่อนโอนผู้รับผิดชอบ",
+    }));
+
+    expect(() => result.current.respondTeachingAssignment({
+      actor: {
+        userId: "teacher-003",
+        userName: "อ. ภก. ธีรภัทร พรหมรักษ์",
+        role: "teacher",
+        organisationId: "org-inst-siriraj",
+        resourceScopes: ["course:assigned"],
+      },
+      assignmentId: "teaching-assignment-005",
+      decision: "accept",
+    })).toThrowError("ไม่สามารถเปลี่ยนหรือยกเลิกการมอบหมายนี้ได้ เนื่องจากมีคำขอปรับข้อมูลรายวิชาที่ยังรอการดำเนินการ");
+    expect(result.current.teachingAssignments.find((item) => item.id === "teaching-assignment-005"))
+      .toMatchObject({ teacherId: "teacher-001", pendingChanges: { teacherId: "teacher-003" } });
+  });
+
+  it("rejects a pending assignment whose dates exceed the Teacher affiliation", async () => {
+    window.localStorage.setItem("mock_teacher_affiliations", JSON.stringify([{
+      id: "teacher-affiliation-001",
+      teacherId: "teacher-001",
+      institutionId: "org-inst-siriraj",
+      startsAt: "2026-01-01T00:00:00.000Z",
+      endsAt: "2026-09-01T00:00:00.000Z",
+      status: "active",
+    }]));
+    window.localStorage.setItem("mock_teaching_assignments", JSON.stringify([{
+      id: "teaching-assignment-outside-affiliation",
+      teacherId: "teacher-001",
+      courseOfferingId: "offering-bcp-220",
+      institutionId: "org-inst-siriraj",
+      startsAt: "2026-08-01T00:00:00.000Z",
+      endsAt: "2027-01-01T00:00:00.000Z",
+      assignedBy: "institution-admin-001",
+      assignedAt: "2026-08-01T00:00:00.000Z",
+      status: "pending_teacher_response",
+      updatedAt: "2026-08-01T00:00:00.000Z",
+    }]));
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    expect(() => result.current.respondTeachingAssignment({
+      actor: teacherAssignmentActor,
+      assignmentId: "teaching-assignment-outside-affiliation",
+      decision: "accept",
+    })).toThrowError("ช่วงเวลามอบหมายอยู่นอกช่วงสังกัดของอาจารย์ในสถาบันนี้");
+    expect(result.current.teachingAssignments.find((item) => (
+      item.id === "teaching-assignment-outside-affiliation"
+    ))?.status).toBe("pending_teacher_response");
+  });
+
+  it("blocks Teacher workflow mutations after the Institution affiliation expires", async () => {
+    window.localStorage.setItem("mock_teacher_affiliations", JSON.stringify([{
+      id: "teacher-affiliation-001",
+      teacherId: "teacher-001",
+      institutionId: "org-inst-siriraj",
+      startsAt: "2026-01-01T00:00:00.000Z",
+      endsAt: "2026-08-17T00:00:00.000Z",
+      status: "active",
+    }]));
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    expect(() => result.current.reviewRegistration({
+      registrationId: "REG-001",
+      decision: "approve",
+      actor: teacherProposalActor,
+      reason: "ทดสอบหลังสิ้นสุดสังกัด",
+    })).toThrowError("Teacher cannot review a registration outside their assignment");
+    expect(() => result.current.publishSubjectResult({
+      resultId: "result-draft-001",
+      actor: teacherProposalActor,
+    })).toThrowError("Teacher cannot access this subject result");
+    expect(() => result.current.reviewCourseOfferingChange({
+      requestId: "COCHG-2569-001",
+      actor: teacherProposalActor,
+      decision: "approved",
+      reason: "ทดสอบหลังสิ้นสุดสังกัด",
+    })).toThrowError("บัญชีนี้ไม่มีสิทธิ์ตรวจคำขอปรับข้อมูลรายวิชาดังกล่าว");
+  });
+
+  it("requires teacher acceptance, stages edits, and soft-cancels assignments", async () => {
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    expect(canTeacherAccessOffering(
+      result.current.teachingAssignments,
+      "teacher-001",
+      "offering-bcp-220",
+      new Date("2026-08-21T00:00:00.000Z"),
+    )).toBe(false);
+    act(() => result.current.respondTeachingAssignment({
+      actor: teacherAssignmentActor,
+      assignmentId: "teaching-assignment-005",
+      decision: "accept",
+    }));
+    expect(result.current.teachingAssignments.find((item) => item.id === "teaching-assignment-005")?.status)
+      .toBe("accepted");
+
+    act(() => result.current.updateTeachingAssignment({
+      actor: institutionActor,
+      assignmentId: "teaching-assignment-005",
+      teacherId: "teacher-001",
+      courseOfferingId: "offering-bcp-220",
+      startsAt: "2026-09-01T00:00:00.000Z",
+      endsAt: "2027-02-01T00:00:00.000Z",
+      reason: "ปรับช่วงเวลาการสอน",
+    }));
+    expect(result.current.teachingAssignments.find((item) => item.id === "teaching-assignment-005"))
+      .toMatchObject({ status: "accepted", pendingChanges: { startsAt: "2026-09-01T00:00:00.000Z" } });
+    act(() => result.current.respondTeachingAssignment({
+      actor: teacherAssignmentActor,
+      assignmentId: "teaching-assignment-005",
+      decision: "accept",
+    }));
+    expect(result.current.teachingAssignments.find((item) => item.id === "teaching-assignment-005"))
+      .toMatchObject({ status: "accepted", startsAt: "2026-09-01T00:00:00.000Z" });
+    expect(result.current.teachingAssignments.find((item) => item.id === "teaching-assignment-005")?.pendingChanges)
+      .toBeUndefined();
+
+    act(() => result.current.cancelTeachingAssignment({
+      actor: institutionActor,
+      assignmentId: "teaching-assignment-005",
+      reason: "ยกเลิกการมอบหมายตามแผนการสอนใหม่",
+    }));
+    expect(result.current.teachingAssignments.find((item) => item.id === "teaching-assignment-005")?.status)
+      .toBe("cancelled");
+  });
+
+  it("blocks the wrong Teacher and revoked course scope from assignment responses", async () => {
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+
+    expect(() => result.current.respondTeachingAssignment({
+      actor: { ...teacherAssignmentActor, userId: "teacher-002" },
+      assignmentId: "teaching-assignment-005",
+      decision: "accept",
+    })).toThrowError("บัญชีนี้ไม่มีสิทธิ์ตอบรับการมอบหมายดังกล่าว");
+    expect(() => result.current.respondTeachingAssignment({
+      actor: { ...teacherAssignmentActor, resourceScopes: [] },
+      assignmentId: "teaching-assignment-005",
+      decision: "accept",
+    })).toThrowError("บัญชีนี้ไม่มีสิทธิ์ตอบรับการมอบหมายดังกล่าว");
+  });
+
+  it("applies a course change only after Teacher approval", async () => {
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+    act(() => result.current.respondTeachingAssignment({
+      actor: teacherAssignmentActor,
+      assignmentId: "teaching-assignment-005",
+      decision: "accept",
+    }));
+    const originalTitle = result.current.courseOfferings.find((item) => item.id === "offering-bcp-220")?.courseTitle;
+
+    act(() => result.current.requestCourseOfferingChange({
+      actor: institutionActor,
+      courseOfferingId: "offering-bcp-220",
+      reviewerTeacherId: "teacher-001",
+      proposedChanges: { courseTitle: "การดูแลความปลอดภัยด้านยาระดับระบบ" },
+      reason: "ปรับชื่อให้ชัดเจนขึ้น",
+    }));
+    const request = result.current.courseOfferingChangeRequests.find((item) => (
+      item.courseOfferingId === "offering-bcp-220"
+    ))!;
+    act(() => result.current.reviewCourseOfferingChange({
+      actor: teacherAssignmentActor,
+      requestId: request.id,
+      decision: "needs_revision",
+      reason: "กรุณาระบุขอบเขตเนื้อหาเพิ่มเติม",
+    }));
+    expect(result.current.courseOfferings.find((item) => item.id === "offering-bcp-220")?.courseTitle)
+      .toBe(originalTitle);
+
+    act(() => result.current.resubmitCourseOfferingChange({
+      actor: institutionActor,
+      requestId: request.id,
+      proposedChanges: { courseTitle: "การดูแลความปลอดภัยด้านยาระดับระบบ" },
+      reason: "เพิ่มรายละเอียดขอบเขตแล้ว",
+    }));
+    act(() => result.current.reviewCourseOfferingChange({
+      actor: teacherAssignmentActor,
+      requestId: request.id,
+      decision: "approved",
+      reason: "รายละเอียดครบถ้วน",
+    }));
+    expect(result.current.courseOfferingChangeRequests.find((item) => item.id === request.id)?.status)
+      .toBe("approved");
+    expect(result.current.courseOfferings.find((item) => item.id === "offering-bcp-220")?.courseTitle)
+      .toBe("การดูแลความปลอดภัยด้านยาระดับระบบ");
+  });
+
+  it("does not mutate an assignment when Audit persistence fails", async () => {
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+    const before = result.current.teachingAssignments;
+    window.localStorage.setItem(AUDIT_STORAGE_KEY, "not-json");
+
+    expect(() => result.current.respondTeachingAssignment({
+      actor: teacherAssignmentActor,
+      assignmentId: "teaching-assignment-005",
+      decision: "accept",
+    })).toThrow();
+    expect(result.current.teachingAssignments).toBe(before);
   });
 });
 

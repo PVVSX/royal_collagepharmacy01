@@ -1,155 +1,40 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useMockDb } from "@/providers/mock-db-provider";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { RESPONSIBLE_INSTITUTION_LABEL } from "@/roles/shared/features/courses/responsible-institution";
+import { useMockDb } from "@/providers/mock-db-provider";
+import { allocateCourseCode, courseCatalog, courseInstitutions, type CollegeCode, type CourseClassification } from "@/roles/shared/features/courses/course-catalog";
 
 export default function CreateCoursePage() {
   const router = useRouter();
-  const { setCourseRequests, programs } = useMockDb();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { courseRequests, setCourseRequests } = useMockDb();
+  const [kind, setKind] = useState<"course" | "short_course">("course");
+  const [collegeCode, setCollegeCode] = useState<CollegeCode>("วภท.");
+  const [classification, setClassification] = useState<CourseClassification>("required");
+  const [institutionId, setInstitutionId] = useState<keyof typeof courseInstitutions>("inst-siriraj");
+  const [title, setTitle] = useState("");
+  const [duration, setDuration] = useState("");
+  const [capacity, setCapacity] = useState("");
+  const existingCodes = [...courseCatalog.flatMap((item) => item.kind === "course" ? [item.code] : []), ...courseRequests.flatMap((item) => item.courseCode ? [item.courseCode] : [])];
+  const generatedCode = kind === "course" ? allocateCourseCode(collegeCode, classification, existingCodes) : undefined;
 
-  const [formData, setFormData] = useState({
-    collegeName: programs.length > 0 ? programs[0].name : "",
-    courseCode: "",
-    courseTitle: "",
-    type: "วุฒิบัตรเฉพาะทาง",
-    duration: "",
-    capacity: "",
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const numericCapacity = Number(capacity);
+    if (!title.trim() || !duration.trim() || !Number.isInteger(numericCapacity) || numericCapacity < 1) return;
+    setCourseRequests((current) => [{ id: `CRQ-${Date.now()}`, collegeName: collegeCode, courseCode: generatedCode, courseTitle: title.trim(), type: kind === "course" ? (classification === "required" ? "รายวิชาบังคับ" : "รายวิชาทั่วไป") : "หลักสูตรระยะสั้น", kind, classification: kind === "course" ? classification : "general", institutionId, duration: duration.trim(), capacity: numericCapacity, status: "pending", submittedAt: new Intl.DateTimeFormat("th-TH", { dateStyle: "medium" }).format(new Date()) }, ...current]);
+    toast.success("บันทึกคำขอเรียบร้อยแล้ว");
+    router.push("/admin/courses");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  return <main className="mx-auto max-w-3xl space-y-6 p-4 pb-24 md:p-6"><header className="flex items-start gap-3"><Button variant="outline" size="icon" asChild aria-label="กลับไปหน้าจัดการรายวิชา"><Link href="/admin/courses"><span aria-hidden="true" className="material-symbols-outlined">arrow_back</span></Link></Button><div><h1 className="text-2xl font-bold">สร้างรายการเปิดสอน</h1><p className="mt-1 text-sm text-muted-foreground">เลือกโครงสร้างให้ตรงกับรายวิชาปกติหรือหลักสูตรระยะสั้น</p></div></header><div className="grid grid-cols-2 gap-3"><button type="button" onClick={() => setKind("course")} className={`rounded-xl border p-4 text-left ${kind === "course" ? "border-primary bg-primary/5" : "border-border bg-card"}`}><strong className="block">รายวิชาปกติ</strong><span className="mt-1 block text-xs text-muted-foreground">ระบบสร้างรหัสและบันทึกหน่วยกิตตามโครงสร้างวิทยาลัย</span></button><button type="button" onClick={() => setKind("short_course")} className={`rounded-xl border p-4 text-left ${kind === "short_course" ? "border-primary bg-primary/5" : "border-border bg-card"}`}><strong className="block">หลักสูตรระยะสั้น</strong><span className="mt-1 block text-xs text-muted-foreground">ระยะเวลา 3-4 เดือน และไม่กำหนดรหัสวิชา</span></button></div><Card><CardHeader><CardTitle>{kind === "course" ? "ข้อมูลรายวิชา" : "ข้อมูลหลักสูตรระยะสั้น"}</CardTitle></CardHeader><CardContent><form onSubmit={submit} className="space-y-5"><div className="grid gap-4 sm:grid-cols-2"><FieldSelect label="วิทยาลัย" value={collegeCode} onChange={(value) => setCollegeCode(value as CollegeCode)} options={["วคบท.", "CPAT", "วภช.", "สมุนไพร", "วภท."]} /><FieldSelect label="สถาบันผู้รับผิดชอบ" value={institutionId} onChange={(value) => setInstitutionId(value as keyof typeof courseInstitutions)} options={Object.entries(courseInstitutions).map(([value, item]) => ({ value, label: `${item.name} (${item.code})` }))} /></div>{kind === "course" && <div className="grid gap-4 sm:grid-cols-2"><FieldSelect label="ประเภทวิชา" value={classification} onChange={(value) => setClassification(value as CourseClassification)} options={[{ value: "required", label: "วิชาบังคับ" }, { value: "general", label: "วิชาทั่วไป" }]} /><div><label className="mb-2 block text-sm font-medium">รหัสที่จะได้รับ</label><div className="rounded-md border border-border bg-muted/40 px-3 py-2 font-mono font-semibold">{generatedCode}</div><p className="mt-1 text-xs text-muted-foreground">ระบบจองรหัสเมื่อบันทึกคำขอสำเร็จ</p></div></div>}<div><label htmlFor="course-title" className="mb-2 block text-sm font-medium">ชื่อ{kind === "course" ? "รายวิชา" : "หลักสูตร"}</label><Input id="course-title" value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={180} /></div><div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor="course-duration" className="mb-2 block text-sm font-medium">ระยะเวลา</label><Input id="course-duration" value={duration} onChange={(event) => setDuration(event.target.value)} placeholder={kind === "course" ? "1 ภาคการศึกษา" : "3 เดือน"} required /></div><div><label htmlFor="course-capacity" className="mb-2 block text-sm font-medium">จำนวนที่เปิดรับ</label><Input id="course-capacity" type="number" min="1" value={capacity} onChange={(event) => setCapacity(event.target.value)} required /></div></div><div className="flex justify-end gap-3 border-t pt-5"><Button variant="outline" asChild><Link href="/admin/courses">ยกเลิก</Link></Button><Button type="submit">บันทึกคำขอ</Button></div></form></CardContent></Card></main>;
+}
 
-    setTimeout(() => {
-      const newRequest = {
-        id: `CRQ-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-        collegeName: formData.collegeName,
-        courseCode: formData.courseCode,
-        courseTitle: formData.courseTitle,
-        type: formData.type,
-        duration: formData.duration,
-        capacity: parseInt(formData.capacity) || 0,
-        status: "pending" as const,
-        submittedAt: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' }),
-      };
-
-      setCourseRequests(prev => [newRequest, ...prev]);
-      
-      toast.success("ส่งคำขอเปิดรายวิชาสำเร็จ", {
-        description: `ข้อมูลรายวิชาและ${RESPONSIBLE_INSTITUTION_LABEL}ถูกส่งเพื่อตรวจสอบแล้ว`,
-      });
-      
-      router.push("/admin/courses");
-    }, 1000);
-  };
-
-  return (
-    <div className="p-4 md:p-6 pb-24 max-w-3xl mx-auto">
-      <div className="mb-6 flex items-center gap-4">
-        <Link href="/admin/courses">
-          <Button variant="outline" size="icon" className="h-9 w-9 rounded-full">
-            <span className="material-symbols-outlined text-lg">arrow_back</span>
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-content tracking-tight">ยื่นขอเปิดรายวิชาใหม่</h1>
-          <p className="text-sm text-content-muted mt-1">ระบุข้อมูลรายวิชาและสถาบันหลักเพื่อให้สภาเภสัชกรรมตรวจสอบและรับรอง</p>
-        </div>
-      </div>
-
-      <Card>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <label htmlFor="collegeName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{RESPONSIBLE_INSTITUTION_LABEL}</label>
-              <select
-                id="collegeName"
-                name="collegeName"
-                required
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={formData.collegeName}
-                onChange={handleChange}
-                aria-describedby="collegeName-description"
-              >
-                <option value="">-- เลือก{RESPONSIBLE_INSTITUTION_LABEL} --</option>
-                {programs.map(p => (
-                  <option key={p.id} value={p.name}>{p.name}</option>
-                ))}
-              </select>
-              <p id="collegeName-description" className="text-xs leading-relaxed text-content-muted">
-                วิทยาลัยหรือสถาบันที่รับผิดชอบการจัดการและรับรองรายวิชานี้
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label htmlFor="courseCode" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">รหัสรายวิชา</label>
-                <Input id="courseCode" name="courseCode" placeholder="เช่น BCP-501" required value={formData.courseCode} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="courseTitle" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">ชื่อรายวิชา / ชื่อหลักสูตร</label>
-                <Input id="courseTitle" name="courseTitle" placeholder="เช่น การบริบาลทางเภสัชกรรมผู้ป่วยวิกฤต" required value={formData.courseTitle} onChange={handleChange} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <label htmlFor="type" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">ประเภทหลักสูตร</label>
-                <select
-                  id="type"
-                  name="type"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={formData.type}
-                  onChange={handleChange}
-                >
-                  <option value="วุฒิบัตรเฉพาะทาง">วุฒิบัตรเฉพาะทาง (3 ปี)</option>
-                  <option value="ประกาศนียบัตรระยะสั้น">ประกาศนียบัตรระยะสั้น (16 สัปดาห์)</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="duration" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">ระยะเวลาการฝึกอบรม</label>
-                <Input id="duration" name="duration" placeholder="เช่น 16 สัปดาห์ หรือ 3 ปี" required value={formData.duration} onChange={handleChange} />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="capacity" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">จำนวนที่เปิดรับสมัคร (คน)</label>
-              <Input id="capacity" name="capacity" type="number" min="1" placeholder="จำนวนที่นั่ง" required value={formData.capacity} onChange={handleChange} />
-            </div>
-
-            <div className="pt-4 flex justify-end gap-3 border-t">
-              <Link href="/admin/courses">
-                <Button type="button" variant="outline">ยกเลิก</Button>
-              </Link>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <span className="material-symbols-outlined animate-spin mr-2 text-lg">sync</span>
-                    กำลังบันทึก...
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined mr-2 text-lg">send</span>
-                    ส่งคำขออนุมัติ
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
+function FieldSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<string | { value: string; label: string }> }) {
+  return <label className="text-sm font-medium">{label}<select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 h-10 w-full rounded-md border border-border bg-background px-3 font-normal">{options.map((option) => { const item = typeof option === "string" ? { value: option, label: option } : option; return <option key={item.value} value={item.value}>{item.label}</option>; })}</select></label>;
 }

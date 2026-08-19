@@ -1,2 +1,2 @@
 import { WorkspaceRouteLoading } from "@/roles/shared/components/workspace/WorkspaceRouteStates";
-export default function Loading() { return <WorkspaceRouteLoading label="กำลังโหลด Institution Workspace" />; }
+export default function Loading() { return <WorkspaceRouteLoading label="กำลังโหลดพื้นที่ทำงานของสถาบัน" />; }

@@ -76,7 +76,7 @@ export const fipFramework: CompetencyCluster[] = [
     description: "จริยธรรมวิชาชีพ การพัฒนาต่อเนื่อง การวิจัยและการสอน",
     areas: [
       { id: "pro_ethics", labelTh: "จริยธรรมและกฎหมายวิชาชีพ", labelEn: "Ethics & law" },
-      { id: "pro_cpd", labelTh: "การเรียนรู้และพัฒนาต่อเนื่อง (CPD)", labelEn: "Continuing development" },
+      { id: "pro_cpd", labelTh: "การเรียนรู้และพัฒนาต่อเนื่อง", labelEn: "Continuing development" },
       { id: "pro_research", labelTh: "การวิจัยและการใช้หลักฐานเชิงประจักษ์", labelEn: "Research & evidence" },
     ],
   },

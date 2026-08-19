@@ -10,6 +10,7 @@ import {
 } from "./mock-data";
 import {
   canTeacherAccessOffering,
+  canTeacherAccessOfferingWithinAffiliation,
   selectInstitutionStudents,
   selectInstitutionTeachers,
   selectTeacherCourseOfferings,
@@ -40,6 +41,70 @@ describe("academic scope selectors", () => {
       DEFAULT_TEACHING_ASSIGNMENTS,
       "teacher-003",
       "offering-vpt-301",
+      activeAt,
+    )).toBe(false);
+    expect(canTeacherAccessOffering(
+      DEFAULT_TEACHING_ASSIGNMENTS,
+      "teacher-001",
+      "offering-bcp-220",
+      activeAt,
+    )).toBe(false);
+  });
+
+  it("keeps accepted access while proposed edits await a teacher response", () => {
+    const accepted = DEFAULT_TEACHING_ASSIGNMENTS.find((item) => (
+      item.id === "teaching-assignment-001"
+    ))!;
+    const withPendingChanges = {
+      ...accepted,
+      pendingChanges: {
+        teacherId: accepted.teacherId,
+        courseOfferingId: "offering-bcp-220",
+        startsAt: accepted.startsAt,
+      },
+    };
+
+    expect(canTeacherAccessOffering(
+      [withPendingChanges],
+      accepted.teacherId,
+      accepted.courseOfferingId,
+      activeAt,
+    )).toBe(true);
+    expect(canTeacherAccessOffering(
+      [withPendingChanges],
+      accepted.teacherId,
+      "offering-bcp-220",
+      activeAt,
+    )).toBe(false);
+    expect(canTeacherAccessOffering(
+      [{ ...accepted, status: "cancelled" }],
+      accepted.teacherId,
+      accepted.courseOfferingId,
+      activeAt,
+    )).toBe(false);
+  });
+
+  it("revokes effective course access when the Teacher affiliation is no longer active", () => {
+    expect(canTeacherAccessOfferingWithinAffiliation(
+      DEFAULT_TEACHING_ASSIGNMENTS,
+      DEFAULT_TEACHER_AFFILIATIONS,
+      "teacher-001",
+      "org-inst-siriraj",
+      "offering-bcp-101",
+      activeAt,
+    )).toBe(true);
+
+    const expiredAffiliations = DEFAULT_TEACHER_AFFILIATIONS.map((affiliation) => (
+      affiliation.teacherId === "teacher-001"
+        ? { ...affiliation, endsAt: "2026-08-10T00:00:00.000Z" }
+        : affiliation
+    ));
+    expect(canTeacherAccessOfferingWithinAffiliation(
+      DEFAULT_TEACHING_ASSIGNMENTS,
+      expiredAffiliations,
+      "teacher-001",
+      "org-inst-siriraj",
+      "offering-bcp-101",
       activeAt,
     )).toBe(false);
   });

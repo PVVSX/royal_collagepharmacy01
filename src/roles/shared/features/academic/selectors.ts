@@ -35,7 +35,9 @@ export function selectActiveTeachingAssignments(
   at: Date = new Date(),
 ) {
   return assignments.filter((assignment) => (
-    assignment.teacherId === teacherId && isAcademicAssignmentActive(assignment, at)
+    assignment.teacherId === teacherId &&
+    assignment.status === "accepted" &&
+    isAcademicAssignmentActive(assignment, at)
   ));
 }
 
@@ -47,6 +49,28 @@ export function canTeacherAccessOffering(
 ) {
   return selectActiveTeachingAssignments(assignments, teacherId, at)
     .some((assignment) => assignment.courseOfferingId === courseOfferingId);
+}
+
+export function canTeacherAccessOfferingWithinAffiliation(
+  assignments: readonly TeachingAssignment[],
+  affiliations: readonly TeacherAffiliation[],
+  teacherId: string,
+  institutionId: string,
+  courseOfferingId: string,
+  at: Date = new Date(),
+) {
+  const hasActiveAffiliation = affiliations.some((affiliation) => (
+    affiliation.teacherId === teacherId &&
+    affiliation.institutionId === institutionId &&
+    isAcademicAffiliationActive(affiliation, at)
+  ));
+  if (!hasActiveAffiliation) return false;
+
+  return selectActiveTeachingAssignments(assignments, teacherId, at)
+    .some((assignment) => (
+      assignment.institutionId === institutionId &&
+      assignment.courseOfferingId === courseOfferingId
+    ));
 }
 
 export function selectTeacherCourseOfferings(

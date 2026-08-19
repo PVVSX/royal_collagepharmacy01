@@ -23,18 +23,16 @@ const navGroups: {
     groupLabel: "เมนูหลัก",
     items: [
       { href: "/member/dashboard", icon: "dashboard", label: "ภาพรวม" },
-      { href: "/member/passport", icon: "badge", label: "หนังสือเดินทางวิชาชีพ" },
-      { href: "/member/students", icon: "person", label: "ข้อมูลของฉัน" },
-      { href: "/member/admission", icon: "quiz", label: "สมัครสอบ" },
+      { href: "/member/passport", icon: "badge", label: "Pharmacist Profile" },
     ],
   },
   {
     groupLabel: "การเรียน",
     items: [
+      { href: "/member/schedule", icon: "calendar_today", label: "ตารางเรียน" },
       { href: "/member/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
       { href: "/member/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
       { href: "/member/results", icon: "fact_check", label: "ผลการเรียน" },
-      { href: "/member/schedule", icon: "calendar_today", label: "ตารางเรียน" },
     ],
   },
   {
@@ -123,23 +121,26 @@ function SidebarNav({ pathname }: { pathname: string }) {
 
       <div className="mx-4 h-px bg-sidebar-border" />
 
-      {/* User */}
+      {/* User account */}
       <div className="p-4">
-        <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-sidebar-accent transition-colors">
-          <Avatar className="h-8 w-8">
-            <img src="/somchai_profile.png" alt="" className="h-full w-full object-cover rounded-full" />
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate text-sidebar-foreground">{session?.displayName ?? "กำลังโหลด"}</p>
-            <p className="truncate text-xs text-sidebar-foreground/70">ผู้เข้ารับการฝึกอบรม · {session?.organisation.code ?? "—"}</p>
+        <div className="rounded-lg p-2 transition-colors hover:bg-sidebar-accent">
+          <div className="flex min-w-0 items-start gap-3">
+            <Avatar className="h-8 w-8 shrink-0">
+              <img src="/somchai_profile.png" alt="" className="h-full w-full rounded-full object-cover" />
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-2 break-words text-sm font-medium leading-snug text-sidebar-foreground">{session?.displayName ?? "กำลังโหลด"}</p>
+              <p className="mt-1 line-clamp-2 break-words text-xs text-sidebar-foreground/70">{session?.organisation.name ?? "ข้อมูลบัญชีสมาชิก"}</p>
+            </div>
           </div>
           <button
             onClick={() => { clearPortalSession(); router.push("/"); }}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/70 hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground transition-colors"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground"
             title="ออกจากระบบ"
             aria-label="ออกจากระบบ"
           >
-            <span className="material-symbols-outlined text-lg">logout</span>
+            <span className="material-symbols-outlined text-base">logout</span>
+            ออกจากระบบ
           </button>
         </div>
       </div>

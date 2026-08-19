@@ -30,7 +30,7 @@ export const DEFAULT_GOVERNANCE_CONFIGURATION: GovernanceConfiguration = {
   schemaVersion: 1,
   userAssignments: [
     { userId: "วภท-2568-001", role: "student", organisationId: ORGANISATIONS.siriraj.id, resourceScopes: ["student:self"] },
-    { userId: "teacher-001", role: "teacher", organisationId: ORGANISATIONS.siriraj.id, resourceScopes: ["course:proposal", "course:offering-bcp-101", "course:offering-vpt-301"] },
+    { userId: "teacher-001", role: "teacher", organisationId: ORGANISATIONS.siriraj.id, resourceScopes: ["course:proposal", "course:assigned", "course:offering-bcp-101", "course:offering-vpt-301"] },
     { userId: "institution-admin-001", role: "institution_admin", organisationId: ORGANISATIONS.siriraj.id, resourceScopes: ["institution:org-inst-siriraj"] },
     { userId: "staff-001", role: "royal_college_staff", organisationId: ORGANISATIONS.royalCollege.id, resourceScopes: ["staff:central"] },
     { userId: "president-vpt-current", role: "president", organisationId: ORGANISATIONS.therapeuticCollege.id, resourceScopes: ["signature:college"] },
@@ -47,6 +47,14 @@ export const DEFAULT_GOVERNANCE_CONFIGURATION: GovernanceConfiguration = {
 const USER_IDS = new Set(DEFAULT_GOVERNANCE_CONFIGURATION.userAssignments.map((item) => item.userId));
 const INTEGRATION_IDS = new Set(DEFAULT_GOVERNANCE_CONFIGURATION.integrations.map((item) => item.integrationId));
 const ORGANISATION_IDS = new Set(ORGANISATION_LIST.map((item) => item.id));
+const DEFAULT_TEACHER_ACCESS = DEFAULT_GOVERNANCE_CONFIGURATION.userAssignments.find((item) => (
+  item.userId === "teacher-001"
+))!;
+const LEGACY_DEFAULT_TEACHER_SCOPES = [
+  "course:proposal",
+  "course:offering-bcp-101",
+  "course:offering-vpt-301",
+] as const;
 
 function cloneConfiguration(configuration: GovernanceConfiguration): GovernanceConfiguration {
   return {
@@ -61,6 +69,23 @@ function cloneConfiguration(configuration: GovernanceConfiguration): GovernanceC
 
 function normalizeResourceScopes(scopes: readonly string[]) {
   return [...new Set(scopes.map((scope) => scope.trim()).filter(Boolean))];
+}
+
+function hasExactlyScopes(scopes: readonly string[], expected: readonly string[]) {
+  return scopes.length === expected.length && expected.every((scope) => scopes.includes(scope));
+}
+
+export function migrateKnownLegacyTeacherResourceScopes(
+  assignment: Pick<UserAccessAssignment, "userId" | "role" | "organisationId" | "resourceScopes">,
+) {
+  const resourceScopes = normalizeResourceScopes(assignment.resourceScopes);
+  const isKnownLegacyTeacherDefault = assignment.userId === DEFAULT_TEACHER_ACCESS.userId &&
+    assignment.role === DEFAULT_TEACHER_ACCESS.role &&
+    assignment.organisationId === DEFAULT_TEACHER_ACCESS.organisationId &&
+    hasExactlyScopes(resourceScopes, LEGACY_DEFAULT_TEACHER_SCOPES);
+  return isKnownLegacyTeacherDefault
+    ? [...DEFAULT_TEACHER_ACCESS.resourceScopes]
+    : resourceScopes;
 }
 
 function isStoredAssignment(value: unknown): value is UserAccessAssignment {
@@ -108,9 +133,13 @@ export function normalizeGovernanceConfiguration(value: unknown): GovernanceConf
     schemaVersion: 1,
     userAssignments: DEFAULT_GOVERNANCE_CONFIGURATION.userAssignments.map((fallback) => {
       const storedAssignment = storedAssignments.find((item) => item.userId === fallback.userId);
-      return storedAssignment
-        ? { ...storedAssignment, resourceScopes: normalizeResourceScopes(storedAssignment.resourceScopes) }
-        : { ...fallback, resourceScopes: [...fallback.resourceScopes] };
+      if (!storedAssignment) {
+        return { ...fallback, resourceScopes: [...fallback.resourceScopes] };
+      }
+      return {
+        ...storedAssignment,
+        resourceScopes: migrateKnownLegacyTeacherResourceScopes(storedAssignment),
+      };
     }),
     integrations: DEFAULT_GOVERNANCE_CONFIGURATION.integrations.map((fallback) => ({
       ...(storedIntegrations.find((item) => item.integrationId === fallback.integrationId) ?? fallback),

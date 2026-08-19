@@ -22,7 +22,9 @@ import {
   WorkspaceHeader,
 } from "@/roles/shared/components/workspace/WorkspacePrimitives";
 import {
+  canTeacherAccessOfferingWithinAffiliation,
   formatSubjectResultValue,
+  subjectResultStatusMeta,
   type ScopedAcademicActor,
   type SubjectResult,
   type SubjectResultValue,
@@ -31,32 +33,26 @@ import {
   SensitiveViewAuditBoundary,
   useSensitiveViewAudit,
 } from "@/roles/shared/features/audit";
-import { hasResourceScope } from "@/roles/shared/features/roles/access-model";
+import { getLicenseEligibility } from "@/roles/shared/features/license-eligibility";
+import { hasResourceScope, ROLE_PRESENTATION } from "@/roles/shared/features/roles/access-model";
 import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 import {
   registrationStatusMeta,
+  type RegistrationActor,
   type RegistrationStatus,
 } from "@/roles/shared/features/registration";
+import TeacherCourseHandoffPanels from "./TeacherCourseHandoffPanels";
 
 type TeacherSection = "dashboard" | "courses" | "registrations" | "results" | "history";
 
-const registrationMeta: Partial<Record<RegistrationStatus, { label: string; variant: "secondary" | "warning" | "success" | "danger" | "info" }>> = {
-  submitted: { label: "รอตรวจ Eligibility", variant: "secondary" },
-  pending: { label: "รออาจารย์ตรวจ", variant: "warning" },
-  needs_info: { label: "ขอข้อมูลเพิ่ม", variant: "info" },
-  approved: { label: "อนุมัติเดิม", variant: "success" },
-  awaiting_payment: { label: "รอชำระเงิน", variant: "warning" },
-  enrolled: { label: "ลงทะเบียนแล้ว", variant: "success" },
-  rejected: { label: "ปฏิเสธ", variant: "danger" },
-  drop_pending: { label: "รอถอน", variant: "warning" },
-  withdrawn: { label: "ถอนแล้ว", variant: "secondary" },
-};
-
-const resultMeta: Record<SubjectResult["status"], { label: string; variant: "secondary" | "warning" | "success" | "info" }> = {
-  pending: { label: "ยังไม่บันทึก", variant: "secondary" },
-  draft: { label: "ฉบับร่าง", variant: "warning" },
-  published: { label: "ประกาศแล้ว", variant: "success" },
-  revised: { label: "แก้ไขแล้ว", variant: "info" },
+const registrationActorLabel: Record<RegistrationActor, string> = {
+  member: "ผู้เข้ารับการฝึกอบรม",
+  student: "ผู้เข้ารับการฝึกอบรม",
+  teacher: "อาจารย์ผู้สอน",
+  registrar: "เจ้าหน้าที่ทะเบียน",
+  royal_college_staff: "เจ้าหน้าที่ราชวิทยาลัย",
+  system: "ระบบ",
+  migration: "ระบบย้ายข้อมูล",
 };
 
 function formatDateTime(value?: string) {
@@ -99,8 +95,21 @@ export default function TeacherWorkspacePage({
     const active = new Date(assignment.startsAt).getTime() <= now && (!assignment.endsAt || new Date(assignment.endsAt).getTime() > now);
     const resourceGranted = resourceScopes.includes("course:assigned") ||
       hasResourceScope(resourceScopes, `course:${assignment.courseOfferingId}`);
-    return active && resourceGranted && assignment.teacherId === teacherId && assignment.institutionId === institutionId;
-  }), [db.teachingAssignments, institutionId, now, resourceScopes, teacherId]);
+    const affiliationGranted = canTeacherAccessOfferingWithinAffiliation(
+      db.teachingAssignments,
+      db.teacherAffiliations,
+      teacherId,
+      institutionId,
+      assignment.courseOfferingId,
+      new Date(now),
+    );
+    return assignment.status === "accepted" &&
+      active &&
+      resourceGranted &&
+      affiliationGranted &&
+      assignment.teacherId === teacherId &&
+      assignment.institutionId === institutionId;
+  }), [db.teacherAffiliations, db.teachingAssignments, institutionId, now, resourceScopes, teacherId]);
   const assignmentIds = useMemo(() => new Set(assignments.map((assignment) => assignment.courseOfferingId)), [assignments]);
   const offerings = useMemo(() => db.courseOfferings.filter((offering) => assignmentIds.has(offering.id)), [assignmentIds, db.courseOfferings]);
   const offeringIds = useMemo(() => new Set(offerings.map((offering) => offering.id)), [offerings]);
@@ -174,15 +183,86 @@ export default function TeacherWorkspacePage({
     const needsInfo = registrations.filter((registration) => registration.status === "needs_info").length;
     const unpublished = results.filter((result) => result.status === "pending" || result.status === "draft").length;
     const recentEvents = registrations.flatMap((registration) => registration.history.map((event) => ({ ...event, resource: `${registration.courseCode} · ${registration.studentName}` }))).filter((event) => event.actorUserId === teacherId).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 5);
-    return <><WorkspaceHeader eyebrow="Teacher workspace" title="ภาพรวมงานสอน" description="เห็นเฉพาะสถาบันและรายวิชาที่ได้รับมอบหมายในช่วงเวลาปัจจุบัน" action={{ href: "/teacher/registrations", label: "ตรวจคำขอลงทะเบียน", icon: "how_to_reg" }} /><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><MetricCard label="รายวิชาที่สอน" value={offerings.length} note="ตาม Teaching Assignment ที่มีผล" icon="menu_book" /><MetricCard label="รอตรวจลงทะเบียน" value={pendingReviews} note="ผ่าน System Eligibility แล้ว" icon="pending_actions" emphasis="warning" /><MetricCard label="ต้องการข้อมูลเพิ่ม" value={needsInfo} note="รอผู้เรียนส่งข้อมูลกลับ" icon="contact_support" /><MetricCard label="ยังไม่ประกาศผล" value={unpublished} note="Pending และ Draft" icon="fact_check" emphasis={unpublished ? "warning" : "success"} /></div><Card className="border-border"><CardHeader><CardTitle className="text-lg">งานล่าสุดของฉัน</CardTitle></CardHeader><CardContent>{recentEvents.length ? <div className="divide-y divide-border">{recentEvents.map((event) => <div key={event.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-medium text-foreground">{event.resource}</p><p className="text-xs text-muted-foreground">{event.from ?? "เริ่มต้น"} → {event.to}{event.reason ? ` · ${event.reason}` : ""}</p></div><time className="text-xs text-muted-foreground">{formatDateTime(event.at)}</time></div>)}</div> : <EmptyState title="ยังไม่มีงานล่าสุด" description="เมื่อพิจารณาคำขอหรือจัดการผล รายการจะปรากฏที่นี่" />}</CardContent></Card></>;
+    return (
+      <>
+        <WorkspaceHeader
+          eyebrow="พื้นที่ทำงานอาจารย์"
+          title="ภาพรวมงานสอน"
+          description="เห็นเฉพาะสถาบันและรายวิชาที่ได้รับมอบหมายในช่วงเวลาปัจจุบัน"
+          action={{ href: "/teacher/registrations", label: "ตรวจคำขอลงทะเบียน", icon: "how_to_reg" }}
+        />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="รายวิชาที่สอน" value={offerings.length} note="ตามการมอบหมายการสอนที่ตอบรับแล้ว" icon="menu_book" />
+          <MetricCard label="รอตรวจลงทะเบียน" value={pendingReviews} note="ผ่านการตรวจคุณสมบัติจากระบบแล้ว" icon="pending_actions" emphasis="warning" />
+          <MetricCard label="ต้องการข้อมูลเพิ่ม" value={needsInfo} note="รอผู้เรียนส่งข้อมูลกลับ" icon="contact_support" />
+          <MetricCard label="ยังไม่ประกาศผล" value={unpublished} note="ยังไม่บันทึกและฉบับร่าง" icon="fact_check" emphasis={unpublished ? "warning" : "success"} />
+        </div>
+        <Card className="border-border">
+          <CardHeader><CardTitle className="text-lg">งานล่าสุดของฉัน</CardTitle></CardHeader>
+          <CardContent>
+            {recentEvents.length ? (
+              <div className="divide-y divide-border">
+                {recentEvents.map((event) => (
+                  <div key={event.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{event.resource}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatRegistrationStatus(event.from)} → {formatRegistrationStatus(event.to)}
+                        {event.reason ? ` · ${event.reason}` : ""}
+                      </p>
+                    </div>
+                    <time className="text-xs text-muted-foreground">{formatDateTime(event.at)}</time>
+                  </div>
+                ))}
+              </div>
+            ) : <EmptyState title="ยังไม่มีงานล่าสุด" description="เมื่อพิจารณาคำขอหรือจัดการผล รายการจะปรากฏที่นี่" />}
+          </CardContent>
+        </Card>
+      </>
+    );
   };
 
-  const renderCourses = () => <><WorkspaceHeader eyebrow="Resource scope" title="รายวิชาที่ได้รับมอบหมาย" description="เปิดดูรายชื่อผู้เรียนได้เฉพาะ Course Assignment ของบัญชีนี้" action={{ href: "/teacher/course-proposals", label: "สร้างคำขอรายวิชา", icon: "post_add" }} /><div className="grid gap-4 lg:grid-cols-2">{offerings.map((offering) => { const roster = registrations.filter((registration) => registration.courseOfferingId === offering.id && registration.status === "enrolled"); return <Card key={offering.id} className="border-border"><CardContent className="p-5"><div className="flex items-start justify-between gap-4"><div><ScopeBadge>{offering.term} · รุ่น {offering.section}</ScopeBadge><h2 className="mt-3 text-lg font-semibold text-foreground">{offering.courseCode} · {offering.courseTitle}</h2><p className="mt-1 text-sm text-muted-foreground">{offering.credits} หน่วยกิต · ผู้เรียนที่ลงทะเบียนแล้ว {roster.length} คน</p></div><span aria-hidden="true" className="material-symbols-outlined text-3xl text-primary">menu_book</span></div><Button asChild variant="outline" className="mt-5"><Link href={`/teacher/courses/${offering.id}`}>เปิดรายชื่อผู้เรียน</Link></Button></CardContent></Card>; })}</div>{offerings.length === 0 ? <EmptyState icon="lock" title="ไม่มีรายวิชาในขอบเขต" description="บัญชีนี้ยังไม่มี Teaching Assignment ที่มีผล หรือไม่มี Resource Scope ของรายวิชา" /> : null}</>;
+  const renderCourses = () => (
+    <>
+      <WorkspaceHeader
+        eyebrow="ขอบเขตรายวิชาที่รับผิดชอบ"
+        title="รายวิชาที่ได้รับมอบหมาย"
+        description="ตอบรับคำเชิญและเปิดดูข้อมูลได้เฉพาะรายวิชาที่อยู่ในขอบเขตของบัญชีนี้"
+        action={{ href: "/teacher/course-proposals", label: "สร้างคำขอรายวิชา", icon: "post_add" }}
+      />
+      {actor ? <TeacherCourseHandoffPanels actor={actor} /> : null}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {offerings.map((offering) => {
+          const roster = registrations.filter((registration) => (
+            registration.courseOfferingId === offering.id && registration.status === "enrolled"
+          ));
+          return (
+            <Card key={offering.id} className="border-border">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <ScopeBadge>{offering.term} · กลุ่ม {offering.section}</ScopeBadge>
+                    <h2 className="mt-3 text-lg font-semibold text-foreground">{offering.courseCode} · {offering.courseTitle}</h2>
+                    <p className="mt-1 text-sm text-muted-foreground">{offering.credits} หน่วยกิต · ผู้เรียนที่ลงทะเบียนแล้ว {roster.length} คน</p>
+                  </div>
+                  <span aria-hidden="true" className="material-symbols-outlined text-3xl text-primary">menu_book</span>
+                </div>
+                <Button asChild variant="outline" className="mt-5"><Link href={`/teacher/courses/${offering.id}`}>เปิดรายชื่อผู้เรียน</Link></Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+      {offerings.length === 0 ? (
+        <EmptyState icon="lock" title="ยังไม่มีรายวิชาที่ตอบรับแล้ว" description="ตอบรับคำเชิญการสอนก่อน หรือขอให้ผู้ดูแลตรวจสอบขอบเขตรายวิชา" />
+      ) : null}
+    </>
+  );
 
   const renderRegistrations = () => (
     <>
       <WorkspaceHeader
-        eyebrow="Teacher decision"
+        eyebrow="การพิจารณาของอาจารย์"
         title="คำขอลงทะเบียนรอตรวจ"
         description="แสดงเฉพาะคำขอที่รอการพิจารณา ในวิชาที่ได้รับมอบหมายและผ่านการตรวจคุณสมบัติจากระบบแล้ว"
       />
@@ -207,7 +287,7 @@ export default function TeacherWorkspacePage({
             </TableHeader>
             <TableBody>
               {visibleRegistrations.map((registration) => {
-                const meta = registrationMeta[registration.status] ?? { label: registration.status, variant: "secondary" as const };
+                const meta = registrationStatusMeta[registration.status];
                 const warning = registration.eligibility?.decision === "eligible_with_warning";
                 return (
                   <TableRow key={registration.id}>
@@ -230,12 +310,10 @@ export default function TeacherWorkspacePage({
   );
 
   const renderRegistrationDetail = () => {
-    if (!selectedRegistration || !selectedOffering) return <><WorkspaceHeader title="รายละเอียดคำขอลงทะเบียน" description="ตรวจข้อมูลและบันทึก Decision พร้อมหลักฐานย้อนหลัง" /><ForbiddenState description="คำขอนี้ไม่ได้อยู่ในรายวิชาที่ได้รับมอบหมายให้บัญชีปัจจุบัน" /></>;
+    if (!selectedRegistration || !selectedOffering) return <><WorkspaceHeader title="รายละเอียดคำขอลงทะเบียน" description="ตรวจข้อมูลและบันทึกผลการพิจารณาพร้อมหลักฐานย้อนหลัง" /><ForbiddenState description="คำขอนี้ไม่ได้อยู่ในรายวิชาที่ได้รับมอบหมายให้บัญชีปัจจุบัน" /></>;
     const canDecide = selectedRegistration.status === "pending";
-    const currentStatus = registrationMeta[selectedRegistration.status] ?? {
-      label: formatRegistrationStatus(selectedRegistration.status),
-      variant: "secondary" as const,
-    };
+    const currentStatus = registrationStatusMeta[selectedRegistration.status];
+    const eligibility = getLicenseEligibility(selectedRegistration.eligibility?.status ?? "unverified");
     return (
       <>
         <WorkspaceHeader
@@ -256,7 +334,7 @@ export default function TeacherWorkspacePage({
                 ["รหัสผู้เรียน", selectedRegistration.studentId],
                 ["สถาบัน", db.academicInstitutions.find((item) => item.id === selectedRegistration.institutionId)?.name ?? "—"],
                 ["รายวิชา", `${selectedRegistration.courseCode} · ${selectedOffering.section}`],
-                ["ผลตรวจคุณสมบัติ", selectedRegistration.eligibility?.decision === "eligible" ? `ผ่าน · ${selectedRegistration.eligibility.status}` : "ผ่านแบบมีเงื่อนไข"],
+                ["ผลตรวจคุณสมบัติ", selectedRegistration.eligibility?.decision === "eligible" ? `ผ่าน · ${eligibility.label}` : `ผ่านแบบมีเงื่อนไข · ${eligibility.label}`],
                 ["ตรวจเมื่อ", formatDateTime(selectedRegistration.eligibility?.checkedAt)],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-xl bg-muted/40 p-3">
@@ -299,7 +377,7 @@ export default function TeacherWorkspacePage({
                 <span aria-hidden="true" className="material-symbols-outlined text-lg text-primary">history</span>
                 <div>
                   <p className="text-sm font-medium">{formatRegistrationStatus(event.from)} → {formatRegistrationStatus(event.to)}</p>
-                  <p className="text-xs text-muted-foreground">{event.actorName ?? event.actor} · {formatDateTime(event.at)}</p>
+                  <p className="text-xs text-muted-foreground">{event.actorName ?? registrationActorLabel[event.actor]} · {formatDateTime(event.at)}</p>
                   {event.reason ? <p className="mt-1 text-sm text-muted-foreground">{event.reason}</p> : null}
                 </div>
               </div>
@@ -313,7 +391,7 @@ export default function TeacherWorkspacePage({
   const renderResults = () => (
     <>
       <WorkspaceHeader
-        eyebrow="Pass/fail workflow"
+        eyebrow="ขั้นตอนบันทึกผลการเรียน"
         title="บันทึกและประกาศผลแบบผ่าน/ไม่ผ่าน"
         description="บันทึกได้เฉพาะผู้เรียนที่ลงทะเบียนแล้วในรายวิชาของตน การแก้ไขหลังประกาศจะเก็บประวัติผลเดิมไว้"
       />
@@ -334,7 +412,7 @@ export default function TeacherWorkspacePage({
               {results.map((result) => {
                 const student = db.academicStudents.find((item) => item.id === result.studentId);
                 const offering = db.courseOfferings.find((item) => item.id === result.courseOfferingId);
-                const meta = resultMeta[result.status];
+                const meta = subjectResultStatusMeta[result.status];
                 return (
                   <TableRow key={result.id}>
                     <TableCell><p className="font-medium">{student?.name ?? result.studentId}</p><p className="text-xs text-muted-foreground">{result.studentId}</p></TableCell>
@@ -391,7 +469,7 @@ export default function TeacherWorkspacePage({
     </>
   );
 
-  const renderHistory = () => { const revisions = results.flatMap((result) => result.revisions.map((revision) => ({ ...revision, result }))).sort((a, b) => b.createdAt.localeCompare(a.createdAt)); return <><WorkspaceHeader eyebrow="Immutable history" title="ประวัติการแก้ไขผล" description="แสดงผลเดิม ผลใหม่ เหตุผล ผู้แก้ และเวลา โดยไม่ลบประวัติเดิม" /><Card className="border-border"><CardContent className="p-0"><div className="divide-y divide-border">{revisions.map((revision) => { const student = db.academicStudents.find((item) => item.id === revision.result.studentId); const offering = db.courseOfferings.find((item) => item.id === revision.result.courseOfferingId); return <div key={revision.id} className="grid gap-3 p-5 md:grid-cols-[minmax(0,1fr)_auto]"><div><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{offering?.courseCode} · {student?.name}</p><Badge variant={revision.previousValue ? "info" : "secondary"}>{revision.previousValue ? `${formatSubjectResultValue(revision.previousValue)} → ${formatSubjectResultValue(revision.newValue)}` : `บันทึก ${formatSubjectResultValue(revision.newValue)}`}</Badge></div><p className="mt-2 text-sm text-muted-foreground">{revision.reason || "บันทึกผลตามขั้นตอนการประเมิน"}</p><p className="mt-1 text-xs text-muted-foreground">{revision.actor.userName} · {revision.actor.role}</p></div><time className="text-xs text-muted-foreground">{formatDateTime(revision.createdAt)}</time></div>; })}</div>{revisions.length === 0 ? <div className="p-5"><EmptyState title="ยังไม่มีประวัติการแก้ไข" description="การบันทึก ประกาศ หรือแก้ไขผลจะถูกเก็บไว้ที่นี่" /></div> : null}</CardContent></Card></>; };
+  const renderHistory = () => { const revisions = results.flatMap((result) => result.revisions.map((revision) => ({ ...revision, result }))).sort((a, b) => b.createdAt.localeCompare(a.createdAt)); return <><WorkspaceHeader eyebrow="ประวัติที่ตรวจสอบย้อนหลังได้" title="ประวัติการแก้ไขผล" description="แสดงผลเดิม ผลใหม่ เหตุผล ผู้แก้ และเวลา โดยไม่ลบประวัติเดิม" /><Card className="border-border"><CardContent className="p-0"><div className="divide-y divide-border">{revisions.map((revision) => { const student = db.academicStudents.find((item) => item.id === revision.result.studentId); const offering = db.courseOfferings.find((item) => item.id === revision.result.courseOfferingId); return <div key={revision.id} className="grid gap-3 p-5 md:grid-cols-[minmax(0,1fr)_auto]"><div><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{offering?.courseCode} · {student?.name}</p><Badge variant={revision.previousValue ? "info" : "secondary"}>{revision.previousValue ? `${formatSubjectResultValue(revision.previousValue)} → ${formatSubjectResultValue(revision.newValue)}` : `บันทึก ${formatSubjectResultValue(revision.newValue)}`}</Badge></div><p className="mt-2 text-sm text-muted-foreground">{revision.reason || "บันทึกผลตามขั้นตอนการประเมิน"}</p><p className="mt-1 text-xs text-muted-foreground">{revision.actor.userName} · {ROLE_PRESENTATION[revision.actor.role].label}</p></div><time className="text-xs text-muted-foreground">{formatDateTime(revision.createdAt)}</time></div>; })}</div>{revisions.length === 0 ? <div className="p-5"><EmptyState title="ยังไม่มีประวัติการแก้ไข" description="การบันทึก ประกาศ หรือแก้ไขผลจะถูกเก็บไว้ที่นี่" /></div> : null}</CardContent></Card></>; };
 
   return <PageShell size="full" className="space-y-6">{resourceId ? renderRegistrationDetail() : section === "dashboard" ? renderDashboard() : section === "courses" ? renderCourses() : section === "registrations" ? renderRegistrations() : section === "results" ? renderResults() : renderHistory()}</PageShell>;
 }
@@ -400,15 +478,17 @@ export function TeacherCourseRosterPage({ courseOfferingId }: { courseOfferingId
   const { session, isReady } = usePortalSession();
   const db = useMockDb();
   const [now] = useState(() => Date.now());
-  const assigned = session?.role === "teacher" && db.teachingAssignments.some((assignment) => (
-    assignment.teacherId === session?.userId &&
-    assignment.courseOfferingId === courseOfferingId &&
-    assignment.institutionId === session?.organisation.id &&
+  const assigned = session?.role === "teacher" &&
     (session.resourceScopes.includes("course:assigned") ||
       hasResourceScope(session.resourceScopes, `course:${courseOfferingId}`)) &&
-    new Date(assignment.startsAt).getTime() <= now &&
-    (!assignment.endsAt || new Date(assignment.endsAt).getTime() > now)
-  ));
+    canTeacherAccessOfferingWithinAffiliation(
+      db.teachingAssignments,
+      db.teacherAffiliations,
+      session.userId,
+      session.organisation.id,
+      courseOfferingId,
+      new Date(now),
+    );
   const offering = assigned ? db.courseOfferings.find((item) => item.id === courseOfferingId) : undefined;
   const sensitiveViewAudit = useSensitiveViewAudit({
     enabled: isReady && db.isLoaded && Boolean(offering),
@@ -422,7 +502,7 @@ export function TeacherCourseRosterPage({ courseOfferingId }: { courseOfferingId
   });
 
   if (!isReady || !db.isLoaded) return <PageShell size="full"><LoadingState /></PageShell>;
-  if (!offering) return <PageShell size="full" className="space-y-6"><WorkspaceHeader title="รายชื่อผู้เรียน" description="ตรวจขอบเขตรายวิชาก่อนแสดงข้อมูล" /><ForbiddenState description="บัญชีไม่ได้รับมอบหมายหรือ Resource Scope ไม่ครอบคลุมรายวิชานี้" /></PageShell>;
+  if (!offering) return <PageShell size="full" className="space-y-6"><WorkspaceHeader title="รายชื่อผู้เรียน" description="ตรวจขอบเขตรายวิชาก่อนแสดงข้อมูล" /><ForbiddenState description="บัญชีนี้ยังไม่ได้ตอบรับการมอบหมาย หรือไม่มีสิทธิ์เข้าถึงรายวิชานี้" /></PageShell>;
   const roster = db.registrations.filter((registration) => registration.courseOfferingId === courseOfferingId && registration.status === "enrolled");
-  return <PageShell size="full" className="space-y-6"><WorkspaceHeader eyebrow={offering.courseCode} title={offering.courseTitle} description={`${offering.term} · รุ่น ${offering.section} · ${offering.credits} หน่วยกิต`} /><SensitiveViewAuditBoundary status={sensitiveViewAudit.status} onRetry={sensitiveViewAudit.retry}><Card className="border-border"><CardHeader><CardTitle className="text-lg">ผู้เรียนที่ลงทะเบียนแล้ว</CardTitle></CardHeader><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead scope="col">รหัส</TableHead><TableHead scope="col">ชื่อผู้เรียน</TableHead><TableHead scope="col">สถานะ</TableHead><TableHead scope="col">ผลล่าสุด</TableHead></TableRow></TableHeader><TableBody>{roster.map((registration) => { const result = db.subjectResults.find((item) => item.studentId === registration.studentId && item.courseOfferingId === courseOfferingId); return <TableRow key={registration.id}><TableCell>{registration.studentId}</TableCell><TableCell className="font-medium">{registration.studentName}</TableCell><TableCell><Badge variant="success">ลงทะเบียนแล้ว</Badge></TableCell><TableCell>{formatSubjectResultValue(result?.currentValue ?? result?.draftValue)}</TableCell></TableRow>; })}</TableBody></Table>{roster.length === 0 ? <div className="p-5"><EmptyState title="ยังไม่มีผู้เรียนที่ลงทะเบียนแล้ว" description="รายชื่อจะแสดงหลังระบบยืนยันการชำระเงิน" /></div> : null}</CardContent></Card></SensitiveViewAuditBoundary></PageShell>;
+  return <PageShell size="full" className="space-y-6"><WorkspaceHeader eyebrow={offering.courseCode} title={offering.courseTitle} description={`${offering.term} · กลุ่มเรียน ${offering.section} · ${offering.credits} หน่วยกิต`} /><SensitiveViewAuditBoundary status={sensitiveViewAudit.status} onRetry={sensitiveViewAudit.retry}><Card className="border-border"><CardHeader><CardTitle className="text-lg">ผู้เรียนที่ลงทะเบียนแล้ว</CardTitle></CardHeader><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead scope="col">รหัส</TableHead><TableHead scope="col">ชื่อผู้เรียน</TableHead><TableHead scope="col">สถานะ</TableHead><TableHead scope="col">ผลล่าสุด</TableHead></TableRow></TableHeader><TableBody>{roster.map((registration) => { const result = db.subjectResults.find((item) => item.studentId === registration.studentId && item.courseOfferingId === courseOfferingId); return <TableRow key={registration.id}><TableCell>{registration.studentId}</TableCell><TableCell className="font-medium">{registration.studentName}</TableCell><TableCell><Badge variant="success">ลงทะเบียนแล้ว</Badge></TableCell><TableCell>{formatSubjectResultValue(result?.currentValue ?? result?.draftValue)}</TableCell></TableRow>; })}</TableBody></Table>{roster.length === 0 ? <div className="p-5"><EmptyState title="ยังไม่มีผู้เรียนที่ลงทะเบียนแล้ว" description="รายชื่อจะแสดงหลังระบบยืนยันการชำระเงิน" /></div> : null}</CardContent></Card></SensitiveViewAuditBoundary></PageShell>;
 }

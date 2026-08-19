@@ -23,8 +23,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { clearPortalSession } from "@/roles/shared/features/roles/mock-login";
 import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 import { ROLE_PRESENTATION } from "@/roles/shared/features/roles/access-model";
+import { useMemberNotifications } from "@/roles/member/features/notifications/member-notifications";
 
 const adminNotificationsData: typeof notificationsData = [
   {
@@ -64,7 +66,7 @@ const breadcrumbMap: Record<string, { trail: { label: string; href: string }[]; 
   "/member/requests": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "คำร้องของฉัน" },
   "/member/research": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ฐานข้อมูลงานวิจัย" },
   "/member/admission": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "สมัครสอบออนไลน์" },
-  "/member/passport": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "หนังสือเดินทางวิชาชีพ" },
+  "/member/passport": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "Pharmacist Profile" },
   "/member/cpd": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "หน่วยกิตการศึกษาต่อเนื่อง" },
   "/member/pathway": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "เส้นทางการศึกษา" },
   "/member/news": { trail: [{ label: "หน้าหลัก", href: "/member/dashboard" }], current: "ข่าวสารและประกาศ" },
@@ -89,21 +91,27 @@ const breadcrumbMap: Record<string, { trail: { label: string; href: string }[]; 
   "/admin/settings": { trail: [{ label: "แอดมิน", href: "/admin/dashboard" }], current: "ตั้งค่าระบบ" },
 };
 
+
 export default function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const memberNotificationStore = useMemberNotifications();
   const { session } = usePortalSession();
   const isAdminRoute = pathname.startsWith("/admin");
-  const activeNotifications = isAdminRoute ? adminNotificationsData : notificationsData;
-  const unreadNotificationCount = activeNotifications.filter((notification) => !notification.isRead).length;
   const activeProfile = {
-    title: session?.displayName ?? (isAdminRoute ? "โปรไฟล์ผู้ดูแลระบบ" : "โปรไฟล์ผู้ใช้"),
-    description: session
-      ? `${ROLE_PRESENTATION[session.role].label} • ${session.organisation.name}`
-      : "กำลังโหลดข้อมูลผู้ใช้",
+    title: session?.displayName ?? "ข้อมูลผู้ดูแลระบบ",
+    description: session ? `${ROLE_PRESENTATION[session.role].label} • ${session.organisation.name}` : "กำลังโหลดข้อมูลผู้ดูแลระบบ",
   };
+  const activeNotifications = isAdminRoute
+    ? adminNotificationsData.map((item) => ({ ...item, destination: getNotificationDestination(item.title) }))
+    : memberNotificationStore.notifications.map((item) => ({
+        ...item,
+        type: item.kind,
+        time: new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" }).format(new Date(item.createdAt)),
+      }));
+  const unreadNotificationCount = activeNotifications.filter((notification) => !notification.isRead).length;
   const adminStudentDetailMatch = pathname.match(/^\/admin\/students\/([^/]+)\/?$/);
 
   let bc = adminStudentDetailMatch
@@ -138,27 +146,18 @@ export default function TopNav() {
     }
   };
 
-  const getNotificationDestination = (title: string) => {
-    if (title === "การเงิน") {
-      return isAdminRoute ? "/admin/finance" : "/member/finance";
-    }
-    if (title === "คำร้อง") {
-      return isAdminRoute ? "/admin/requests" : "/member/requests";
-    }
-    if (title === "การสมัครสอบ") {
-      return "/admin/admissions";
-    }
-    if (title === "งานวิจัย") {
-      return "/admin/research";
-    }
-
+  function getNotificationDestination(title: string) {
+    if (title === "การเงิน") return isAdminRoute ? "/admin/finance" : "/member/finance";
+    if (title === "คำร้อง") return isAdminRoute ? "/admin/requests" : "/member/requests";
+    if (title === "การสมัครสอบ") return "/admin/admissions";
+    if (title === "งานวิจัย") return "/admin/research";
     return isAdminRoute ? "/admin/dashboard" : "/member/news";
-  };
+  }
 
   return (
     <header className="fixed top-4 right-2 left-2 z-50 flex h-14 items-center justify-between rounded-2xl glass-panel px-4 md:left-sidebar md:right-4 border-none shadow-sm">
       {/* Breadcrumbs */}
-      <Breadcrumb>
+      {isAdminRoute && <Breadcrumb>
         <BreadcrumbList className="text-sm">
           {bc.trail.map((item, i) => (
             <Fragment key={`${item.href}-${i}`}>
@@ -178,22 +177,24 @@ export default function TopNav() {
             <BreadcrumbPage className="font-semibold text-primary text-sm">{bc.current}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
-      </Breadcrumb>
+      </Breadcrumb>}
 
       {/* Right actions */}
       <div className="flex items-center gap-1">
-        {/* Search */}
-        <div className="hidden sm:flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 h-7 mr-1">
-          <span className="material-symbols-outlined text-base text-muted-foreground">search</span>
-          <input
-            type="text"
-            placeholder="ค้นหา..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onKeyDown={handleSearch}
-            className="w-32 lg:w-44 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
-          />
-        </div>
+        {/* Search remains an internal administration utility. */}
+        {isAdminRoute && (
+          <div className="hidden sm:flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 h-7 mr-1">
+            <span className="material-symbols-outlined text-base text-muted-foreground">search</span>
+            <input
+              type="text"
+              placeholder="ค้นหา..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={handleSearch}
+              className="w-32 lg:w-44 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+            />
+          </div>
+        )}
 
         {/* Notification */}
         <DropdownMenu open={isNotifOpen} onOpenChange={setIsNotifOpen}>
@@ -224,7 +225,8 @@ export default function TopNav() {
                   className={`flex cursor-pointer items-start gap-3 rounded-none p-4 transition-colors hover:bg-muted/50 focus:bg-muted/50 ${!notif.isRead ? 'bg-primary/5' : ''}`}
                   onSelect={() => {
                     setIsNotifOpen(false);
-                    router.push(getNotificationDestination(notif.title));
+                    if (!isAdminRoute) memberNotificationStore.markRead(String(notif.id));
+                    router.push(notif.destination);
                   }}
                 >
                   <div className={`${notif.type === 'warning' ? 'bg-destructive/10' : notif.type === 'success' ? 'bg-success-soft' : 'bg-primary/10'} p-2 rounded-full mt-0.5 flex-shrink-0`}>
@@ -240,8 +242,9 @@ export default function TopNav() {
                 </DropdownMenuItem>
               ))}
             </div>
-            <div className="p-2 border-t text-center">
-              <Button variant="ghost" size="sm" className="w-full text-xs text-primary h-8" onClick={() => { setIsNotifOpen(false); toast.success('อ่านทั้งหมดแล้ว'); }}>ทำเครื่องหมายว่าอ่านแล้ว</Button>
+            <div className="grid grid-cols-1 gap-1 border-t p-2">
+              {!isAdminRoute && <Button variant="ghost" size="sm" className="w-full text-xs text-primary" onClick={() => { setIsNotifOpen(false); router.push("/member/notifications"); }}>ดูการแจ้งเตือนทั้งหมด</Button>}
+              <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => { setIsNotifOpen(false); if (isAdminRoute) toast.success("อ่านทั้งหมดแล้ว"); else memberNotificationStore.markAllRead(); }}>ทำเครื่องหมายว่าอ่านแล้ว</Button>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -250,8 +253,15 @@ export default function TopNav() {
         <Button
           variant="ghost"
           size="icon"
-          className="hidden sm:inline-flex h-8 w-8 rounded-lg"
-          onClick={() => toast.info("ศูนย์ช่วยเหลือ", { description: "ติดต่อ: info@cpat.ac.th | โทร: 0-2591-9992" })}
+          className="inline-flex h-8 w-8 rounded-lg"
+          aria-label="ศูนย์ช่วยเหลือ"
+          onClick={() => {
+            if (isAdminRoute) {
+              toast.info("ศูนย์ช่วยเหลือ", { description: "ติดต่อ: info@cpat.ac.th | โทร: 0-2591-9992" });
+              return;
+            }
+            router.push("/member/help");
+          }}
         >
           <span className="material-symbols-outlined text-xl text-muted-foreground">help</span>
         </Button>
@@ -259,33 +269,33 @@ export default function TopNav() {
         {/* Settings dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="hidden sm:inline-flex h-8 w-8 rounded-lg">
+            <Button variant="ghost" size="icon" className="inline-flex h-8 w-8 rounded-lg" aria-label="การตั้งค่า">
               <span className="material-symbols-outlined text-xl text-muted-foreground">settings</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44 text-sm">
             <DropdownMenuLabel>ตั้งค่า</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => toast.info(activeProfile.title, { description: activeProfile.description })}>
-              <span className="material-symbols-outlined text-base mr-2">person</span> โปรไฟล์
+            <DropdownMenuItem onClick={() => isAdminRoute
+              ? toast.info(activeProfile.title, { description: activeProfile.description })
+              : router.push("/member/passport")}>
+              <span className="material-symbols-outlined text-base mr-2">person</span> Pharmacist Profile
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push(isAdminRoute ? "/admin/settings" : "/member/settings")}>
               <span className="material-symbols-outlined text-base mr-2">tune</span> การตั้งค่า
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast.info("ช่วยเหลือ", { description: "ติดต่อศูนย์ช่วยเหลือ โทร 0-2591-9992" })}>
+            <DropdownMenuItem onClick={() => isAdminRoute
+              ? toast.info("ช่วยเหลือ", { description: "ติดต่อศูนย์ช่วยเหลือ โทร 0-2591-9992" })
+              : router.push("/member/help")}>
               <span className="material-symbols-outlined text-base mr-2">help</span> ช่วยเหลือ
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive" onClick={() => router.push("/")}>
+            <DropdownMenuItem className="text-destructive" onClick={() => { clearPortalSession(); router.push("/"); }}>
               <span className="material-symbols-outlined text-base mr-2">logout</span> ออกจากระบบ
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Mobile sidebar toggle */}
-        <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 rounded-lg">
-          <span className="material-symbols-outlined text-xl text-muted-foreground">menu</span>
-        </Button>
       </div>
     </header>
   );
