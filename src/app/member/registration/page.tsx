@@ -1,235 +1,57 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { registrationData } from "@/roles/shared/data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 import { useMockDb } from "@/providers/mock-db-provider";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { WorkflowStateTimeline } from "@/roles/shared/components/workspace/WorkflowStateTimeline";
-import { currentMemberPassport } from "@/roles/shared/member/domain/member";
-import {
-  findLicenseRegistryRecord,
-  getLicenseEligibility,
-  LicenseEligibilityNotice,
-} from "@/roles/shared/features/license-eligibility";
-import {
-  registrationStatusMeta,
-  type RegistrationRecord,
-  type RegistrationStatus,
-} from "@/roles/shared/features/registration";
-import type { RegistrationCourseRecord } from "@/roles/shared/features/student-records";
+import { EmptyState, LoadingState } from "@/roles/shared/components/workspace/WorkspacePrimitives";
+import { registrationStatusMeta } from "@/roles/shared/features/registration";
 import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 import {
-  eligibilityDecisionLabel,
-  paymentStatusLabel,
   registrationTimelineSteps,
-  teacherDecisionLabel,
 } from "./registration-timeline";
 
-type Course = RegistrationCourseRecord;
-type CourseViewStatus = RegistrationStatus | "available" | "full";
-
-const courseStatusMeta = {
-  available: { label: "ว่าง", variant: "success" },
-  full: { label: "เต็ม", variant: "danger" },
-  ...registrationStatusMeta,
-} as const;
-
-const activeRegistrationStatuses = new Set<RegistrationStatus>([
-  "submitted",
-  "pending",
-  "needs_info",
-  "approved",
-  "awaiting_payment",
-  "enrolled",
-  "drop_pending",
-]);
-
-function activeRegistrationForCourse(
-  registrations: readonly RegistrationRecord[],
-  courseCode: string,
-) {
-  return registrations.find((registration) => (
-    registration.courseCode === courseCode && activeRegistrationStatuses.has(registration.status)
-  ));
-}
-
-export default function RegistrationPage() {
+export default function RegistrationStatusPage() {
   const { session } = usePortalSession();
-  const {
-    settings,
-    registrations,
-    courseOfferings,
-    registrationInvoices,
-    payments,
-    submitRegistrations,
-    resubmitRegistration,
-    requestRegistrationDrop,
-  } = useMockDb();
-  const [selectedCodes, setSelectedCodes] = useState<Set<string>>(new Set());
-  const [searchQuery, setSearchQuery] = useState("");
-  const member = currentMemberPassport;
-  const licenseRegistryRecord = findLicenseRegistryRecord(member.license.licenseNumber);
-  const licenseStatus = licenseRegistryRecord?.status ?? "unverified";
-  const eligibility = getLicenseEligibility(licenseStatus);
-  const memberName = `${member.identity.titleTh}${member.identity.firstNameTh} ${member.identity.lastNameTh}`;
+  const { isLoaded, registrations, registrationInvoices, payments } = useMockDb();
   const memberId = session?.role === "student" ? session.userId : "";
   const memberRegistrations = useMemo(
     () => registrations.filter((registration) => registration.studentId === memberId),
     [memberId, registrations],
   );
 
-  const selectedCourses = registrationData.courses.filter((course) => selectedCodes.has(course.code));
-  const activeRegistrations = memberRegistrations.filter((registration) => (
-    activeRegistrationStatuses.has(registration.status)
-  ));
-  const selectedCoursesCount = activeRegistrations.length + selectedCourses.length;
-  const selectedCredits = activeRegistrations.reduce((sum, registration) => sum + registration.credits, 0) +
-    selectedCourses.reduce((sum, course) => sum + course.credits, 0);
-  const displayedCourses = registrationData.courses.filter((course) => (
-    course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.code.toLowerCase().includes(searchQuery.toLowerCase())
-  ));
-
-  if (!settings.registrationOpen) {
+  if (!isLoaded) {
     return (
-      <PageShell className="min-h-[70vh] flex flex-col items-center justify-center text-center">
-        <div className="w-20 h-20 bg-neutral-soft rounded-full flex items-center justify-center mb-6">
-          <span className="material-symbols-outlined text-4xl text-content-muted">event_busy</span>
-        </div>
-        <h1 className="text-3xl font-bold text-content mb-2">ปิดระบบลงทะเบียน</h1>
-        <p className="text-content-muted max-w-md">
-          ขณะนี้อยู่นอกช่วงเวลาการเปิดลงทะเบียนรายวิชา<br />
-          กรุณาตรวจสอบปฏิทินการศึกษาสำหรับกำหนดการลงทะเบียนรอบถัดไป
-        </p>
-        <Button className="mt-6" onClick={() => window.history.back()}>กลับไปหน้าก่อนหน้า</Button>
+      <PageShell className="py-10">
+        <LoadingState label="กำลังโหลดสถานะการลงทะเบียน" />
       </PageShell>
     );
   }
 
-  const canSelect = (course: Course) => (
-    eligibility.canRegisterCourses &&
-    course.enrolled < course.capacity &&
-    selectedCoursesCount < registrationData.maxCourses &&
-    selectedCredits + course.credits <= registrationData.maxCredits
-  );
-
-  const handleAdd = (course: Course) => {
-    if (!canSelect(course)) {
-      toast.error("ไม่สามารถเพิ่มรายวิชานี้ได้ กรุณาตรวจสอบจำนวนวิชา หน่วยกิต และสถานะใบอนุญาต");
-      return;
-    }
-    setSelectedCodes((previous) => new Set(previous).add(course.code));
-  };
-
-  const handleRemoveSelection = (courseCode: string) => {
-    setSelectedCodes((previous) => {
-      const next = new Set(previous);
-      next.delete(courseCode);
-      return next;
-    });
-  };
-
-  const handleSubmit = () => {
-    if (!eligibility.canRegisterCourses || selectedCourses.length === 0) return;
-    const created = submitRegistrations(selectedCourses.map((course) => {
-      const offering = courseOfferings.find((item) => item.courseCode === course.code && item.status === "open");
-      return {
-        studentId: memberId,
-        studentName: memberName,
-        courseId: course.code,
-        courseOfferingId: offering?.id,
-        institutionId: offering?.institutionId,
-        courseCode: course.code,
-        courseTitle: course.title,
-        credits: course.credits,
-        term: offering?.term ?? "1/2569",
-      };
-    }));
-    if (created.length === 0) {
-      toast.error("ไม่พบรายวิชาใหม่สำหรับส่งลงทะเบียน");
-      return;
-    }
-    setSelectedCodes(new Set());
-    toast.success(`ส่งคำขอลงทะเบียน ${created.length} วิชาแล้ว`, {
-      description: "ระบบจะตรวจ Eligibility ก่อนส่งให้อาจารย์ผู้รับผิดชอบพิจารณา",
-    });
-  };
-
-  const handleDropRequest = (registration: RegistrationRecord) => {
-    if (!window.confirm(`ยืนยันส่งคำขอถอนวิชา ${registration.courseCode}?`)) return;
-    requestRegistrationDrop(registration.id, "ผู้เข้าศึกษาขอถอนผ่านระบบ");
-    toast.success("ส่งคำขอถอนแล้ว");
-  };
-
   return (
-    <PageShell bottom="roomy">
-      <LicenseEligibilityNotice
-        status={licenseStatus}
-        licenseNumber={member.license.licenseNumber}
-        checkedAt={licenseRegistryRecord?.checkedAt}
-        compact
-        className="mb-4"
-      />
-
-      <div className="bg-warning-soft border border-warning-border rounded-lg p-3 mb-4 flex items-start gap-2">
-        <span className="material-symbols-outlined text-warning-on-soft text-base mt-0.5">warning</span>
-        <div>
-          <p className="text-xs font-medium text-warning-on-soft">หมดเขตลงทะเบียน {registrationData.deadline}</p>
-          <p className="text-xs text-warning-on-soft/80 mt-0.5">เลือกวิชา ตรวจสอบรายการ แล้วส่งเข้าสู่ขั้นตอนตรวจ Eligibility และอาจารย์พิจารณา</p>
-        </div>
+    <PageShell size="wide" bottom="roomy" className="space-y-5">
+      <div className="flex justify-end">
+        <Button asChild className="min-h-11 sm:min-h-9">
+          <Link href="/member/registration/courses">
+            <span aria-hidden="true" className="material-symbols-outlined text-lg">add_circle</span>
+            ลงทะเบียนเรียน
+          </Link>
+        </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        {[
-          { label: "วิชารวมคำขอ", value: `${selectedCoursesCount}/${registrationData.maxCourses}` },
-          { label: "หน่วยกิตรวม", value: `${selectedCredits}/${registrationData.maxCredits}` },
-        ].map((summary) => (
-          <Card key={summary.label}>
-            <CardContent className="p-3 text-center">
-              <p className="text-xs text-muted-foreground">{summary.label}</p>
-              <p className="text-lg font-bold text-primary mt-0.5">{summary.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {selectedCourses.length > 0 && (
-        <Card className="mb-5 border-brand-border">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">ตรวจสอบก่อนส่ง ({selectedCourses.length} วิชา)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {selectedCourses.map((course) => (
-              <div key={course.code} className="flex items-center justify-between gap-3 rounded-lg bg-surface-container-low px-3 py-2">
-                <div>
-                  <p className="text-sm font-medium">{course.code} · {course.title}</p>
-                  <p className="text-xs text-content-muted">{course.credits} หน่วยกิต · {course.schedule}</p>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => handleRemoveSelection(course.code)}>เอาออก</Button>
-              </div>
-            ))}
-            <div className="rounded-lg border border-warning-border bg-warning-soft px-3 py-2 text-xs text-warning-on-soft">
-              หลังส่งคำขอ ระบบจะตรวจ Eligibility และส่งให้อาจารย์พิจารณาก่อน จึงจะเปิดให้ชำระเงินได้
-            </div>
-            <Button className="w-full" onClick={handleSubmit} disabled={!eligibility.canRegisterCourses}>
-              ส่งคำขอลงทะเบียน
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {memberRegistrations.length > 0 && (
-        <Card className="mb-5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">สถานะและลำดับการลงทะเบียน</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {memberRegistrations.length === 0 ? (
+        <EmptyState
+          icon="timeline"
+          title="ยังไม่มีคำขอลงทะเบียน"
+          description="เลือกวิชาจากหน้าลงทะเบียนเรียน แล้วสถานะและลำดับการดำเนินงานจะแสดงที่นี่"
+        />
+      ) : (
+        <Card>
+          <CardContent className="space-y-4 p-5">
             {memberRegistrations.map((registration) => {
               const status = registrationStatusMeta[registration.status];
               const invoice = registrationInvoices.find((item) => item.registrationId === registration.id);
@@ -237,106 +59,46 @@ export default function RegistrationPage() {
               const teacherDecisionEvent = [...registration.history].reverse().find((event) => event.actorRole === "teacher");
               const teacherDecision = registration.teacherDecision;
               const timelineSteps = registrationTimelineSteps(registration, invoice?.status, payment?.status);
+
               return (
-                <article key={registration.id} className="rounded-xl border border-border p-4">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <h2 className="text-sm font-semibold text-foreground">{registration.courseCode} · {registration.courseTitle}</h2>
-                      <p className="mt-1 text-xs text-muted-foreground">คำขอ {registration.id}</p>
+                <article key={registration.id} className="overflow-hidden rounded-2xl border border-border">
+                  <details className="group">
+                    <summary className="flex min-h-20 cursor-pointer list-none items-center justify-between gap-4 p-4 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 [&::-webkit-details-marker]:hidden">
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-foreground">{registration.courseCode} · {registration.courseTitle}</span>
+                        <span className="mt-1 block text-xs text-muted-foreground">คำขอ {registration.id}</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <Badge variant={status.variant}>{status.label}</Badge>
+                        <span aria-hidden="true" className="material-symbols-outlined text-xl text-muted-foreground transition-transform group-open:rotate-180">expand_more</span>
+                      </span>
+                    </summary>
+                    <div className="border-t border-border px-4 pb-4">
+                      <WorkflowStateTimeline steps={timelineSteps} label={`สถานะการลงทะเบียน ${registration.courseCode}`} className="mt-4" />
+                      {registration.status === "drop_pending" ? (
+                        <div role="note" className="mt-2 flex items-start gap-2 rounded-lg border border-neutral-border bg-neutral-soft px-3 py-2 text-xs text-neutral-on-soft">
+                          <span aria-hidden="true" className="material-symbols-outlined text-base">schedule</span>
+                          <span><strong>รอตรวจสอบคำขอถอนรายวิชา</strong> ขั้นตอนด้านบนแสดงสถานะก่อนยื่นถอน</span>
+                        </div>
+                      ) : registration.status === "withdrawn" ? (
+                        <div role="note" className="mt-2 flex items-start gap-2 rounded-lg border border-neutral-border bg-neutral-soft px-3 py-2 text-xs text-neutral-on-soft">
+                          <span aria-hidden="true" className="material-symbols-outlined text-base">cancel</span>
+                          <span><strong>ถอนรายวิชาแล้ว</strong> ขั้นตอนด้านบนเป็นประวัติก่อนถอนรายวิชา</span>
+                        </div>
+                      ) : null}
+                      {(teacherDecision?.reason || teacherDecisionEvent?.reason || registration.reviewReason) ? (
+                        <div role="note" className="mt-3 rounded-lg border border-info-border bg-info-soft px-3 py-2 text-xs text-info-on-soft">
+                          <span className="font-semibold">เหตุผลจากผู้พิจารณา:</span> {teacherDecision?.reason ?? teacherDecisionEvent?.reason ?? registration.reviewReason}
+                        </div>
+                      ) : null}
                     </div>
-                    <Badge variant={status.variant}>{status.label}</Badge>
-                  </div>
-                  <WorkflowStateTimeline
-                    steps={timelineSteps}
-                    label={`สถานะการลงทะเบียน ${registration.courseCode}`}
-                    className="mt-4"
-                  />
-                  {registration.status === "drop_pending" ? (
-                    <div role="note" className="mt-2 flex items-start gap-2 rounded-lg border border-neutral-border bg-neutral-soft px-3 py-2 text-xs text-neutral-on-soft">
-                      <span aria-hidden="true" className="material-symbols-outlined text-base">schedule</span>
-                      <span><strong>รอตรวจสอบคำขอถอนรายวิชา</strong> ขั้นตอนด้านบนแสดงสถานะก่อนยื่นถอน</span>
-                    </div>
-                  ) : registration.status === "withdrawn" ? (
-                    <div role="note" className="mt-2 flex items-start gap-2 rounded-lg border border-neutral-border bg-neutral-soft px-3 py-2 text-xs text-neutral-on-soft">
-                      <span aria-hidden="true" className="material-symbols-outlined text-base">cancel</span>
-                      <span><strong>ถอนรายวิชาแล้ว</strong> ขั้นตอนด้านบนเป็นประวัติก่อนถอนรายวิชา</span>
-                    </div>
-                  ) : null}
-                  <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
-                    <div className="rounded-lg bg-muted/40 p-2.5"><p className="text-muted-foreground">การตรวจคุณสมบัติ</p><p className="mt-1 font-medium text-foreground">{registration.eligibility ? eligibilityDecisionLabel[registration.eligibility.decision] : "รอตรวจ"}</p></div>
-                    <div className="rounded-lg bg-muted/40 p-2.5"><p className="text-muted-foreground">ผลการพิจารณาของอาจารย์</p><p className="mt-1 font-medium text-foreground">{teacherDecision ? `${teacherDecision.teacherName} · ${teacherDecisionLabel[teacherDecision.decision]}` : "รอพิจารณา"}</p></div>
-                    <div className="rounded-lg bg-muted/40 p-2.5"><p className="text-muted-foreground">ใบแจ้งชำระและการชำระเงิน</p><p className="mt-1 font-medium text-foreground">{paymentStatusLabel(invoice?.status, payment?.status)}</p></div>
-                  </div>
-                  {(teacherDecision?.reason || teacherDecisionEvent?.reason || registration.reviewReason) ? <div role="note" className="mt-3 rounded-lg border border-info-border bg-info-soft px-3 py-2 text-xs text-info-on-soft"><span className="font-semibold">เหตุผลจากผู้พิจารณา:</span> {teacherDecision?.reason ?? teacherDecisionEvent?.reason ?? registration.reviewReason}</div> : null}
+                  </details>
                 </article>
               );
             })}
           </CardContent>
         </Card>
       )}
-
-      <Card className="mb-6">
-        <CardHeader className="pb-0 pt-4 px-5">
-          <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-sm flex-shrink-0">รายวิชาที่เปิดลงทะเบียน</CardTitle>
-            <div className="relative flex-1 max-w-sm">
-              <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">search</span>
-              <Input placeholder="ค้นหาวิชา..." className="pl-9 h-8 text-xs" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0 mt-3">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs h-9">รหัส</TableHead>
-                <TableHead className="text-xs h-9">ชื่อรายวิชา</TableHead>
-                <TableHead className="text-xs h-9">หน่วยกิต</TableHead>
-                <TableHead className="text-xs h-9">วัน/เวลา</TableHead>
-                <TableHead className="text-xs h-9">ที่นั่ง</TableHead>
-                <TableHead className="text-xs h-9">สถานะ</TableHead>
-                <TableHead className="text-xs h-9">จัดการ</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayedCourses.map((course) => {
-                const registration = activeRegistrationForCourse(memberRegistrations, course.code);
-                const isSelected = selectedCodes.has(course.code);
-                const status: CourseViewStatus = registration?.status ?? (isSelected ? "selected" : course.enrolled >= course.capacity ? "full" : "available");
-                const statusInfo = courseStatusMeta[status];
-                return (
-                  <TableRow key={course.code}>
-                    <TableCell className="text-xs py-2.5 font-medium">{course.code}</TableCell>
-                    <TableCell className="text-xs py-2.5">
-                      <p>{course.title}</p>
-                      {registration?.reviewReason && <p className="mt-1 text-xs text-danger">หมายเหตุ: {registration.reviewReason}</p>}
-                    </TableCell>
-                    <TableCell className="text-xs py-2.5">{course.credits}</TableCell>
-                    <TableCell className="text-xs py-2.5">{course.schedule}</TableCell>
-                    <TableCell className="text-xs py-2.5">{course.enrolled}/{course.capacity}</TableCell>
-                    <TableCell className="text-xs py-2.5"><Badge variant={statusInfo.variant}>{statusInfo.label}</Badge></TableCell>
-                    <TableCell className="text-xs py-2.5">
-                      {status === "available" && (
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" disabled={!canSelect(course)} onClick={() => handleAdd(course)}>+ เพิ่ม</Button>
-                      )}
-                      {status === "selected" && (
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs text-danger" onClick={() => handleRemoveSelection(course.code)}>เอาออก</Button>
-                      )}
-                      {status === "needs_info" && registration && (
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => { resubmitRegistration(registration.id); toast.success("ส่งข้อมูลกลับไปตรวจสอบแล้ว"); }}>ส่งตรวจใหม่</Button>
-                      )}
-                      {(status === "approved" || status === "awaiting_payment" || status === "enrolled") && registration && (
-                        <Button variant="link" size="sm" className="h-auto p-0 text-xs text-danger" onClick={() => handleDropRequest(registration)}>ขอถอน</Button>
-                      )}
-                      {status !== "available" && status !== "selected" && status !== "needs_info" && status !== "approved" && status !== "awaiting_payment" && status !== "enrolled" && <span className="text-content-muted">—</span>}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </PageShell>
   );
 }

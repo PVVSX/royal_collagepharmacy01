@@ -2,14 +2,11 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { pathwayData, type PathwayStep, profileData } from "@/roles/shared/data";
+import { pathwayData, type PathwayStep } from "@/roles/shared/data";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { motion, AnimatePresence } from "framer-motion";
-
-const icon18 = "material-symbols-outlined text-lg";
 
 // ── Type config: icon + colors ──
 const typeConfig: Record<string, { icon: string; nodeColor: string; label: string }> = {
@@ -33,7 +30,11 @@ function ZigzagCard({ step, index }: { step: PathwayStep; index: number }) {
   const [expanded, setExpanded] = useState(step.status === "current");
 
   return (
-    <div className="relative flex items-start">
+    <>
+      <div className="md:hidden">
+        <CardContent step={step} cfg={cfg} badge={badge} expanded={expanded} setExpanded={setExpanded} side="right" />
+      </div>
+      <div className="relative hidden items-start md:flex">
       {/* ── Left side ── */}
       <div className="w-[calc(50%-28px)] md:w-[calc(50%-32px)]">
         {!isRight ? (
@@ -69,7 +70,8 @@ function ZigzagCard({ step, index }: { step: PathwayStep; index: number }) {
           <div />
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -101,7 +103,7 @@ function CardContent({
       {/* Arrow connector pointing toward center */}
       <div
         className={cn(
-          "absolute top-4 w-3 h-3 bg-card border rotate-45",
+          "absolute top-4 hidden h-3 w-3 rotate-45 border bg-card md:block",
           side === "left"
             ? "right-[-7px] border-l-0 border-b-0 border-r border-t"
             : "left-[-7px] border-r-0 border-t-0 border-l border-b",
@@ -138,7 +140,7 @@ function CardContent({
         </p>
 
         {/* ── Bottom row: status info ── */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3">
           {/* Left: status indicator */}
           {step.status === "completed" && (
             <div className="flex items-center gap-1.5">
@@ -296,25 +298,6 @@ export default function PathwayPage() {
     <>
       <PageShell size="focused" className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
 
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <a href="/member/dashboard" className="hover:text-primary transition-colors">หน้าหลัก</a>
-          <span className={`${icon18} text-muted-foreground/50`}>chevron_right</span>
-          <span className="text-primary font-medium flex items-center gap-1">
-            <span className={icon18}>route</span> เส้นทางการศึกษา
-          </span>
-        </div>
-
-        {/* Header */}
-        <div className="text-center mb-2">
-          <h1 className="text-xl md:text-2xl font-bold mb-1 tracking-tight text-primary">
-            เส้นทางการศึกษา (Learning Pathway)
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {profileData.personalInfo.firstName} {profileData.personalInfo.lastName} — {profileData.workHistory.position}, {profileData.workHistory.currentWorkplace}
-          </p>
-        </div>
-
         {/* Summary row */}
         <div className="flex items-center justify-center gap-4 md:gap-6 flex-wrap">
           <div className="flex items-center gap-1.5">
@@ -336,7 +319,7 @@ export default function PathwayPage() {
         {/* ═══════ Zigzag Timeline ═══════ */}
         <div className="relative">
           {/* Central vertical line */}
-          <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-0.5 bg-gradient-to-b from-success/40 via-info/40 to-warning/30" />
+          <div className="absolute bottom-0 left-1/2 top-0 hidden w-0.5 -translate-x-1/2 bg-gradient-to-b from-success/40 via-info/40 to-warning/30 md:block" />
 
           {!showAll ? (
             /* ══════ Preview Mode: 3 cards ══════ */
@@ -495,7 +478,6 @@ export default function PathwayPage() {
         </div>
 
       </PageShell>
-      <Footer />
     </>
   );
 }

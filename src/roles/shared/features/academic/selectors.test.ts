@@ -29,6 +29,7 @@ describe("academic scope selectors", () => {
 
     expect(offerings.map((offering) => offering.id)).toEqual([
       "offering-bcp-101",
+      "offering-community-201",
       "offering-vpt-301",
     ]);
     expect(canTeacherAccessOffering(

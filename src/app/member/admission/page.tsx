@@ -15,7 +15,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import Footer from "@/roles/shared/components/layout/Footer";
 import { PersonalInfoCard } from "@/roles/shared/member/components/PersonalInfoCard";
 import { AddressCard } from "@/roles/shared/member/components/AddressCard";
 import { WorkplaceCard } from "@/roles/shared/member/components/WorkplaceCard";
@@ -310,7 +309,7 @@ export default function ExamApplicationPage() {
         <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6">
           <span className="material-symbols-outlined text-4xl text-muted-foreground">event_busy</span>
         </div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">ปิดรับสมัครสอบ</h1>
+        <h2 className="text-3xl font-bold text-foreground mb-2">ปิดรับสมัครสอบ</h2>
         <p className="text-muted-foreground max-w-md">
           ขณะนี้อยู่นอกช่วงเวลาการเปิดรับสมัครสอบ<br />
           กรุณาติดตามประกาศเปิดรับสมัครรอบถัดไปทางหน้าเว็บไซต์
@@ -334,9 +333,9 @@ export default function ExamApplicationPage() {
           <div className="w-24 h-24 bg-success-soft rounded-full flex items-center justify-center mb-6 shadow-sm">
             <span className="material-symbols-outlined text-success text-5xl">check_circle</span>
         </div>
-        <h1 className="text-3xl font-bold mb-2">
+        <h2 className="text-3xl font-bold mb-2">
           {isDocumentResubmission ? "ส่งเอกสารเพิ่มเติมสำเร็จแล้ว!" : "ส่งใบสมัครสอบสำเร็จแล้ว!"}
-        </h1>
+        </h2>
         <p className="text-muted-foreground max-w-md mb-8">
           {isDocumentResubmission
             ? "ระบบได้รับเอกสารเพิ่มเติมของคุณแล้ว เจ้าหน้าที่จะตรวจสอบอีกครั้ง"
@@ -357,19 +356,7 @@ export default function ExamApplicationPage() {
     return (
       <>
         <PageShell size="form" className="duration-500 animate-in fade-in slide-in-from-bottom-4">
-          {/* Header */}
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden mb-8">
-            <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-6 py-5">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-2xl text-primary">quiz</span>
-                </div>
-                <div>
-                  <h1 className="text-lg md:text-xl font-bold tracking-tight">ระบบสมัครสอบหนังสืออนุมัติ / วุฒิบัตร</h1>
-                  <p className="text-sm text-muted-foreground">สมัครสอบประเมินความรู้เพื่อรับหนังสืออนุมัติ / วุฒิบัตรแสดงความรู้ความชำนาญฯ</p>
-                </div>
-              </div>
-            </div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4">
               <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-base">info</span>
@@ -675,7 +662,6 @@ export default function ExamApplicationPage() {
             </Dialog>
           )}
         </PageShell>
-        <Footer />
       </>
     );
   }
@@ -937,7 +923,6 @@ export default function ExamApplicationPage() {
         </div>
 
       </PageShell>
-      <Footer />
     </>
   );
 }

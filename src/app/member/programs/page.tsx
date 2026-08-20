@@ -2,13 +2,12 @@
 
 import { toast } from "sonner";
 import { useState } from "react";
-import Link from "next/link";
 import { programsData } from "@/roles/shared/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProgramSectionNav } from "@/roles/member/features/programs/ProgramSectionNav";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 
 const PAGE_SIZE = 3;
@@ -31,43 +30,58 @@ export default function ProgramsPage() {
 
   return (
     <PageShell>
-      <header className="mb-5">
-        <h1 className="text-lg md:text-xl font-semibold mb-1">หลักสูตรและรายวิชา</h1>
-        <p className="text-xs text-muted-foreground">ภาพรวมหลักสูตรทั้งหมดของวิทยาลัยเภสัชกรรม</p>
-      </header>
-
-      <Tabs defaultValue="programs" className="mb-4">
-        <TabsList className="h-9">
-          <TabsTrigger value="programs" className="text-xs" asChild><Link href="/member/programs">หลักสูตรทั้งหมด</Link></TabsTrigger>
-          <TabsTrigger value="courses" className="text-xs" asChild><Link href="/member/programs/all">รายวิชาทั้งหมด</Link></TabsTrigger>
-          <TabsTrigger value="by-college" className="text-xs" asChild><Link href="/member/programs/by-college">แยกตามวิทยาลัย</Link></TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
-          <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">search</span>
-          <Input
-            placeholder="ค้นหาหลักสูตร..."
-            className="pl-9 h-9 text-sm"
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-          />
-        </div>
-        <select
-          className="bg-card border border-border rounded-md px-3 py-1.5 text-sm h-9 outline-none focus:border-ring"
-          value={collegeFilter}
-          onChange={(e) => { setCollegeFilter(e.target.value); setPage(1); }}
-        >
-          <option>ทุกวิทยาลัย</option><option>วคบท.</option><option>CPAT</option><option>วภช.</option><option>สมุนไพร</option><option>วภท.</option>
-        </select>
+      <div className="mb-5">
+        <ProgramSectionNav active="overview" />
       </div>
 
-      <p className="text-xs text-muted-foreground mb-4">
-        {searchQuery || collegeFilter !== "ทุกวิทยาลัย"
-          ? `พบ ${filtered.length} หลักสูตร (จากทั้งหมด ${programsData.length})`
-          : `พบ ${programsData.length} หลักสูตร`}
-      </p>
+      <Card className="mb-5">
+        <CardContent className="p-5">
+          <form role="search" onSubmit={(event) => event.preventDefault()} className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,0.4fr)]">
+            <div>
+              <label htmlFor="program-search" className="mb-1.5 block text-sm font-medium">ค้นหาหลักสูตร</label>
+              <div className="relative">
+                <span aria-hidden="true" className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">search</span>
+                <Input
+                  id="program-search"
+                  type="search"
+                  placeholder="พิมพ์ชื่อหลักสูตร"
+                  className="h-11 rounded-xl pl-10 text-sm"
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="program-college" className="mb-1.5 block text-sm font-medium">วิทยาลัย</label>
+              <select
+                id="program-college"
+                className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+                value={collegeFilter}
+                onChange={(e) => { setCollegeFilter(e.target.value); setPage(1); }}
+              >
+                <option>ทุกวิทยาลัย</option><option>วคบท.</option><option>CPAT</option><option>วภช.</option><option>สมุนไพร</option><option>วภท.</option>
+              </select>
+            </div>
+          </form>
+          <div className="mt-4 flex min-h-11 flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+            <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+              {searchQuery || collegeFilter !== "ทุกวิทยาลัย"
+                ? <>พบ <strong className="font-semibold tabular-nums text-foreground">{filtered.length}</strong> หลักสูตร จากทั้งหมด {programsData.length}</>
+                : <>พบ <strong className="font-semibold tabular-nums text-foreground">{programsData.length}</strong> หลักสูตร</>}
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-11"
+              disabled={!searchQuery && collegeFilter === "ทุกวิทยาลัย"}
+              onClick={() => { setSearchQuery(""); setCollegeFilter("ทุกวิทยาลัย"); setPage(1); }}
+            >
+              <span aria-hidden="true" className="material-symbols-outlined text-lg">filter_alt_off</span>
+              ล้างตัวกรอง
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
@@ -114,33 +128,37 @@ export default function ProgramsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-1.5 mt-6">
+            <nav aria-label="การแบ่งหน้าหลักสูตร" className="mt-6 flex items-center justify-center gap-1.5">
               <Button
-                variant="outline" size="icon" className="h-7 w-7"
+                variant="outline" size="icon" className="size-11 rounded-xl"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                aria-label="หน้าก่อนหน้า"
               >
-                <span className="material-symbols-outlined text-sm">chevron_left</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-lg">chevron_left</span>
               </Button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
                 <Button
                   key={n}
                   variant={page === n ? "default" : "outline"}
                   size="icon"
-                  className="h-7 w-7 text-xs"
+                  className="size-11 rounded-xl text-sm"
                   onClick={() => setPage(n)}
+                  aria-label={`หน้า ${n}`}
+                  aria-current={page === n ? "page" : undefined}
                 >
                   {n}
                 </Button>
               ))}
               <Button
-                variant="outline" size="icon" className="h-7 w-7"
+                variant="outline" size="icon" className="size-11 rounded-xl"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
+                aria-label="หน้าถัดไป"
               >
-                <span className="material-symbols-outlined text-sm">chevron_right</span>
+                <span aria-hidden="true" className="material-symbols-outlined text-lg">chevron_right</span>
               </Button>
-            </div>
+            </nav>
           )}
         </>
       )}

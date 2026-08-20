@@ -32,7 +32,7 @@ export default function VerifyPage({ params }: { params: Promise<{ token: string
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 p-6 text-center">
         <span className="material-symbols-outlined mb-3 text-5xl text-danger">gpp_bad</span>
-        <h1 className="text-xl font-bold">ไม่พบข้อมูล Pharmacist Profile</h1>
+        <h1 className="text-xl font-bold">ไม่พบประวัติวิชาชีพ</h1>
         <p className="mt-1 text-sm text-muted-foreground">รหัสตรวจสอบ <span className="font-mono">{token}</span> ไม่ถูกต้องหรือถูกยกเลิก</p>
       </div>
     );

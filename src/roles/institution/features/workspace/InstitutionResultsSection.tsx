@@ -36,9 +36,9 @@ import {
 import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 
 import {
+  filterSelectClassName,
   formatInstitutionDateTime,
   institutionActor,
-  selectClassName,
 } from "./institution-workspace-utils";
 
 const resultStatuses = ["pending", "draft", "published", "revised"] as const satisfies readonly SubjectResultStatus[];
@@ -113,6 +113,7 @@ export default function InstitutionResultsSection() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="ค้นหาชื่อผู้เรียน รหัส หรือรายวิชา"
+              className="h-11 rounded-xl text-sm"
             />
           </div>
           <div className="space-y-1.5">
@@ -123,7 +124,7 @@ export default function InstitutionResultsSection() {
               id="institution-result-status"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-              className={selectClassName}
+              className={filterSelectClassName}
             >
               <option value="all">ทุกสถานะ</option>
               {resultStatuses.map((status) => (
@@ -139,7 +140,7 @@ export default function InstitutionResultsSection() {
               id="institution-result-value"
               value={valueFilter}
               onChange={(event) => setValueFilter(event.target.value as ResultValueFilter)}
-              className={selectClassName}
+              className={filterSelectClassName}
             >
               <option value="all">ทุกผลการเรียน</option>
               <option value="S">ผ่าน (S)</option>
@@ -155,7 +156,7 @@ export default function InstitutionResultsSection() {
               id="institution-result-course"
               value={courseFilter}
               onChange={(event) => setCourseFilter(event.target.value)}
-              className={selectClassName}
+              className={filterSelectClassName}
             >
               <option value="all">ทุกรายวิชา</option>
               {offerings.map((offering) => (

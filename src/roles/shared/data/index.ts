@@ -47,7 +47,8 @@ export const sidebarNavItems = [
   { href: "/member/cpd", icon: "workspace_premium", label: "หน่วยกิต CPD" },
   { href: "/member/admission", icon: "quiz", label: "สมัครสอบ" },
   { href: "/member/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
-  { href: "/member/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
+  { href: "/member/registration", icon: "how_to_reg", label: "สถานะการลงทะเบียน" },
+  { href: "/member/registration/courses", icon: "library_add", label: "ลงทะเบียนเรียน" },
   { href: "/member/finance", icon: "payments", label: "การเงิน" },
   { href: "/member/requests", icon: "description", label: "คำร้อง" },
   { href: "/member/news", icon: "campaign", label: "ข่าวสาร" },
@@ -58,14 +59,15 @@ export const institutionInfo = {
   nameTh: "ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย",
   nameEn: "Royal College of Pharmacists of Thailand",
   parentOrg: "สภาเภสัชกรรม — The Pharmacy Council of Thailand",
-  address: "ชั้น 8 อาคารมหิตลาธิเบศร กระทรวงสาธารณสุข ถ.ติวานนท์ ต.ตลาดขวัญ อ.เมือง จ.นนทบุรี 11000",
+  address: "สำนักงานเลขาธิการสภาเภสัชกรรม อาคารมหิตลาธิเบศร ชั้น 8 กระทรวงสาธารณสุข เลขที่ 88/19 หมู่ 4 ถนนติวานนท์ ตำบลตลาดขวัญ อำเภอเมือง จังหวัดนนทบุรี 11000",
   phone: "0-2591-9992",
-  phoneExtensions: { "วคบท.": "ต่อ 7", "CPAT": "ต่อ 208", "วภท.": "ต่อ 7" },
+  phoneExtensions: { "ราชวิทยาลัย": "กด 7", "วคบท.": "ต่อ 7", "CPAT": "ต่อ 208", "วภท.": "ต่อ 7" },
   emails: {
-    general: "info@cpat.ac.th",
+    general: "pharthai@pharmacycouncil.org",
     วคบท: "cphcp.th@gmail.com",
     CPAT: "cpat-academic@cpat.ac.th",
   },
+  officialWebsite: "https://www.pharmacycouncil.org/",
 };
 
 // ===== Dashboard =====

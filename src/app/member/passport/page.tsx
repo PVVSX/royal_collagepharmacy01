@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,7 +116,7 @@ export default function PassportPage() {
               <img src={p.issuingAuthority.logoUrl} alt={`ตราสัญลักษณ์${p.issuingAuthority.nameTh}`} className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-base font-bold leading-tight text-foreground md:text-lg">{p.issuingAuthority.nameTh}</h1>
+              <h2 className="text-base font-bold leading-tight text-foreground md:text-lg">{p.issuingAuthority.nameTh}</h2>
               <p className="text-xs text-muted-foreground">{p.issuingAuthority.nameEn}</p>
               <p className="mt-0.5 text-2xs text-muted-foreground">ภายใต้การกำกับของ{p.issuingAuthority.regulatorTh} · {p.issuingAuthority.regulatorEn}</p>
             </div>
@@ -126,7 +125,7 @@ export default function PassportPage() {
                 <span className="material-symbols-outlined text-15">badge</span>
                  Pharmacist Profile
               </div>
-              <p className="mt-1 text-2xs text-muted-foreground">Pharmacist professional profile</p>
+              <p className="mt-1 text-2xs text-muted-foreground">ข้อมูลประวัติและสถานะทางวิชาชีพ</p>
             </div>
           </div>
         </div>
@@ -363,10 +362,9 @@ export default function PassportPage() {
       {/* Footer note */}
       <p className="flex items-center justify-center gap-1.5 text-center text-2xs text-muted-foreground">
         <span className="material-symbols-outlined text-sm">shield</span>
-        Pharmacist Profile จัดทำโดย{p.issuingAuthority.nameTh} · ปรับปรุงล่าสุด {formatThaiDate(p.updatedAt)}
+        ประวัติวิชาชีพจัดทำโดย{p.issuingAuthority.nameTh} · ปรับปรุงล่าสุด {formatThaiDate(p.updatedAt)}
       </p>
 
-      <Footer />
     </PageShell>
   );
 }

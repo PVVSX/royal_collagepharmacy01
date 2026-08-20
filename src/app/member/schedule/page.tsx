@@ -2,7 +2,6 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { cn } from "@/lib/utils";
 
@@ -61,11 +60,7 @@ export default function SchedulePage() {
   return (
     <>
       <PageShell bottom="roomy">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-3">
-          <div>
-            <h1 className="text-lg md:text-xl font-semibold mb-1">ตารางกิจกรรมการฝึกอบรม</h1>
-            <p className="text-xs text-muted-foreground">หลักสูตรวุฒิบัตรฯ สาขาเภสัชบำบัด (BCP) · ภาคทฤษฎีและปฏิบัติการ (สัปดาห์ที่ 1 และ 3 ของเดือน)</p>
-          </div>
+        <div className="mb-5 flex justify-end gap-3">
           <div className="flex gap-2">
             <Badge variant="info" className="text-xs px-2 py-1">ทฤษฎี (Lecture)</Badge>
             <Badge variant="success" className="text-xs px-2 py-1">ปฏิบัติการ (Lab)</Badge>
@@ -147,7 +142,6 @@ export default function SchedulePage() {
           </CardContent>
         </Card>
       </PageShell>
-      <Footer />
     </>
   );
 }

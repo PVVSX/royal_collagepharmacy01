@@ -147,9 +147,9 @@ export default function StaffCourseProposalsPage() {
               <p aria-live="polite" className="mt-1 text-xs text-muted-foreground">แสดง {filtered.length} จาก {db.courseProposals.length} รายการ</p>
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-              <Input type="search" value={search} onChange={(event) => setSearch(event.target.value)} aria-label="ค้นหาคำขอสร้างรายวิชา" placeholder="ค้นหารหัส ชื่อวิชา หรือผู้เสนอ" className="sm:w-72" />
+              <Input type="search" value={search} onChange={(event) => setSearch(event.target.value)} aria-label="ค้นหาคำขอสร้างรายวิชา" placeholder="ค้นหารหัส ชื่อวิชา หรือผู้เสนอ" className="h-11 rounded-xl text-sm sm:w-72" />
               <label className="sr-only" htmlFor="course-proposal-status-filter">กรองสถานะคำขอ</label>
-              <select id="course-proposal-status-filter" value={status} onChange={(event) => setStatus(event.target.value as CourseProposalStatus | "all")} className="h-8 rounded-2xl border border-border bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <select id="course-proposal-status-filter" value={status} onChange={(event) => setStatus(event.target.value as CourseProposalStatus | "all")} className="h-11 rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <option value="all">ทุกสถานะ</option>
                 <option value="submitted">รอตรวจสอบ</option>
                 <option value="needs_revision">ส่งกลับให้แก้ไข</option>

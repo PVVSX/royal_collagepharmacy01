@@ -10,7 +10,6 @@ export default function SettingsPage() {
 
   return (
     <PageShell className="space-y-6">
-      <header><h1 className="text-2xl font-bold">การตั้งค่า</h1><p className="mt-1 text-sm text-muted-foreground">กำหนดภาษาและช่องทางรับข่าวสารสำหรับบัญชีนี้</p></header>
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><span aria-hidden="true" className="material-symbols-outlined text-primary">language</span>ภาษาแสดงผล</CardTitle><CardDescription>การเลือกจะถูกจดจำในอุปกรณ์นี้</CardDescription></CardHeader>

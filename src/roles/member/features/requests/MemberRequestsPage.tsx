@@ -15,9 +15,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { SegmentedFilterButton, SegmentedFilterGroup } from "@/components/ui/segmented-filter";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUploadField } from "@/roles/shared/components/forms/FileUploadField";
-import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { registrationData, studentDetailData } from "@/roles/shared/data";
 import { formatFileSize } from "@/roles/shared/features/file-metadata";
@@ -569,13 +569,7 @@ export default function MemberRequestsPage() {
   return (
     <>
       <PageShell>
-        <div className="mb-5 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-          <div>
-            <h1 className="mb-1 text-lg font-semibold md:text-xl">คำร้องของฉัน</h1>
-            <p className="text-xs text-muted-foreground">
-              ยื่นคำร้อง ติดตามสถานะ และอ่านคำแนะนำจากเจ้าหน้าที่
-            </p>
-          </div>
+        <div className="mb-5 flex justify-end">
           <Button onClick={() => setIsCreateOpen(true)} className="gap-1.5">
             <span className="material-symbols-outlined text-base">add</span>
             ยื่นคำร้องใหม่
@@ -589,29 +583,23 @@ export default function MemberRequestsPage() {
           </div>
         )}
 
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1" aria-label="กรองสถานะคำร้อง">
+        <SegmentedFilterGroup className="mb-4" aria-label="กรองสถานะคำร้อง">
           {FILTERS.map((item) => {
             const count =
               item.id === "all"
                 ? memberRequests.length
                 : memberRequests.filter((request) => request.status === item.id).length;
             return (
-              <button
+              <SegmentedFilterButton
                 key={item.id}
-                type="button"
-                aria-pressed={filter === item.id}
+                active={filter === item.id}
                 onClick={() => setFilter(item.id)}
-                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 ${
-                  filter === item.id
-                    ? "border-brand-border bg-brand-soft text-brand-on-soft"
-                    : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
               >
                 {item.label} ({count})
-              </button>
+              </SegmentedFilterButton>
             );
           })}
-        </div>
+        </SegmentedFilterGroup>
 
         {!isReady || !isSessionReady ? (
           <Card>
@@ -908,7 +896,6 @@ export default function MemberRequestsPage() {
           </DialogContent>
         </Dialog>
       </PageShell>
-      <Footer />
     </>
   );
 }

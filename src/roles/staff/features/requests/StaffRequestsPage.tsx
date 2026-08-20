@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { SegmentedFilterButton, SegmentedFilterGroup } from "@/components/ui/segmented-filter";
 import { Textarea } from "@/components/ui/textarea";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { appendAuditEvent, createAuditActorSnapshot } from "@/roles/shared/features/audit";
@@ -364,13 +365,13 @@ export default function StaffRequestsPage() {
       <Card className="border border-border bg-surface-raised">
         <CardContent className="space-y-4 px-4 md:px-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex gap-2 overflow-x-auto pb-1" aria-label="กรองสถานะคำร้อง">
+            <SegmentedFilterGroup aria-label="กรองสถานะคำร้อง">
               {FILTERS.map((item) => {
                 const count = item.id === "all" ? visibleRequests.length : visibleRequests.filter((request) => request.status === item.id).length;
-                return <button key={item.id} type="button" aria-pressed={filter === item.id} onClick={() => setFilter(item.id)} className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 ${filter === item.id ? "border-brand-border bg-brand-soft text-brand-on-soft" : "border-border bg-surface-container-low text-muted-foreground hover:text-foreground"}`}>{item.label} ({count})</button>;
+                return <SegmentedFilterButton key={item.id} active={filter === item.id} onClick={() => setFilter(item.id)}>{item.label} ({count})</SegmentedFilterButton>;
               })}
-            </div>
-            <div className="relative w-full lg:w-80"><span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">search</span><Input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="ค้นหาเลขที่ ชื่อสมาชิก หรือประเภท..." aria-label="ค้นหาคำร้อง" className="h-9 bg-surface-container-low pl-9" /></div>
+            </SegmentedFilterGroup>
+            <div className="relative w-full lg:w-80"><span aria-hidden="true" className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">search</span><Input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="ค้นหาเลขที่ ชื่อสมาชิก หรือประเภท..." aria-label="ค้นหาคำร้อง" className="h-11 rounded-xl bg-surface-container-low pl-9 text-sm" /></div>
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-border">

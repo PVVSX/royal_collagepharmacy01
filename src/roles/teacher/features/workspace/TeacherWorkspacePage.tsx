@@ -272,7 +272,7 @@ export default function TeacherWorkspacePage({
             <CardTitle className="text-lg">งานที่ต้องพิจารณา</CardTitle>
             <p aria-live="polite" className="mt-1 text-xs text-muted-foreground">รอตรวจ {visibleRegistrations.length} คำขอ</p>
           </div>
-          <Input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="ค้นหาคำขอลงทะเบียน" placeholder="ค้นหาชื่อหรือรหัสวิชา" className="sm:max-w-xs" />
+          <Input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="ค้นหาคำขอลงทะเบียน" placeholder="ค้นหาชื่อหรือรหัสวิชา" className="h-11 rounded-xl text-sm sm:max-w-xs" />
         </CardHeader>
         <CardContent className="p-0">
           <Table>

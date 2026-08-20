@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SegmentedFilterButton, SegmentedFilterGroup } from "@/components/ui/segmented-filter";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { useMemberNotifications } from "@/roles/member/features/notifications/member-notifications";
 
@@ -19,14 +20,13 @@ export default function MemberNotificationsPage() {
 
   return (
     <PageShell className="space-y-5">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div><h1 className="text-2xl font-bold">การแจ้งเตือน</h1><p className="mt-1 text-sm text-muted-foreground">ติดตามกำหนดการ สถานะ และรายการที่ต้องดำเนินการ</p></div>
-        <Button variant="outline" size="sm" disabled={unread === 0} onClick={markAllRead}>ทำเครื่องหมายว่าอ่านทั้งหมด</Button>
-      </header>
-      <div className="flex gap-2">
-        <Button size="sm" variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>ทั้งหมด</Button>
-        <Button size="sm" variant={filter === "unread" ? "default" : "outline"} onClick={() => setFilter("unread")}>ยังไม่ได้อ่าน {unread > 0 ? `(${unread})` : ""}</Button>
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" className="min-h-11" disabled={unread === 0} onClick={markAllRead}>ทำเครื่องหมายว่าอ่านทั้งหมด</Button>
       </div>
+      <SegmentedFilterGroup aria-label="กรองการแจ้งเตือน">
+        <SegmentedFilterButton active={filter === "all"} onClick={() => setFilter("all")}>ทั้งหมด</SegmentedFilterButton>
+        <SegmentedFilterButton active={filter === "unread"} onClick={() => setFilter("unread")}>ยังไม่ได้อ่าน {unread > 0 ? `(${unread})` : ""}</SegmentedFilterButton>
+      </SegmentedFilterGroup>
       <Card><CardContent className="divide-y p-0">
         {visible.map((item) => (
           <button key={item.id} className={`flex w-full items-start gap-4 p-4 text-left transition-colors hover:bg-muted/50 ${item.isRead ? "" : "bg-primary/[0.04]"}`} onClick={() => { markRead(item.id); router.push(item.destination); }}>

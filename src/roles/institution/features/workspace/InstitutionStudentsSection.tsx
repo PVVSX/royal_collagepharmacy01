@@ -66,6 +66,7 @@ export default function InstitutionStudentsSection({
               placeholder="ค้นหาชื่อ รหัส หรือเลขใบอนุญาต"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
+              className="h-11 rounded-xl text-sm"
             />
           </div>
         </CardHeader>

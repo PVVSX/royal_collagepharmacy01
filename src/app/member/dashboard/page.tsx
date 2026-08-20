@@ -7,25 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { colleges, dashboardData } from "@/roles/shared/data";
 import { useMockDb } from "@/providers/mock-db-provider";
-
-function registrationWindow(opensAt: string, closesAt: string, enabled: boolean, now: number) {
-  if (!enabled) return { label: "ยังไม่เปิดรับลงทะเบียน", detail: "กำหนดการจะแสดงเมื่อมีประกาศ", tone: "neutral" as const };
-  const opens = new Date(opensAt).getTime();
-  const closes = new Date(closesAt).getTime();
-  if (!Number.isFinite(opens) || !Number.isFinite(closes)) return { label: "กำลังปรับปรุงกำหนดการ", detail: "โปรดตรวจสอบอีกครั้งภายหลัง", tone: "neutral" as const };
-  if (now < opens) return { label: "เปิดลงทะเบียนเร็ว ๆ นี้", detail: `เปิด ${new Intl.DateTimeFormat("th-TH", { dateStyle: "long", timeStyle: "short" }).format(opens)}`, tone: "info" as const };
-  if (now >= closes) return { label: "ปิดรับลงทะเบียนแล้ว", detail: `ปิดเมื่อ ${new Intl.DateTimeFormat("th-TH", { dateStyle: "long", timeStyle: "short" }).format(closes)}`, tone: "neutral" as const };
-  const remaining = closes - now;
-  const days = Math.floor(remaining / 86_400_000);
-  const hours = Math.floor((remaining % 86_400_000) / 3_600_000);
-  return { label: days < 3 ? "ใกล้ปิดรับลงทะเบียน" : "เปิดรับลงทะเบียน", detail: `เหลือ ${days} วัน ${hours} ชั่วโมง`, tone: days < 3 ? "warning" as const : "success" as const };
-}
+import { getRegistrationWindowStatus } from "@/roles/shared/features/registration/registration-window";
 
 export default function DashboardPage() {
   const { settings } = useMockDb();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 60_000); return () => window.clearInterval(timer); }, []);
-  const registration = registrationWindow(settings.registrationOpensAt, settings.registrationClosesAt, settings.registrationOpen, now);
+  const registration = getRegistrationWindowStatus({
+    enabled: settings.registrationOpen,
+    opensAt: settings.registrationOpensAt,
+    closesAt: settings.registrationClosesAt,
+    now,
+  });
   const college = colleges["วภท."];
 
   return (
@@ -33,7 +26,7 @@ export default function DashboardPage() {
       <header className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="border-b-2 border-primary bg-gradient-to-r from-primary/[0.07] to-transparent px-5 py-5 md:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0"><h1 className="text-xl font-bold md:text-2xl">ยินดีต้อนรับ {dashboardData.studentName}</h1><p className="mt-1 break-words text-sm text-muted-foreground">{college.fullName} · รหัสสมาชิกนักศึกษา <span className="font-mono">{dashboardData.studentId}</span></p></div>
+            <div className="min-w-0"><h2 className="text-xl font-bold md:text-2xl">ยินดีต้อนรับ {dashboardData.studentName}</h2><p className="mt-1 break-words text-sm text-muted-foreground">{college.fullName} · รหัสสมาชิกนักศึกษา <span className="font-mono">{dashboardData.studentId}</span></p></div>
             <Link href="/member/passport" className="inline-flex shrink-0 items-center gap-2 self-start rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"><span aria-hidden="true" className="material-symbols-outlined text-lg">badge</span>เปิด Pharmacist Profile</Link>
           </div>
         </div>

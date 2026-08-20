@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import PaymentDialog from "@/roles/member/features/finance/components/PaymentDialog";
 import { useMockDb, type Payment } from "@/providers/mock-db-provider";
@@ -149,11 +148,6 @@ export default function FinancePage() {
   return (
     <>
       <PageShell>
-        <header className="mb-6">
-          <h1 className="text-lg md:text-xl font-semibold mb-1">การชำระเงิน</h1>
-          <p className="text-xs text-muted-foreground">ใบแจ้งชำระจะเปิดหลังอาจารย์ผู้รับผิดชอบอนุมัติการลงทะเบียน</p>
-        </header>
-
         {hasLockedInvoice && (
           <div role="note" className="mb-5 flex items-start gap-3 rounded-xl border border-warning-border bg-warning-soft p-4 text-warning-on-soft">
             <span className="material-symbols-outlined">hourglass_top</span>
@@ -216,7 +210,6 @@ export default function FinancePage() {
           </CardContent>
         </Card>
       </PageShell>
-      <Footer />
       {selectedInvoice && (
         <PaymentDialog
           item={{

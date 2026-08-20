@@ -1,14 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
 import { OrganizationLogo } from "@/roles/shared/components/brand/OrganizationLogo";
-import { clearPortalSession } from "@/roles/shared/features/roles/mock-login";
-import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 
 
 // กลุ่ม nav แบบมี section label
@@ -23,15 +21,16 @@ const navGroups: {
     groupLabel: "เมนูหลัก",
     items: [
       { href: "/member/dashboard", icon: "dashboard", label: "ภาพรวม" },
-      { href: "/member/passport", icon: "badge", label: "Pharmacist Profile" },
+      { href: "/member/passport", icon: "badge", label: "ประวัติวิชาชีพ" },
     ],
   },
   {
     groupLabel: "การเรียน",
     items: [
-      { href: "/member/schedule", icon: "calendar_today", label: "ตารางเรียน" },
       { href: "/member/programs", icon: "menu_book", label: "หลักสูตรและรายวิชา" },
-      { href: "/member/registration", icon: "how_to_reg", label: "การลงทะเบียน" },
+      { href: "/member/registration/courses", icon: "library_add", label: "ลงทะเบียนเรียน" },
+      { href: "/member/registration", icon: "how_to_reg", label: "สถานะการลงทะเบียน" },
+      { href: "/member/schedule", icon: "calendar_today", label: "ตารางเรียน" },
       { href: "/member/results", icon: "fact_check", label: "ผลการเรียน" },
     ],
   },
@@ -44,28 +43,32 @@ const navGroups: {
   },
 ];
 
-function SidebarNav({ pathname }: { pathname: string }) {
-  const router = useRouter();
-  const { session } = usePortalSession();
+function SidebarNav({ pathname, onNavigate, reserveCloseSpace = false }: { pathname: string; onNavigate?: () => void; reserveCloseSpace?: boolean }) {
   const isActive = (href: string) => {
     if (href === "/member/dashboard") return pathname === "/member/dashboard";
+    if (href === "/member/registration") return pathname === href;
     return pathname.startsWith(href);
   };
 
   return (
     <div className="flex h-full flex-col bg-transparent">
       {/* Logo */}
-      <Link href="/member/dashboard" className="block px-5 pt-5 pb-4">
+      <Link
+        href="/member/dashboard"
+        onClick={onNavigate}
+        className={cn("block px-5 pb-4 pt-5", reserveCloseSpace && "pr-16")}
+      >
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-logo-surface p-1 overflow-hidden flex-shrink-0">
             <OrganizationLogo className="h-full w-full object-contain" />
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-bold leading-tight text-sidebar-foreground">
-              ฐานข้อมูลเภสัชกร
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold leading-snug text-sidebar-foreground">
+              <span className="block">ระบบสารสนเทศ</span>
+              <span className="block">ราชวิทยาลัยแห่งประเทศไทย</span>
             </p>
-            <p className="text-xs opacity-90 text-sidebar-foreground/70 mt-0.5">
-              Pharmacist Database
+            <p className="mt-1 break-words text-3xs leading-snug text-sidebar-foreground">
+              The Information System of the Royal College of Thailand
             </p>
           </div>
         </div>
@@ -74,11 +77,11 @@ function SidebarNav({ pathname }: { pathname: string }) {
       <div className="mx-4 h-px bg-sidebar-border" />
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3 custom-scrollbar space-y-4">
+      <nav aria-label="เมนูสมาชิก" className="custom-scrollbar flex-1 space-y-4 overflow-y-auto px-3 py-3">
         {navGroups.map((group, gi) => (
           <div key={gi}>
             {group.groupLabel && (
-              <p className="mb-1 px-3 text-3xs font-semibold uppercase tracking-widest text-sidebar-foreground/40 select-none">
+              <p className="mb-1 px-3 text-xs font-semibold tracking-wide text-sidebar-foreground select-none">
                 {group.groupLabel}
               </p>
             )}
@@ -89,12 +92,13 @@ function SidebarNav({ pathname }: { pathname: string }) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-caption font-medium transition-all duration-150",
+                      "group flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
                       active
                         ? "bg-sidebar-primary/10 text-sidebar-primary"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
                     )}
                   >
                     <span
@@ -102,8 +106,9 @@ function SidebarNav({ pathname }: { pathname: string }) {
                         "material-symbols-outlined text-xl transition-all",
                         active
                           ? "fill text-sidebar-primary"
-                          : "text-sidebar-foreground/70 group-hover:text-sidebar-foreground"
+                          : "text-sidebar-foreground group-hover:text-sidebar-foreground"
                       )}
+                      aria-hidden="true"
                     >
                       {item.icon}
                     </span>
@@ -119,55 +124,47 @@ function SidebarNav({ pathname }: { pathname: string }) {
         ))}
     </nav>
 
-      <div className="mx-4 h-px bg-sidebar-border" />
-
-      {/* User account */}
-      <div className="p-4">
-        <div className="rounded-lg p-2 transition-colors hover:bg-sidebar-accent">
-          <div className="flex min-w-0 items-start gap-3">
-            <Avatar className="h-8 w-8 shrink-0">
-              <img src="/somchai_profile.png" alt="" className="h-full w-full rounded-full object-cover" />
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="line-clamp-2 break-words text-sm font-medium leading-snug text-sidebar-foreground">{session?.displayName ?? "กำลังโหลด"}</p>
-              <p className="mt-1 line-clamp-2 break-words text-xs text-sidebar-foreground/70">{session?.organisation.name ?? "ข้อมูลบัญชีสมาชิก"}</p>
-            </div>
-          </div>
-          <button
-            onClick={() => { clearPortalSession(); router.push("/"); }}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground"
-            title="ออกจากระบบ"
-            aria-label="ออกจากระบบ"
-          >
-            <span className="material-symbols-outlined text-base">logout</span>
-            ออกจากระบบ
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
       {/* Desktop */}
-      <aside className="fixed left-4 top-4 bottom-4 z-40 hidden w-60 flex-col overflow-hidden rounded-2xl glass-panel-primary md:flex">
+      <aside className="fixed bottom-4 left-4 top-4 z-40 hidden w-60 flex-col overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar shadow-app-float md:flex">
         <SidebarNav pathname={pathname} />
       </aside>
 
       {/* Mobile trigger */}
-      <div className="fixed left-3 top-3 z-50 md:hidden">
-        <Sheet>
+      <div className="fixed left-2 top-5 z-50 md:hidden">
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg shadow-sm">
-              <span className="material-symbols-outlined text-xl">menu</span>
+            <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl shadow-sm" aria-label="เปิดเมนูหลัก">
+              <span aria-hidden="true" className="material-symbols-outlined text-xl">menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-56 p-0 [&>button]:hidden">
-            <SidebarNav pathname={pathname} />
+          <SheetContent
+            side="left"
+            showCloseButton={false}
+            className="w-72 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground"
+          >
+            <SheetTitle className="sr-only">เมนูหลัก</SheetTitle>
+            <SheetClose asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-3 top-3 z-10 h-11 w-11 rounded-xl text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                aria-label="ปิดเมนูหลัก"
+              >
+                <span aria-hidden="true" className="material-symbols-outlined text-xl">close</span>
+              </Button>
+            </SheetClose>
+            <SidebarNav pathname={pathname} onNavigate={() => setMobileOpen(false)} reserveCloseSpace />
           </SheetContent>
         </Sheet>
       </div>

@@ -1,13 +1,21 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, BookOpen, Bookmark, FileText, ChevronDown, X, SlidersHorizontal } from "lucide-react";
+import { Search, BookOpen, Bookmark, FileText, X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { researchData, type ResearchArticle } from "@/roles/member/features/research/data/research";
 import { ResearchSubmissionDialog } from "@/roles/member/features/research/components/ResearchSubmissionDialog";
 import { ResearchSubmissionPanel } from "@/roles/member/features/research/components/ResearchSubmissionPanel";
-import Footer from "@/roles/shared/components/layout/Footer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMockDb } from "@/providers/mock-db-provider";
 import { approvedResearchArticles } from "@/roles/shared/features/research/projection";
@@ -44,7 +52,7 @@ const PUBLISHERS = [
 const filterCheckboxClass =
   "size-[15px] rounded border-outline text-brand accent-brand focus:ring-brand";
 const filterInputClass =
-  "h-8 w-full rounded-md border border-outline bg-surface px-2 text-12 focus:outline-none focus:ring-1 focus:ring-brand";
+  "h-11 w-full rounded-xl border border-outline bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30";
 
 export default function ResearchPage() {
   const { researchSubmissions } = useMockDb();
@@ -170,7 +178,7 @@ export default function ResearchPage() {
           {DOCUMENT_TYPES.map((type, i) => (
             <label
               key={i}
-              className="group flex cursor-pointer items-center gap-2.5"
+              className="group flex min-h-11 cursor-pointer items-center gap-2.5"
             >
               <input
                 type="checkbox"
@@ -198,7 +206,7 @@ export default function ResearchPage() {
           {FIELDS.map((field, i) => (
             <label
               key={i}
-              className="group flex cursor-pointer items-center gap-2.5"
+              className="group flex min-h-11 cursor-pointer items-center gap-2.5"
             >
               <input
                 type="checkbox"
@@ -216,9 +224,6 @@ export default function ResearchPage() {
               </span>
             </label>
           ))}
-          <button className="mt-1.5 flex items-center gap-1 text-2xs font-medium text-brand hover:underline">
-            แสดงเพิ่มเติม <ChevronDown className="w-3 h-3" />
-          </button>
         </div>
       </div>
 
@@ -230,6 +235,7 @@ export default function ResearchPage() {
         <div className="flex items-center gap-2 mb-2.5">
           <input
             type="number"
+            aria-label="ปีเริ่มต้น"
             placeholder="ปีเริ่มต้น"
             className={filterInputClass}
             value={startYear}
@@ -240,19 +246,13 @@ export default function ResearchPage() {
           </span>
           <input
             type="number"
+            aria-label="ปีสิ้นสุด"
             placeholder="ปีสิ้นสุด"
             className={filterInputClass}
             value={endYear}
             onChange={(e) => setEndYear(e.target.value)}
           />
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full h-8 text-12 font-medium"
-        >
-          นำไปใช้
-        </Button>
       </div>
 
       {/* Language */}
@@ -262,7 +262,7 @@ export default function ResearchPage() {
           {LANGUAGES.map((lang, i) => (
             <label
               key={i}
-              className="group flex cursor-pointer items-center gap-2.5"
+              className="group flex min-h-11 cursor-pointer items-center gap-2.5"
             >
               <input
                 type="checkbox"
@@ -292,7 +292,7 @@ export default function ResearchPage() {
           {PUBLISHERS.map((pub, i) => (
             <label
               key={i}
-              className="group flex cursor-pointer items-center gap-2.5"
+              className="group flex min-h-11 cursor-pointer items-center gap-2.5"
             >
               <input
                 type="checkbox"
@@ -329,40 +329,31 @@ export default function ResearchPage() {
           <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-brand-foreground/5" />
 
           <div className="relative z-10 px-6 md:px-8 pt-8 pb-10">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-brand-foreground/15 backdrop-blur-sm">
-                <Search className="size-5 text-brand-foreground" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-brand-foreground md:text-2xl">
-                  ค้นหางานวิจัยและบทความวิชาการ
-                </h1>
-                <p className="mt-0.5 text-xs text-brand-foreground/60">
-                  ฐานข้อมูลงานวิจัยทางเภสัชกรรม ราชวิทยาลัยเภสัชกรรม
-                </p>
-              </div>
-            </div>
-
             <form
               onSubmit={handleSearch}
+              role="search"
+              aria-label="ค้นหางานวิจัยและบทความวิชาการ"
               className="flex flex-col sm:flex-row gap-3"
             >
               <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-content-muted" />
+                <label htmlFor="research-search" className="sr-only">คำค้นหางานวิจัย</label>
+                <Search aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 size-4.5 -translate-y-1/2 text-content-muted" />
                 <input
-                  type="text"
+                  id="research-search"
+                  type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="พิมพ์คำค้นหา เช่น warfarin, เภสัชกรรมคลินิก..."
-                  className="h-11 w-full rounded-xl border-0 bg-surface-raised pl-10 pr-10 text-sm text-content shadow-lg placeholder:text-content-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-foreground/40"
+                  className="h-11 w-full rounded-xl border-0 bg-surface-raised pl-10 pr-12 text-sm text-content shadow-lg placeholder:text-content-muted/60 focus:outline-none focus:ring-2 focus:ring-brand-foreground/40"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-content-muted transition-colors hover:text-content"
+                    aria-label="ล้างคำค้นหา"
+                    className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-xl text-content-muted transition-colors hover:text-content focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
                   >
-                    <X className="w-4 h-4" />
+                    <X aria-hidden="true" className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -370,7 +361,7 @@ export default function ResearchPage() {
                 type="submit"
                 className="h-11 rounded-xl border border-brand-foreground/20 bg-brand-foreground/15 px-6 font-semibold text-brand-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-brand-foreground/25"
               >
-                <Search className="w-4 h-4 mr-2" />
+                <Search aria-hidden="true" className="mr-2 h-4 w-4" />
                 ค้นหา
               </Button>
             </form>
@@ -397,16 +388,18 @@ export default function ResearchPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-outline/50 bg-surface/30 px-4 py-3.5">
                   <div className="flex items-center gap-2 text-caption font-bold text-brand">
-                    <SlidersHorizontal className="w-4 h-4" />
+                    <SlidersHorizontal aria-hidden="true" className="h-4 w-4" />
                     จำกัดผลการค้นหา
                   </div>
                   {activeFilterCount > 0 && (
-                    <button
+                    <Button
+                      type="button"
+                      variant="ghost"
                       onClick={clearAllFilters}
-                      className="text-2xs text-destructive hover:underline"
+                      className="min-h-11 px-2 text-sm text-destructive hover:bg-danger-soft hover:text-destructive"
                     >
                       ล้างทั้งหมด
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -418,43 +411,60 @@ export default function ResearchPage() {
             </aside>
 
             {/* ── Mobile Filter Toggle ── */}
-            <div className="lg:hidden fixed bottom-6 right-6 z-50">
-              <Button
-                onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
-                className="size-12 rounded-full bg-brand text-brand-foreground shadow-xl hover:bg-brand-strong"
-                size="icon"
-              >
-                <SlidersHorizontal className="w-5 h-5" />
-              </Button>
-              {activeFilterCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-danger text-3xs font-bold text-destructive-foreground">
-                  {activeFilterCount}
-                </span>
-              )}
-            </div>
-
-            {/* ── Mobile Filter Overlay ── */}
-            {mobileFilterOpen && (
-              <div className="fixed inset-0 z-50 lg:hidden">
-                <div
-                  className="absolute inset-0 bg-content/50 backdrop-blur-sm"
-                  onClick={() => setMobileFilterOpen(false)}
-                />
-                <div className="absolute right-0 bottom-0 left-0 max-h-[80vh] overflow-hidden rounded-t-2xl bg-surface-raised shadow-xl animate-in slide-in-from-bottom">
-                  <div className="flex items-center justify-between border-b border-outline px-5 py-4">
-                    <h2 className="font-bold text-15">
-                      ตัวกรอง ({activeFilterCount})
-                    </h2>
-                    <button onClick={() => setMobileFilterOpen(false)}>
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="px-5 py-4 overflow-y-auto max-h-[65vh]">
-                    {filterContent}
-                  </div>
-                </div>
+            <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
+              <div className="fixed bottom-6 right-6 z-50 lg:hidden">
+                <SheetTrigger asChild>
+                  <Button
+                    type="button"
+                    className="size-12 rounded-full bg-brand text-brand-foreground shadow-xl hover:bg-brand-strong"
+                    size="icon"
+                    aria-label={`เปิดตัวกรอง${activeFilterCount > 0 ? ` (${activeFilterCount} รายการที่เลือก)` : ""}`}
+                    aria-expanded={mobileFilterOpen}
+                    aria-controls="research-mobile-filters"
+                  >
+                    <SlidersHorizontal aria-hidden="true" className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                {activeFilterCount > 0 && (
+                  <span aria-hidden="true" className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-danger text-3xs font-bold text-destructive-foreground">
+                    {activeFilterCount}
+                  </span>
+                )}
               </div>
-            )}
+              <SheetContent
+                id="research-mobile-filters"
+                side="bottom"
+                showCloseButton={false}
+                className="max-h-[80vh] overflow-hidden rounded-t-2xl border-outline bg-surface-raised p-0 lg:hidden"
+              >
+                <SheetHeader className="border-b border-outline px-5 py-4 text-left">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <SheetTitle className="font-bold text-15">
+                        ตัวกรอง ({activeFilterCount})
+                      </SheetTitle>
+                      <SheetDescription className="mt-1 text-xs">
+                        เลือกเงื่อนไขเพื่อจำกัดผลการค้นหา
+                      </SheetDescription>
+                    </div>
+                    <SheetClose asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-11 w-11 shrink-0 rounded-xl"
+                        aria-label="ปิดตัวกรอง"
+                      >
+                        <X aria-hidden="true" className="h-5 w-5" />
+                      </Button>
+                    </SheetClose>
+                  </div>
+                </SheetHeader>
+                <div className="max-h-[65vh] overflow-y-auto px-5 py-4 custom-scrollbar">
+                  {filterContent}
+                </div>
+              </SheetContent>
+            </Sheet>
 
             {/* ── Results ── */}
             <div className="flex-1 min-w-0 space-y-4">
@@ -473,11 +483,12 @@ export default function ResearchPage() {
                 </div>
 
                 <div className="flex items-center gap-2 text-caption">
-                  <span className="whitespace-nowrap text-content-muted">
+                  <label htmlFor="research-sort" className="whitespace-nowrap text-content-muted">
                     เรียงตาม:
-                  </span>
+                  </label>
                   <select
-                    className="cursor-pointer rounded-lg border border-outline bg-surface px-2.5 py-1.5 text-12 focus:outline-none focus:ring-1 focus:ring-brand"
+                    id="research-sort"
+                    className="h-11 cursor-pointer rounded-xl border border-outline bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                   >
@@ -614,61 +625,6 @@ export default function ResearchPage() {
                 )}
               </div>
 
-              {/* Pagination */}
-              {filteredResults.length > 0 && (
-                <div className="flex items-center justify-center gap-1.5 pt-6 pb-4">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="size-8 rounded-lg text-content-muted"
-                    disabled
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      chevron_left
-                    </span>
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="size-8 rounded-lg bg-brand text-brand-foreground hover:bg-brand-strong"
-                  >
-                    1
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="size-8 rounded-lg"
-                  >
-                    2
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="size-8 rounded-lg"
-                  >
-                    3
-                  </Button>
-                  <span className="px-1.5 text-sm text-content-muted">
-                    …
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="size-8 rounded-lg"
-                  >
-                    125
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="size-8 rounded-lg text-content-muted"
-                  >
-                    <span className="material-symbols-outlined text-sm">
-                      chevron_right
-                    </span>
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -702,7 +658,6 @@ export default function ResearchPage() {
         }}
       />
 
-      <Footer />
     </>
   );
 }

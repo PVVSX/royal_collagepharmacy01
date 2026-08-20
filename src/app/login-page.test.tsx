@@ -41,7 +41,7 @@ describe("member login page", () => {
     render(<LoginPage />);
 
     fireEvent.change(screen.getByLabelText("เลขที่ใบประกอบวิชาชีพ"), { target: { value: "ภ.99999" } });
-    fireEvent.change(screen.getByLabelText(/รหัสผ่าน/), { target: { value: "2323" } });
+    fireEvent.change(screen.getByLabelText("รหัสผ่าน", { selector: "input" }), { target: { value: "2323" } });
     fireEvent.submit(screen.getByRole("button", { name: "เข้าสู่ระบบ" }).closest("form")!);
 
     expect(screen.getByRole("alert").textContent).toContain("ข้อมูลเข้าสู่ระบบไม่ถูกต้อง");
@@ -55,7 +55,7 @@ describe("member login page", () => {
     render(<LoginPage />);
 
     fireEvent.change(screen.getByLabelText("เลขที่ใบประกอบวิชาชีพ"), { target: { value: "ภ.12345" } });
-    fireEvent.change(screen.getByLabelText(/รหัสผ่าน/), { target: { value: "2323" } });
+    fireEvent.change(screen.getByLabelText("รหัสผ่าน", { selector: "input" }), { target: { value: "2323" } });
     fireEvent.submit(screen.getByRole("button", { name: "เข้าสู่ระบบ" }).closest("form")!);
     expect(JSON.parse(window.localStorage.getItem(PORTAL_SESSION_KEY)!)).toMatchObject({
       userId: "วภท-2568-001",
@@ -63,5 +63,13 @@ describe("member login page", () => {
     });
     expect(push).toHaveBeenCalledWith("/member/dashboard");
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("exposes public contact and terms links in the login footer", () => {
+    render(<LoginPage />);
+
+    expect(screen.getByRole("navigation", { name: "ลิงก์ส่วนท้าย" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "ติดต่อเรา" }).getAttribute("href")).toBe("/contact");
+    expect(screen.getByRole("link", { name: "ข้อตกลงการใช้งาน" }).getAttribute("href")).toBe("/terms");
   });
 });

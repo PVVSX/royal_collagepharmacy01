@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import Footer from "@/roles/shared/components/layout/Footer";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -27,11 +26,7 @@ export default function CPDPage() {
       <PageShell className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold mb-1 tracking-tight text-primary">ระบบสะสมหน่วยกิตการศึกษาต่อเนื่อง (CPD)</h1>
-            <p className="text-sm text-muted-foreground">ติดตามสถานะและประวัติการสะสมหน่วยกิตของคุณ</p>
-          </div>
+        <div className="flex justify-end">
           <Button size="sm" className="h-9 gap-1.5 shadow-sm">
             <span className="material-symbols-outlined text-base">sync</span>
             ซิงค์ข้อมูลกับ ศธภ.
@@ -242,7 +237,6 @@ export default function CPDPage() {
           </div>
         </div>
       </PageShell>
-      <Footer />
     </>
   );
 }

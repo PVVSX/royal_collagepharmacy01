@@ -4,6 +4,9 @@ import type { ScopedAcademicActor } from "@/roles/shared/features/academic";
 export const selectClassName =
   "h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
 
+export const filterSelectClassName =
+  "h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+
 export function formatInstitutionDate(value?: string) {
   if (!value) return "ปัจจุบัน";
   return new Intl.DateTimeFormat("th-TH", {

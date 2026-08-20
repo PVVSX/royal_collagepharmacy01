@@ -81,12 +81,13 @@ export default function SuperAdminAuditPage() {
               onChange={(event) => setQuery(event.target.value)}
               aria-label="ค้นหา Audit Log"
               placeholder="ค้นหาผู้ใช้ Action หรือ Resource"
+              className="h-11 rounded-xl text-sm"
             />
             <select
               value={role}
               onChange={(event) => setRole(event.target.value as typeof role)}
               aria-label="กรองตาม Role"
-              className="h-10 rounded-xl border border-input bg-background px-3 text-sm"
+              className="h-11 rounded-xl border border-input bg-background px-3 text-sm"
             >
               <option value="all">ทุก Role</option>
               {SYSTEM_ROLES.map((item) => (

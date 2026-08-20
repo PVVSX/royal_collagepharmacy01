@@ -95,7 +95,7 @@ export function registrationTimelineSteps(
     },
     {
       id: "teacher-review",
-      label: "อาจารย์พิจารณา",
+      label: "พิจารณาคำขอ",
       description: registration.status === "needs_info"
         ? "ต้องส่งข้อมูลเพิ่ม"
         : registration.status === "rejected"

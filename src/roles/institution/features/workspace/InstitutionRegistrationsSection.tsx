@@ -37,9 +37,9 @@ import {
 import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 
 import {
+  filterSelectClassName,
   formatInstitutionDateTime,
   institutionActor,
-  selectClassName,
 } from "./institution-workspace-utils";
 
 const actorLabels: Record<RegistrationActor, string> = {
@@ -112,6 +112,7 @@ export default function InstitutionRegistrationsSection() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="ค้นหาเลขคำขอ ชื่อผู้เรียน หรือรายวิชา"
+              className="h-11 rounded-xl text-sm"
             />
           </div>
           <div className="space-y-1.5">
@@ -122,7 +123,7 @@ export default function InstitutionRegistrationsSection() {
               id="institution-registration-status"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-              className={selectClassName}
+              className={filterSelectClassName}
             >
               <option value="all">ทุกสถานะ</option>
               {registrationStatuses.map((status) => (
@@ -138,7 +139,7 @@ export default function InstitutionRegistrationsSection() {
               id="institution-registration-course"
               value={courseFilter}
               onChange={(event) => setCourseFilter(event.target.value)}
-              className={selectClassName}
+              className={filterSelectClassName}
             >
               <option value="all">ทุกรายวิชา</option>
               {offerings.map((offering) => (

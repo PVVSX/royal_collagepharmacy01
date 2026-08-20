@@ -33,6 +33,7 @@ import {
 import { usePortalSession } from "@/roles/shared/features/roles/use-portal-session";
 
 import {
+  filterSelectClassName,
   formatInstitutionDateTime,
   friendlyInstitutionError,
   institutionActor,
@@ -239,6 +240,7 @@ export default function InstitutionCoursesSection() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="ค้นหารหัส ชื่อ ภาคการศึกษา หรือกลุ่มเรียน"
+              className="h-11 rounded-xl text-sm"
             />
           </div>
           <div className="space-y-1.5">
@@ -249,7 +251,7 @@ export default function InstitutionCoursesSection() {
               id="institution-course-status"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
-              className={selectClassName}
+              className={filterSelectClassName}
             >
               <option value="all">ทุกสถานะ</option>
               <option value="open">เปิดอยู่</option>

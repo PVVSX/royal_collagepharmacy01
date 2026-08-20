@@ -238,9 +238,9 @@ export default function StaffOperationsPage({ domain }: { domain: StaffOperation
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div><h2 className="font-semibold text-foreground">รายการดำเนินงาน</h2><p aria-live="polite" className="mt-1 text-xs text-muted-foreground">แสดง {filtered.length} จาก {records.length} รายการ</p></div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="ค้นหารหัส ชื่อ หรือผู้เกี่ยวข้อง" aria-label={`ค้นหา${config.title}`} className="sm:w-72" />
+            <Input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="ค้นหารหัส ชื่อ หรือผู้เกี่ยวข้อง" aria-label={`ค้นหา${config.title}`} className="h-11 rounded-xl text-sm sm:w-72" />
             <label className="sr-only" htmlFor={`staff-${domain}-status`}>กรองสถานะ</label>
-            <select id={`staff-${domain}-status`} value={status} onChange={(event) => setStatus(event.target.value)} className="h-8 rounded-2xl border border-border bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <select id={`staff-${domain}-status`} value={status} onChange={(event) => setStatus(event.target.value)} className="h-11 rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <option value="all">ทุกสถานะ</option><option value="draft">ฉบับร่าง</option><option value="pending">รอตรวจ</option><option value="needs_info">ต้องการข้อมูลเพิ่ม</option><option value="ready">พร้อมดำเนินการ</option><option value="published">เผยแพร่แล้ว</option>
             </select>
           </div>

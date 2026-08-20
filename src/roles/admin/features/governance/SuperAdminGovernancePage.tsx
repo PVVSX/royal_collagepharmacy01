@@ -224,7 +224,7 @@ function UsersSection() {
       <Card className="border-border">
         <CardHeader className="gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div><CardTitle className="text-lg">บัญชีทั้งหมด</CardTitle><p className="mt-1 text-xs text-muted-foreground">แก้ Assignment ปัจจุบันของแต่ละบัญชี โดยค่าที่บันทึกจะมีผลเมื่อเข้าสู่ระบบครั้งถัดไปและไม่กำหนดนโยบายหลาย Role ต่อบัญชี</p></div>
-          <div className="relative w-full sm:max-w-xs"><span aria-hidden="true" className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">search</span><Input aria-label="ค้นหาบัญชีผู้ใช้" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาชื่อ User ID หรือ Role" className="pl-10" /></div>
+          <div className="relative w-full sm:max-w-xs"><span aria-hidden="true" className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">search</span><Input aria-label="ค้นหาบัญชีผู้ใช้" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาชื่อ User ID หรือ Role" className="h-11 rounded-xl pl-10 text-sm" /></div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto rounded-2xl border border-border">

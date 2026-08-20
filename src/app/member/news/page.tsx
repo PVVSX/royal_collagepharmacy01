@@ -5,7 +5,7 @@ import { newsData } from "@/roles/shared/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Footer from "@/roles/shared/components/layout/Footer";
+import { SegmentedFilterButton, SegmentedFilterGroup } from "@/components/ui/segmented-filter";
 import { PageShell } from "@/roles/shared/components/layout/PageShell";
 
 const cm: Record<string, { border: string; variant: "brand" | "danger" | "success" | "warning" }> = {
@@ -23,16 +23,12 @@ export default function NewsPage() {
   return (
     <>
       <PageShell>
-        <div className="relative w-full h-[200px] md:h-[280px] rounded-2xl overflow-hidden mb-8 shadow-sm">
-          <img src="/images/assets/news/header page.png" alt="News Banner" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-scrim-strong via-scrim to-transparent flex flex-col justify-end p-6 md:p-10">
-            <h1 className="text-2xl md:text-3xl font-bold mb-2 text-content-on-image drop-shadow-md">ข่าวสารและประกาศ</h1>
-            <p className="text-sm md:text-base text-content-on-image/80 drop-shadow-sm">ติดตามข่าวสาร ประกาศ และกิจกรรมของวิทยาลัย</p>
-          </div>
+        <div className="mb-8 h-[200px] w-full overflow-hidden rounded-2xl shadow-sm md:h-[280px]">
+          <img src="/images/assets/news/header page.png" alt="" aria-hidden="true" className="h-full w-full object-cover" />
         </div>
-        <div className="flex flex-wrap gap-2 mb-5">{filters.map((f) => (
-          <Badge key={f} variant={activeFilter === f ? "default" : "outline"} className="cursor-pointer text-xs px-3 py-1.5" onClick={() => setActiveFilter(f)}>{f}</Badge>
-        ))}</div>
+        <SegmentedFilterGroup aria-label="กรองหมวดหมู่ข่าว" className="mb-5">{filters.map((f) => (
+          <SegmentedFilterButton key={f} active={activeFilter === f} onClick={() => setActiveFilter(f)}>{f}</SegmentedFilterButton>
+        ))}</SegmentedFilterGroup>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{filtered.map((item) => { const c = cm[item.categoryColor]; return (
           <Card key={item.id} className={`border-t-4 border-l-0 ${c.border} hover:shadow-md transition-all hover:-translate-y-1 overflow-hidden flex flex-col`}>
             <div className="relative w-full h-48 bg-muted">
@@ -57,7 +53,6 @@ export default function NewsPage() {
           </Card>
         );})}</div>
       </PageShell>
-      <Footer />
     </>
   );
 }

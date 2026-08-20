@@ -29,6 +29,7 @@ import {
   type RegistrationEligibilitySnapshot,
   type RegistrationTeacherDecision,
 } from "@/roles/shared/features/registration";
+import { getRegistrationWindowStatus } from "@/roles/shared/features/registration/registration-window";
 import {
   cancelRegistrationInvoice,
   createLockedRegistrationInvoice,
@@ -1802,6 +1803,15 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
   const submitRegistrations = (
     selections: RegistrationSubmissionInput[],
   ): Registration[] => {
+    const registrationWindow = getRegistrationWindowStatus({
+      enabled: settings.registrationOpen,
+      opensAt: settings.registrationOpensAt,
+      closesAt: settings.registrationClosesAt,
+      now: Date.now(),
+    });
+    if (!registrationWindow.canRegister) {
+      throw new Error("Registration window is not open");
+    }
     const activeCourseKeys = new Set(
       registrations
         .filter((registration) => registration.status !== "rejected" && registration.status !== "withdrawn")
@@ -1822,6 +1832,9 @@ export function MockDbProvider({ children }: { children: ReactNode }) {
       const offering = requestedOffering ?? defaultOfferingFor(selection.courseCode, selection.studentId);
       if (!offering || offering.courseCode !== selection.courseCode) {
         throw new Error(`No course offering matches ${selection.courseCode}`);
+      }
+      if (offering.status !== "open") {
+        throw new Error(`Course offering ${offering.id} is not open`);
       }
       if (selection.institutionId && selection.institutionId !== offering.institutionId) {
         throw new Error("Registration institution does not match its course offering");

@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OrganizationLogo } from "@/roles/shared/components/brand/OrganizationLogo";
+import Footer from "@/roles/shared/components/layout/Footer";
 import {
   resolvePortalLogin,
   savePortalSession,
@@ -128,9 +129,13 @@ export default function LoginPage() {
                   required
                   className="pl-10 pr-10 h-11 bg-muted/30 focus-visible:bg-transparent transition-colors" 
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground transition-colors">
-                  <span className="material-symbols-outlined text-xl">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                  className="absolute inset-y-0 right-0 flex min-w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <span aria-hidden="true" className="material-symbols-outlined text-xl">
                     {showPassword ? "visibility" : "visibility_off"}
                   </span>
                 </button>
@@ -155,9 +160,7 @@ export default function LoginPage() {
           </form>
 
         </motion.div>
-        <footer className="mt-10 text-center text-xs text-muted-foreground/70">
-          © 2026 ราชวิทยาลัยเภสัชกรรมแห่งประเทศไทย
-        </footer>
+        <Footer />
       </div>
 
     </div>

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   canTeacherAccessOffering,
+  DEFAULT_COURSE_OFFERINGS,
   type CourseProposalActor,
   type ScopedAcademicActor,
 } from "@/roles/shared/features/academic";
@@ -118,6 +119,12 @@ describe("mock DB registration migration", () => {
   });
 
   it("derives System eligibility and keeps an unverified student out of the teacher queue", async () => {
+    window.localStorage.setItem("mock_settings", JSON.stringify({
+      admissionOpen: true,
+      registrationOpen: true,
+      registrationOpensAt: "2026-01-01T00:00:00+07:00",
+      registrationClosesAt: "2027-01-01T00:00:00+07:00",
+    }));
     const { result } = renderHook(() => useMockDb(), { wrapper });
     await waitFor(() => expect(result.current.isLoaded).toBe(true));
     const before = result.current.registrations.length;
@@ -133,6 +140,61 @@ describe("mock DB registration migration", () => {
       credits: 3,
       term: "1/2569",
     }])).toThrowError("Registration eligibility is manual_review");
+    expect(result.current.registrations).toHaveLength(before);
+  });
+
+  it("rejects submissions outside the persisted registration window", async () => {
+    window.localStorage.setItem("mock_settings", JSON.stringify({
+      admissionOpen: true,
+      registrationOpen: true,
+      registrationOpensAt: "2026-08-01T00:00:00+07:00",
+      registrationClosesAt: "2026-08-02T00:00:00+07:00",
+    }));
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+    const before = result.current.registrations.length;
+
+    expect(() => result.current.submitRegistrations([{
+      studentId: "วภท-2568-001",
+      studentName: "ภก. สมชาย ใจดี",
+      courseId: "BCP-101",
+      courseOfferingId: "offering-bcp-101",
+      institutionId: "org-inst-siriraj",
+      courseCode: "BCP-101",
+      courseTitle: "เภสัชบำบัดพื้นฐาน",
+      credits: 3,
+      term: "1/2569",
+    }])).toThrowError("Registration window is not open");
+    expect(result.current.registrations).toHaveLength(before);
+  });
+
+  it("rejects an offering that is no longer open", async () => {
+    window.localStorage.setItem("mock_settings", JSON.stringify({
+      admissionOpen: true,
+      registrationOpen: true,
+      registrationOpensAt: "2026-01-01T00:00:00+07:00",
+      registrationClosesAt: "2027-01-01T00:00:00+07:00",
+    }));
+    window.localStorage.setItem("mock_course_offerings", JSON.stringify(
+      DEFAULT_COURSE_OFFERINGS.map((offering) => (
+        offering.id === "offering-bcp-101" ? { ...offering, status: "closed" } : offering
+      )),
+    ));
+    const { result } = renderHook(() => useMockDb(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+    const before = result.current.registrations.length;
+
+    expect(() => result.current.submitRegistrations([{
+      studentId: "วภท-2568-001",
+      studentName: "ภก. สมชาย ใจดี",
+      courseId: "BCP-101",
+      courseOfferingId: "offering-bcp-101",
+      institutionId: "org-inst-siriraj",
+      courseCode: "BCP-101",
+      courseTitle: "เภสัชบำบัดพื้นฐาน",
+      credits: 3,
+      term: "1/2569",
+    }])).toThrowError("Course offering offering-bcp-101 is not open");
     expect(result.current.registrations).toHaveLength(before);
   });
 
